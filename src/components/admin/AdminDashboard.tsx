@@ -221,21 +221,21 @@ export const AdminDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2">
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/patients'}>
               <Users className="h-5 w-5" />
               <span className="text-sm">View All Patients</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2">
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/doctors'}>
               <UserCog className="h-5 w-5" />
               <span className="text-sm">Manage Doctors</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2">
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/hospitals'}>
               <Building2 className="h-5 w-5" />
               <span className="text-sm">View Hospitals</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2">
-              <TrendingUp className="h-5 w-5" />
-              <span className="text-sm">Generate Reports</span>
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/appointments'}>
+              <Calendar className="h-5 w-5" />
+              <span className="text-sm">View Appointments</span>
             </Button>
           </div>
         </CardContent>

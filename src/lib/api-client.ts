@@ -317,91 +317,91 @@ export const yogaAPI = {
 
 // Admin API
 export const adminAPI = {
-  getStats: () => apiCall<any>('/admin/stats'),
+  getStats: () => apiCall<any>('/api/admin/stats'),
 
   // Patient management
-  getAllPatients: () => apiCall<any[]>('/admin/patients'),
-  getPatientById: (id: string) => apiCall<any>(`/admin/patients/${id}`),
+  getAllPatients: () => apiCall<any[]>('/api/admin/patients'),
+  getPatientById: (id: string) => apiCall<any>(`/api/admin/patients/${id}`),
   updatePatient: (id: string, patient: any) =>
-    apiCall<any>(`/admin/patients/${id}`, {
+    apiCall<any>(`/api/admin/patients/${id}`, {
       method: 'PUT',
       body: JSON.stringify(patient),
     }),
   deletePatient: (id: string) =>
-    apiCall<void>(`/admin/patients/${id}`, {
+    apiCall<void>(`/api/admin/patients/${id}`, {
       method: 'DELETE',
     }),
 
   // Doctor management
-  getAllDoctors: () => apiCall<any[]>('/admin/doctors'),
-  getDoctorById: (id: string) => apiCall<any>(`/admin/doctors/${id}`),
+  getAllDoctors: () => apiCall<any[]>('/api/admin/doctors'),
+  getDoctorById: (id: string) => apiCall<any>(`/api/admin/doctors/${id}`),
   updateDoctor: (id: string, doctor: any) =>
-    apiCall<any>(`/admin/doctors/${id}`, {
+    apiCall<any>(`/api/admin/doctors/${id}`, {
       method: 'PUT',
       body: JSON.stringify(doctor),
     }),
   approveDoctor: (id: string) =>
-    apiCall<any>(`/admin/doctors/${id}/approve`, {
+    apiCall<any>(`/api/admin/doctors/${id}/approve`, {
       method: 'PUT',
     }),
   suspendDoctor: (id: string) =>
-    apiCall<any>(`/admin/doctors/${id}/suspend`, {
+    apiCall<any>(`/api/admin/doctors/${id}/suspend`, {
       method: 'PUT',
     }),
   deleteDoctor: (id: string) =>
-    apiCall<void>(`/admin/doctors/${id}`, {
+    apiCall<void>(`/api/admin/doctors/${id}`, {
       method: 'DELETE',
     }),
 
   // Hospital management
-  getAllHospitals: () => apiCall<any[]>('/admin/hospitals'),
-  getHospitalById: (id: string) => apiCall<any>(`/admin/hospitals/${id}`),
+  getAllHospitals: () => apiCall<any[]>('/api/admin/hospitals'),
+  getHospitalById: (id: string) => apiCall<any>(`/api/admin/hospitals/${id}`),
   updateHospital: (id: string, hospital: any) =>
-    apiCall<any>(`/admin/hospitals/${id}`, {
+    apiCall<any>(`/api/admin/hospitals/${id}`, {
       method: 'PUT',
       body: JSON.stringify(hospital),
     }),
   approveHospital: (id: string) =>
-    apiCall<any>(`/admin/hospitals/${id}/approve`, {
+    apiCall<any>(`/api/admin/hospitals/${id}/approve`, {
       method: 'PUT',
     }),
   rejectHospital: (id: string) =>
-    apiCall<any>(`/admin/hospitals/${id}/reject`, {
+    apiCall<any>(`/api/admin/hospitals/${id}/reject`, {
       method: 'PUT',
     }),
   deleteHospital: (id: string) =>
-    apiCall<void>(`/admin/hospitals/${id}`, {
+    apiCall<void>(`/api/admin/hospitals/${id}`, {
       method: 'DELETE',
     }),
 
   // Appointment management
-  getAllAppointments: () => apiCall<any[]>('/admin/appointments'),
-  getAppointmentById: (id: string) => apiCall<any>(`/admin/appointments/${id}`),
+  getAllAppointments: () => apiCall<any[]>('/api/admin/appointments'),
+  getAppointmentById: (id: string) => apiCall<any>(`/api/admin/appointments/${id}`),
   updateAppointment: (id: string, appointment: any) =>
-    apiCall<any>(`/admin/appointments/${id}`, {
+    apiCall<any>(`/api/admin/appointments/${id}`, {
       method: 'PUT',
       body: JSON.stringify(appointment),
     }),
   cancelAppointment: (id: string) =>
-    apiCall<any>(`/admin/appointments/${id}/cancel`, {
+    apiCall<any>(`/api/admin/appointments/${id}/cancel`, {
       method: 'PUT',
     }),
   completeAppointment: (id: string) =>
-    apiCall<any>(`/admin/appointments/${id}/complete`, {
+    apiCall<any>(`/api/admin/appointments/${id}/complete`, {
       method: 'PUT',
     }),
   confirmAppointment: (id: string) =>
-    apiCall<any>(`/admin/appointments/${id}/confirm`, {
+    apiCall<any>(`/api/admin/appointments/${id}/confirm`, {
       method: 'PUT',
     }),
   deleteAppointment: (id: string) =>
-    apiCall<void>(`/admin/appointments/${id}`, {
+    apiCall<void>(`/api/admin/appointments/${id}`, {
       method: 'DELETE',
     }),
 
   // Pending approvals
-  getPendingDoctors: () => apiCall<any[]>('/admin/pending/doctors'),
-  getPendingHospitals: () => apiCall<any[]>('/admin/pending/hospitals'),
+  getPendingDoctors: () => apiCall<any[]>('/api/admin/pending/doctors'),
+  getPendingHospitals: () => apiCall<any[]>('/api/admin/pending/hospitals'),
 };
 
 // Export all APIs
