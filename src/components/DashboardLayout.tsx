@@ -75,7 +75,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       
       case 'admin':
         return [
-          { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+          { icon: LayoutDashboard, label: 'Dashboard', path: '/admin-dashboard' },
           { icon: Building2, label: 'Hospitals', path: '/admin/hospitals' },
           { icon: UserCog, label: 'Doctors', path: '/admin/doctors' },
           { icon: Users, label: 'Patients', path: '/admin/patients' },
