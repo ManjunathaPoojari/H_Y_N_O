@@ -7,10 +7,6 @@ interface Config {
 }
 
 // Default configuration (works without any .env file)
-const defaultConfig: Config = {
-  USE_BACKEND: false,
-  API_URL: 'http://localhost:8081/api',
-};
 
 // Load config from window object (set by index.html or build process)
 const loadConfig = (): Config => {

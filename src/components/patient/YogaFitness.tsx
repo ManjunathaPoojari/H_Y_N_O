@@ -15,6 +15,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { AIChatAssistant } from '../common/AIChatAssistant';
 import { aiService } from '../../lib/ai-service';
+import { toast } from 'sonner';
 
 interface YogaFitnessProps {
   onNavigate: (path: string) => void;
@@ -285,7 +286,7 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
 
   const handleBookAppointment = () => {
     if (!selectedTrainer || !selectedDate || !selectedTime) {
-      alert('Please select all booking details');
+      toast.error('Please select all booking details');
       return;
     }
 
@@ -301,7 +302,7 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
 
     setAppointments(prev => [...prev, newAppointment]);
     setShowBookingModal(false);
-    alert('Appointment booked successfully!');
+    toast.success('Appointment booked successfully!');
   };
 
   const toggleFavorite = (id: string) => {

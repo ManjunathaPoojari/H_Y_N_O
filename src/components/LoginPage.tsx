@@ -5,6 +5,7 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Activity, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../lib/auth-context';
+import { toast } from 'sonner';
 
 interface LoginPageProps {
   onNavigate: (path: string) => void;
@@ -26,7 +27,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
                            '/patient/dashboard';
       onNavigate(dashboardPath);
     } else {
-      alert('Login failed. Please check your credentials and try again.');
+      toast.error('Login failed. Please check your credentials and try again.');
     }
   };
 

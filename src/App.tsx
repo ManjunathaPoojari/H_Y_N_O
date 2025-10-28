@@ -10,17 +10,27 @@ import { PatientDashboard } from './components/patient/PatientDashboard';
 import { BookAppointment } from './components/patient/BookAppointment';
 import { MyAppointments } from './components/patient/MyAppointments';
 import { PatientProfile } from './components/patient/PatientProfile';
+import { PatientMeetings } from './components/patient/PatientMeetings';
 import { OnlinePharmacy } from './components/patient/OnlinePharmacy';
 import { NutritionWellness } from './components/patient/NutritionWellness';
 import { YogaFitness } from './components/patient/YogaFitness';
 import { ChatInterface } from './components/common/ChatInterface';
 import { DoctorDashboard } from './components/doctor/DoctorDashboard';
+import { DoctorProfile } from './components/doctor/DoctorProfile';
+import { DoctorAppointments } from './components/doctor/DoctorAppointments';
+import { DoctorPatients } from './components/doctor/DoctorPatients';
+import { DoctorSchedule } from './components/doctor/DoctorSchedule';
+import { DoctorMeetings } from './components/doctor/DoctorMeetings';
 import { HospitalDashboard } from './components/hospital/HospitalDashboard';
+import { HospitalProfile } from './components/hospital/HospitalProfile';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { HospitalManagement } from './components/admin/HospitalManagement';
 import { DoctorManagement } from './components/admin/DoctorManagement';
 import { ConfigStatus } from './components/ConfigStatus';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
+import { Card, CardContent } from './components/ui/card';
+import { Video, MessageSquare, MapPin, Building2 } from 'lucide-react';
 
 function AppContent() {
   const [currentPath, setCurrentPath] = useState('/');
@@ -67,6 +77,13 @@ function AppContent() {
       return <LoginPage onNavigate={navigate} role="doctor" />;
     }
 
+    if (currentPath === '/doctor-dashboard') {
+      if (!isAuthenticated) {
+        return <LoginPage onNavigate={navigate} role="doctor" />;
+      }
+      // If authenticated, continue to doctor routes below
+    }
+
     if (currentPath === '/hospital-login') {
       return <LoginPage onNavigate={navigate} role="hospital" />;
     }
@@ -85,21 +102,55 @@ function AppContent() {
       return (
         <DashboardLayout role="patient" onNavigate={navigate} currentPath={currentPath}>
           {currentPath === '/patient/dashboard' && <PatientDashboard onNavigate={navigate} />}
+          {currentPath === '/patient/book' && (
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-3xl mb-2">Book Appointment</h1>
+                <p className="text-gray-600">Choose your preferred consultation type</p>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/patient/book/video')}>
+                  <CardContent className="p-6 text-center">
+                    <Video className="h-12 w-12 mx-auto mb-4 text-blue-600" />
+                    <h3 className="text-lg font-semibold mb-2">Video Consultation</h3>
+                    <p className="text-gray-600 text-sm">Connect with doctor via video call</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/patient/book/chat')}>
+                  <CardContent className="p-6 text-center">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-4 text-green-600" />
+                    <h3 className="text-lg font-semibold mb-2">Chat Consultation</h3>
+                    <p className="text-gray-600 text-sm">Text-based consultation with doctor</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/patient/book/inperson')}>
+                  <CardContent className="p-6 text-center">
+                    <MapPin className="h-12 w-12 mx-auto mb-4 text-orange-600" />
+                    <h3 className="text-lg font-semibold mb-2">In-Person Visit</h3>
+                    <p className="text-gray-600 text-sm">Visit doctor at clinic/hospital</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/patient/book/hospital')}>
+                  <CardContent className="p-6 text-center">
+                    <Building2 className="h-12 w-12 mx-auto mb-4 text-purple-600" />
+                    <h3 className="text-lg font-semibold mb-2">Hospital Appointment</h3>
+                    <p className="text-gray-600 text-sm">Book hospital-based consultation</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
           {currentPath === '/patient/book/video' && <BookAppointment type="video" />}
           {currentPath === '/patient/book/chat' && <BookAppointment type="chat" />}
           {currentPath === '/patient/book/inperson' && <BookAppointment type="inperson" />}
           {currentPath === '/patient/book/hospital' && <BookAppointment type="hospital" />}
           {currentPath === '/patient/appointments' && <MyAppointments />}
           {currentPath === '/patient/chat' && <ChatInterface />}
-          {currentPath === '/patient/meetings' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">Video Consultations</h1>
-              <p className="text-gray-600">Your video consultation meetings</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Video meeting interface will be displayed here</p>
-              </div>
-            </div>
-          )}
+          {currentPath === '/patient/meetings' && <PatientMeetings />}
           {currentPath === '/patient/reports' && (
             <div className="space-y-4">
               <h1 className="text-3xl">Medical Reports</h1>
@@ -110,8 +161,8 @@ function AppContent() {
             </div>
           )}
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
-          {currentPath === '/patient/nutrition' && <NutritionWellness />}
-          {currentPath === '/patient/yoga' && <YogaFitness />}
+          {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
+          {currentPath === '/patient/yoga' && <YogaFitness onNavigate={navigate} />}
           {currentPath === '/my-profile' && <PatientProfile />}
         </DashboardLayout>
       );
@@ -122,52 +173,12 @@ function AppContent() {
       return (
         <DashboardLayout role="doctor" onNavigate={navigate} currentPath={currentPath}>
           {currentPath === '/doctor-dashboard' && <DoctorDashboard />}
-          {currentPath === '/doctor/appointments' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">Appointments</h1>
-              <p className="text-gray-600">Manage your patient appointments</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Appointments management will be displayed here</p>
-              </div>
-            </div>
-          )}
-          {currentPath === '/doctor/patients' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">My Patients</h1>
-              <p className="text-gray-600">View patient records and history</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Patient list will be displayed here</p>
-              </div>
-            </div>
-          )}
-          {currentPath === '/doctor/schedule' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">My Schedule</h1>
-              <p className="text-gray-600">Manage your availability</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Schedule management will be displayed here</p>
-              </div>
-            </div>
-          )}
+          {currentPath === '/doctor/appointments' && <DoctorAppointments />}
+          {currentPath === '/doctor/patients' && <DoctorPatients />}
+          {currentPath === '/doctor/schedule' && <DoctorSchedule />}
           {currentPath === '/doctor/chat' && <ChatInterface />}
-          {currentPath === '/doctor/meetings' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">Video Consultations</h1>
-              <p className="text-gray-600">Conduct video consultations</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Video meeting interface will be displayed here</p>
-              </div>
-            </div>
-          )}
-          {currentPath === '/doctor/profile' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">My Profile</h1>
-              <p className="text-gray-600">Manage your profile and credentials</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Profile settings will be displayed here</p>
-              </div>
-            </div>
-          )}
+          {currentPath === '/doctor/meetings' && <DoctorMeetings />}
+          {currentPath === '/doctor/profile' && <DoctorProfile />}
         </DashboardLayout>
       );
     }
@@ -204,15 +215,7 @@ function AppContent() {
               </div>
             </div>
           )}
-          {currentPath === '/hospital/profile' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">Hospital Profile</h1>
-              <p className="text-gray-600">Manage hospital information</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Hospital profile will be displayed here</p>
-              </div>
-            </div>
-          )}
+          {currentPath === '/hospital/profile' && <HospitalProfile />}
         </DashboardLayout>
       );
     }
@@ -287,11 +290,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppStoreProvider>
-        <AppContent />
-        <ConfigStatus />
-      </AppStoreProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppStoreProvider>
+          <AppContent />
+        </AppStoreProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

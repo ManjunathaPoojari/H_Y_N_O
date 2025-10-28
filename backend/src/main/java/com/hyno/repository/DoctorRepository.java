@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public interface DoctorRepository extends JpaRepository<Doctor, String> {
     List<Doctor> findByStatus(String status);
-    List<Doctor> findByHospitalId(String hospitalId);
+    List<Doctor> findByHospital_Id(String hospitalId);
     List<Doctor> findBySpecialization(String specialization);
     Optional<Doctor> findByEmail(String email);
 }

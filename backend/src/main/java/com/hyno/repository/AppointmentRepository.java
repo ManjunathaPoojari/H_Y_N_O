@@ -10,16 +10,18 @@ import java.util.List;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, String> {
-    List<Appointment> findByPatientId(String patientId);
-    List<Appointment> findByDoctorId(String doctorId);
-    List<Appointment> findByHospitalId(String hospitalId);
+    List<Appointment> findByPatient_Id(String patientId);
+    List<Appointment> findByDoctor_Id(String doctorId);
+    List<Appointment> findByHospital_Id(String hospitalId);
     List<Appointment> findByStatus(Appointment.AppointmentStatus status);
     List<Appointment> findByAppointmentDate(LocalDate date);
 
-    
     @Query("SELECT a FROM Appointment a WHERE a.patient.id = :patientId AND a.appointmentDate >= :date ORDER BY a.appointmentDate, a.appointmentTime")
-List<Appointment> findUpcomingByPatientId(@Param("patientId") String patientId, @Param("date") LocalDate date);
+    List<Appointment> findUpcomingByPatientId(@Param("patientId") String patientId, @Param("date") LocalDate date);
 
     @Query("SELECT a FROM Appointment a WHERE a.doctor.id = :doctorId AND a.appointmentDate >= :date ORDER BY a.appointmentDate, a.appointmentTime")
     List<Appointment> findUpcomingByDoctorId(@Param("doctorId") String doctorId, @Param("date") LocalDate date);
+
+    @Query("SELECT a FROM Appointment a WHERE a.doctor.id = :doctorId AND a.patient.id = :patientId")
+    List<Appointment> findByDoctorIdAndPatientId(@Param("doctorId") String doctorId, @Param("patientId") String patientId);
 }

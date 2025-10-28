@@ -20,9 +20,9 @@ export const ConfigStatus = () => {
 
   const checkBackendConnection = async () => {
     try {
-      const response = await fetch(`${API_URL}/health`, { 
+      const response = await fetch(`${API_URL}/health`, {
         method: 'GET',
-        timeout: 5000 
+        timeout: 5000
       } as any);
       setBackendReachable(response.ok);
     } catch (error) {
@@ -38,9 +38,9 @@ export const ConfigStatus = () => {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm">System Status</CardTitle>
-            <Button 
-              size="sm" 
-              variant="ghost" 
+            <Button
+              size="sm"
+              variant="ghost"
               onClick={() => setShowStatus(false)}
               className="h-6 w-6 p-0"
             >
@@ -109,7 +109,7 @@ export const ConfigStatus = () => {
               </p>
             ) : backendReachable ? (
               <p className="text-green-700">
-                ✅ Connected to database. All data is being saved!
+                {/* Removed connected message */}
               </p>
             ) : (
               <p className="text-red-700">
@@ -120,9 +120,9 @@ export const ConfigStatus = () => {
 
           {/* Retry Button */}
           {backendEnabled && !backendReachable && (
-            <Button 
-              size="sm" 
-              variant="outline" 
+            <Button
+              size="sm"
+              variant="outline"
               className="w-full text-xs"
               onClick={checkBackendConnection}
             >

@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string, role: string) => Promise<boolean>;
   logout: () => void;
+  register: (userData: any) => Promise<boolean>;
   isAuthenticated: boolean;
 }
 
@@ -43,7 +44,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return true;
       }
     } catch (err) {
-      console.error('Login failed:', err);
+      // Login error handled by toast notification
+    }
+    return false;
+  };
+
+  const register = async (userData: any): Promise<boolean> => {
+    try {
+      const res = await axios.post(`${API_BASE}/auth/register`, userData);
+      if (res.status === 200) {
+        // After successful registration, automatically log them in
+        return await login(userData.email, userData.password, userData.role);
+      }
+    } catch (err) {
+      // Registration error handled by toast notification
     }
     return false;
   };
@@ -55,7 +69,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, logout, register, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

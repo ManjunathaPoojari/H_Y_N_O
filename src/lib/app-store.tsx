@@ -15,6 +15,9 @@ interface AppStoreContextType {
   prescriptions: Prescription[];
   nutritionPlans: NutritionPlan[];
   yogaTrainers: YogaTrainer[];
+
+  // Data loading functions
+  refreshData: () => Promise<void>;
   
   // Patient Actions
   addPatient: (patient: Patient) => void;
@@ -101,47 +104,116 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, []);
 
+
+
   const loadDataFromBackend = async () => {
     try {
       // Load different data based on user role
       const userRole = localStorage.getItem('userRole');
 
+      let patientsData: any[] = [];
+      let doctorsData: any[] = [];
+      let hospitalsData: any[] = [];
+      let appointmentsData: any[] = [];
+      let medicinesData: any[] = [];
+
       if (userRole === 'admin') {
-        // Admin loads all data
-        const [patientsData, doctorsData, hospitalsData, appointmentsData, medicinesData] = await Promise.all([
-          api.admin.getAllPatients().catch(() => []),
-          api.admin.getAllDoctors().catch(() => []),
-          api.admin.getAllHospitals().catch(() => []),
-          api.admin.getAllAppointments().catch(() => []),
-          api.medicines.getAll().catch(() => []),
-        ]);
+        // Admin loads all data - handle each API call separately to prevent one failure from stopping others
+        try {
+          patientsData = await api.admin.getAllPatients();
+        } catch (error) {
+          // Failed to load patients from backend - using empty array
+          patientsData = [];
+        }
 
-        setPatients(patientsData);
-        setDoctors(doctorsData);
-        setHospitals(hospitalsData);
-        setAppointments(appointmentsData);
-        setMedicines(medicinesData);
+        try {
+          doctorsData = await api.admin.getAllDoctors();
+        } catch (error) {
+          // Failed to load doctors from backend - using empty array
+          doctorsData = [];
+        }
+
+        try {
+          hospitalsData = await api.admin.getAllHospitals();
+        } catch (error) {
+          // Failed to load hospitals from backend - using empty array
+          hospitalsData = [];
+        }
+
+        try {
+          appointmentsData = await api.admin.getAllAppointments();
+        } catch (error) {
+          // Failed to load appointments from backend - using empty array
+          appointmentsData = [];
+        }
+
+        try {
+          medicinesData = await api.medicines.getAll();
+        } catch (error) {
+          // Failed to load medicines from backend - using empty array
+          medicinesData = [];
+        }
       } else {
-        // Regular users load their own data
-        const [patientsData, doctorsData, hospitalsData, appointmentsData, medicinesData] = await Promise.all([
-          api.patients.getAll().catch(() => []),
-          api.doctors.getAll().catch(() => []),
-          api.hospitals.getAll().catch(() => []),
-          api.appointments.getAll().catch(() => []),
-          api.medicines.getAll().catch(() => []),
-        ]);
+        // Regular users load their own data - handle each API call separately
+        try {
+          patientsData = await api.patients.getAll();
+        } catch (error) {
+          // Failed to load patients from backend - using empty array
+          patientsData = [];
+        }
 
-        setPatients(patientsData);
-        setDoctors(doctorsData);
-        setHospitals(hospitalsData);
-        setAppointments(appointmentsData);
-        setMedicines(medicinesData);
+        try {
+          doctorsData = await api.doctors.getAll();
+        } catch (error) {
+          // Failed to load doctors from backend - using empty array
+          doctorsData = [];
+        }
+
+        try {
+          hospitalsData = await api.hospitals.getAll();
+        } catch (error) {
+          // Failed to load hospitals from backend - using empty array
+          hospitalsData = [];
+        }
+
+        try {
+          appointmentsData = await api.appointments.getAll();
+          // Normalize status and type values to lowercase for frontend consistency
+          appointmentsData = appointmentsData.map(apt => ({
+            ...apt,
+            status: apt.status?.toLowerCase(),
+            type: apt.type?.toLowerCase(),
+            date: apt.appointmentDate,
+            time: apt.appointmentTime,
+          }));
+        } catch (error) {
+          // Failed to load appointments from backend - using empty array
+          appointmentsData = [];
+        }
+
+        try {
+          medicinesData = await api.medicines.getAll();
+        } catch (error) {
+          // Failed to load medicines from backend - using empty array
+          medicinesData = [];
+        }
       }
 
-      toast.success('Connected to backend successfully!');
+      setPatients(patientsData);
+      setDoctors(doctorsData);
+      setHospitals(hospitalsData);
+      setAppointments(appointmentsData);
+      setMedicines(medicinesData);
+
+      // Only show success toast if at least some data was loaded
+      const hasData = patientsData.length > 0 || doctorsData.length > 0 || hospitalsData.length > 0 ||
+                     appointmentsData.length > 0 || medicinesData.length > 0;
+      if (hasData) {
+        // toast.success('Connected to backend successfully!');
+      }
     } catch (error) {
-      console.log('Backend not available, starting with empty data');
-      // Initialize with empty arrays instead of fallback to mock data
+      console.error('Backend initialization error, starting with empty data:', error);
+      // Initialize with empty arrays
       setPatients([]);
       setDoctors([]);
       setHospitals([]);
@@ -203,6 +275,8 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
         const newDoctor = await api.doctors.create(doctor);
         setDoctors([...doctors, newDoctor]);
         toast.success('Doctor added successfully');
+        // Reload data to reflect changes in dashboard counts
+        loadDataFromBackend();
       } catch (error) {
         toast.error('Failed to add doctor');
       }
@@ -354,9 +428,19 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       try {
         const newAppointment = await api.appointments.create(appointmentData);
         setAppointments([...appointments, newAppointment]);
+
+        // Create chat room for the appointment
+        try {
+          await api.chat.createChatRoom(newAppointment.id);
+        } catch (chatError) {
+          console.warn('Failed to create chat room for appointment:', chatError);
+          // Don't fail the appointment booking if chat room creation fails
+        }
+
         toast.success('Appointment booked successfully!');
-      } catch (error) {
-        toast.error('Failed to book appointment');
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.message || error?.message || 'Failed to book appointment';
+        toast.error(errorMessage);
       }
     } else {
       const newAppointment: Appointment = {
@@ -519,6 +603,7 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     prescriptions,
     nutritionPlans,
     yogaTrainers,
+    refreshData: loadDataFromBackend,
     addPatient,
     updatePatient,
     deletePatient,

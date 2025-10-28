@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, useInView } from 'motion/react';
+import { motion, useInView } from 'framer-motion';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { 
-  Activity, Calendar, Heart, Pill, Apple, Dumbbell, Shield, Users, Clock, 
-  ArrowRight, Sparkles, Award, CheckCircle, Star, Video, MessageSquare, 
+import {
+  Activity, Calendar, Heart, Pill, Apple, Dumbbell, Shield, Users, Clock,
+  ArrowRight, Sparkles, Award, CheckCircle, Star, Video, MessageSquare,
   MapPin, Hospital, ChevronUp, UserCheck, TrendingUp
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface LandingPageProps {
   onNavigate: (path: string) => void;
@@ -229,10 +230,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   const submitContact = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email) {
-      alert('Please fill your name and email.');
+      toast.error('Please fill your name and email.');
       return;
     }
-    alert('Appointment requested — we\'ll contact you soon!');
+    toast.success('Appointment requested — we\'ll contact you soon!');
     setFormData({
       name: '',
       email: '',
@@ -249,7 +250,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   const submitNewsletter = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newsletter) return;
-    alert('Successfully subscribed! Check your email for a welcome message.');
+    toast.success('Successfully subscribed! Check your email for a welcome message.');
     setNewsletter('');
   };
 

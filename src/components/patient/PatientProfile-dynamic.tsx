@@ -38,8 +38,6 @@ export const PatientProfile = () => {
       if (response.ok) {
         const patientData = await response.json();
         setPatient(patientData);
-      } else {
-        toast.error('Failed to load patient data');
       }
     } catch (error) {
       console.error('Error fetching patient data:', error);

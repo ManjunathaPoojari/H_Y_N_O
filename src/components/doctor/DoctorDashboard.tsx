@@ -1,35 +1,187 @@
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Calendar, Users, Video, MessageSquare, Clock, FileText } from 'lucide-react';
-import { useAppStore } from '../../lib/app-store';
+import { Calendar, Users, Video, MessageSquare, Clock, FileText, Loader2 } from 'lucide-react';
+import { useAuth } from '../../lib/auth-context';
+import { appointmentAPI, doctorAPI, patientAPI, chatAPI } from '../../lib/api-client';
 import { toast } from 'sonner';
+import { useState, useEffect } from 'react';
+
+interface Appointment {
+  id: string;
+  patientName: string;
+  patientId: string;
+  type: string;
+  status: string;
+  reason: string;
+  appointmentDate: string;
+  time: string;
+}
+
+interface Patient {
+  id: string;
+  name: string;
+}
 
 export const DoctorDashboard = () => {
-  const { appointments, patients, updateAppointment } = useAppStore();
-  const todayAppointments = appointments.filter(a => a.status === 'upcoming').slice(0, 4);
-  const stats = {
-    todayAppointments: todayAppointments.length,
-    totalPatients: patients.length,
-    pendingRequests: 2,
-    completedToday: 3,
+  const { user } = useAuth();
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    todayAppointments: 0,
+    totalPatients: 0,
+    pendingRequests: 0,
+    completedToday: 0,
+  });
+
+  useEffect(() => {
+    if (user?.id) {
+      loadDashboardData();
+    }
+
+    // Listen for appointment updates from other components
+    const handleAppointmentUpdate = () => {
+      if (user?.id) {
+        loadDashboardData();
+      }
+    };
+
+    const handleAppointmentCompleted = () => {
+      if (user?.id) {
+        loadDashboardData();
+      }
+    };
+
+    window.addEventListener('appointmentUpdated', handleAppointmentUpdate);
+    window.addEventListener('appointmentCompleted', handleAppointmentCompleted);
+
+    return () => {
+      window.removeEventListener('appointmentUpdated', handleAppointmentUpdate);
+      window.removeEventListener('appointmentCompleted', handleAppointmentCompleted);
+    };
+  }, [user]);
+
+  const loadDashboardData = async () => {
+    if (!user?.id) return;
+
+    try {
+      setLoading(true);
+      const appointmentsRes = await appointmentAPI.getByDoctor(user.id);
+
+      // Get unique patients from appointments
+      const uniquePatientIds = [...new Set(appointmentsRes.map(app => app.patientId))];
+      const patientsRes = await Promise.all(
+        uniquePatientIds.map(id => patientAPI.getById(id).catch(() => null))
+      ).then(results => results.filter(p => p !== null));
+
+      setAppointments(appointmentsRes);
+      setPatients(patientsRes);
+
+      // Calculate stats
+      const today = new Date().toISOString().split('T')[0];
+      const todayApps = appointmentsRes.filter(app =>
+        app.appointmentDate === today && app.status === 'UPCOMING'
+      );
+      const completedToday = appointmentsRes.filter(app =>
+        app.appointmentDate === today && app.status === 'COMPLETED'
+      );
+      const pendingRequests = appointmentsRes.filter(app =>
+        app.status === 'PENDING'
+      );
+
+      setStats({
+        todayAppointments: todayApps.length,
+        totalPatients: patientsRes.length,
+        pendingRequests: pendingRequests.length,
+        completedToday: completedToday.length,
+      });
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleStartVideo = () => {
-    toast.success('Starting video consultation...');
-    setTimeout(() => {
-      window.open('https://meet.google.com/new', '_blank');
-    }, 1000);
+  const todayAppointments = appointments.filter(a => {
+    const today = new Date().toISOString().split('T')[0];
+    return a.appointmentDate === today && a.status === 'UPCOMING';
+  }).slice(0, 4);
+
+  const handleStartVideo = async (appointmentId: string) => {
+    try {
+      toast.success('Starting video consultation...');
+      // Create chat room if it doesn't exist
+      await chatAPI.createChatRoom(appointmentId);
+      setTimeout(() => {
+        window.open('https://meet.google.com/new', '_blank');
+      }, 1000);
+    } catch (error) {
+      console.error('Error starting video call:', error);
+      toast.error('Failed to start video call');
+    }
   };
 
-  const handleStartChat = () => {
-    toast.success('Opening chat window...');
+  const handleStartChat = async (appointmentId: string) => {
+    try {
+      toast.success('Opening chat window...');
+      // Create chat room if it doesn't exist
+      await chatAPI.createChatRoom(appointmentId);
+      // Navigate to chat or open chat interface
+      window.location.href = '/doctor/chat';
+    } catch (error) {
+      console.error('Error opening chat:', error);
+      toast.error('Failed to open chat');
+    }
   };
+
+  const handleViewPatientHistory = (patientId: string) => {
+    // Navigate to patient profile page which should show history
+    window.location.href = `/doctor/patients?patientId=${patientId}`;
+  };
+
+  const handleAddNotes = (appointmentId: string) => {
+    // For now, show a toast - could be expanded to a modal or separate page
+    toast.info('Notes functionality will be implemented soon');
+  };
+
+  const handleApproveAppointment = async (appointmentId: string) => {
+    try {
+      await appointmentAPI.update(appointmentId, { status: 'UPCOMING' });
+      toast.success('Appointment approved');
+      loadDashboardData(); // Refresh data
+    } catch (error: any) {
+      console.error('Error approving appointment:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to approve appointment';
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleRejectAppointment = async (appointmentId: string) => {
+    try {
+      await appointmentAPI.cancel(appointmentId);
+      toast.success('Appointment rejected');
+      loadDashboardData(); // Refresh data
+    } catch (error) {
+      console.error('Error rejecting appointment:', error);
+      toast.error('Failed to reject appointment');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading dashboard...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl mb-2">Welcome, Dr. Priya Patel</h1>
+        <h1 className="text-3xl mb-2">Welcome, Dr. {user?.name || 'Doctor'}</h1>
         <p className="text-gray-600">Today's Schedule</p>
       </div>
 
@@ -87,19 +239,33 @@ export const DoctorDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Button className="h-auto py-4 flex flex-col gap-2">
+            <Button
+              className="h-auto py-4 flex flex-col gap-2"
+              onClick={() => window.open('https://meet.google.com/new', '_blank')}
+            >
               <Video className="h-5 w-5" />
               <span className="text-sm">Start Video Call</span>
             </Button>
-            <Button className="h-auto py-4 flex flex-col gap-2">
+            <Button
+              className="h-auto py-4 flex flex-col gap-2"
+              onClick={() => window.location.href = '/doctor/chat'}
+            >
               <MessageSquare className="h-5 w-5" />
               <span className="text-sm">Open Chat</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2">
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex flex-col gap-2"
+              onClick={() => window.location.href = '/doctor/patients'}
+            >
               <Users className="h-5 w-5" />
               <span className="text-sm">View Patients</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2">
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex flex-col gap-2"
+              onClick={() => window.location.href = '/doctor/schedule'}
+            >
               <Calendar className="h-5 w-5" />
               <span className="text-sm">Manage Schedule</span>
             </Button>
@@ -151,10 +317,10 @@ export const DoctorDashboard = () => {
                       Start Chat
                     </Button>
                   )}
-                  <Button size="sm" variant="outline" onClick={() => toast.success('Opening patient history...')}>
+                  <Button size="sm" variant="outline" onClick={() => handleViewPatientHistory(appointment.patientId)}>
                     View Patient History
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => toast.success('Opening notes editor...')}>
+                  <Button size="sm" variant="outline" onClick={() => handleAddNotes(appointment.id)}>
                     Add Notes
                   </Button>
                 </div>
@@ -172,33 +338,39 @@ export const DoctorDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="border rounded-lg p-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h4 className="text-sm">Vikram Singh</h4>
-                    <p className="text-xs text-gray-600">Knee pain consultation</p>
-                    <p className="text-xs text-gray-500 mt-1">Requested: Oct 16, 09:00 AM</p>
+              {appointments.filter(a => a.status === 'PENDING').slice(0, 2).map((appointment) => (
+                <div key={appointment.id} className="border rounded-lg p-3">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h4 className="text-sm">{appointment.patientName}</h4>
+                      <p className="text-xs text-gray-600">{appointment.reason}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Requested: {appointment.appointmentDate} {appointment.time}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleApproveAppointment(appointment.id)}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleRejectAppointment(appointment.id)}
+                    >
+                      Reject
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2 mt-3">
-                  <Button size="sm" className="flex-1">Approve</Button>
-                  <Button size="sm" variant="outline" className="flex-1">Reject</Button>
-                </div>
-              </div>
-
-              <div className="border rounded-lg p-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h4 className="text-sm">Anita Desai</h4>
-                    <p className="text-xs text-gray-600">Follow-up consultation</p>
-                    <p className="text-xs text-gray-500 mt-1">Requested: Oct 17, 02:00 PM</p>
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-3">
-                  <Button size="sm" className="flex-1">Approve</Button>
-                  <Button size="sm" variant="outline" className="flex-1">Reject</Button>
-                </div>
-              </div>
+              ))}
+              {appointments.filter(a => a.status === 'PENDING').length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">No pending requests</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -209,27 +381,24 @@ export const DoctorDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-start gap-3 pb-3 border-b">
-                <FileText className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm">Lab report uploaded</p>
-                  <p className="text-xs text-gray-500">Rahul Sharma • 2 hours ago</p>
+              {appointments.slice(0, 3).map((appointment) => (
+                <div key={appointment.id} className="flex items-start gap-3 pb-3 border-b last:border-b-0">
+                  <FileText className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm">
+                      {appointment.status === 'COMPLETED' ? 'Consultation completed' :
+                       appointment.status === 'UPCOMING' ? 'Upcoming appointment' :
+                       'Appointment requested'}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {appointment.patientName} • {appointment.appointmentDate}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-3 pb-3 border-b">
-                <MessageSquare className="h-5 w-5 text-green-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm">New message received</p>
-                  <p className="text-xs text-gray-500">Anita Desai • 4 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-purple-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm">Appointment rescheduled</p>
-                  <p className="text-xs text-gray-500">Vikram Singh • Yesterday</p>
-                </div>
-              </div>
+              ))}
+              {appointments.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">No recent activity</p>
+              )}
             </div>
           </CardContent>
         </Card>

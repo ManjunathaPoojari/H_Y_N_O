@@ -3,6 +3,8 @@ package com.hyno.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "hospitals")
@@ -27,6 +29,11 @@ public class Hospital {
     private Integer totalDoctors = 0;
     private String status = "pending";
     private String password;
+
+    @ElementCollection
+    @CollectionTable(name = "hospital_facilities", joinColumns = @JoinColumn(name = "hospital_id"))
+    @Column(name = "facility")
+    private List<String> facilities = new ArrayList<>();
 
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

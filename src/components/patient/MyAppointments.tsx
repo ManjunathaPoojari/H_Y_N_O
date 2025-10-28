@@ -9,6 +9,7 @@ import { Label } from '../ui/label';
 import { Calendar, Clock, Video, MessageSquare, MapPin, Building2, FileText } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
 import { toast } from 'sonner';
+import { Appointment } from '../../types';
 
 export const MyAppointments = () => {
   const [activeTab, setActiveTab] = useState('upcoming');
@@ -17,6 +18,7 @@ export const MyAppointments = () => {
   const [rescheduleTime, setRescheduleTime] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState<string>('');
 
+  const pendingAppointments = appointments.filter(a => a.status === 'pending');
   const upcomingAppointments = appointments.filter(a => a.status === 'upcoming');
   const completedAppointments = appointments.filter(a => a.status === 'completed');
   const cancelledAppointments = appointments.filter(a => a.status === 'cancelled');
@@ -37,14 +39,18 @@ export const MyAppointments = () => {
   };
 
   const handleJoinVideo = () => {
-    toast.success('Connecting to video call...');
-    setTimeout(() => {
-      window.open('https://meet.google.com/new', '_blank');
-    }, 1000);
+    if (window.confirm('Are you sure you want to join the video call?')) {
+      toast.success('Connecting to video call...');
+      setTimeout(() => {
+        window.location.href = 'http://localhost:3001/patient/meetings';
+      }, 1000);
+    }
   };
 
-  const handleStartChat = () => {
+  const handleStartChat = (appointmentId: string) => {
     toast.success('Opening chat...');
+    // Navigate to chat with appointment ID to select the correct chat room
+    window.location.href = `http://localhost:3001/patient/chat?appointmentId=${appointmentId}`;
   };
 
   const getIcon = (type: string) => {
@@ -62,7 +68,7 @@ export const MyAppointments = () => {
     }
   };
 
-  const renderAppointmentCard = (appointment: typeof mockAppointments[0]) => (
+  const renderAppointmentCard = (appointment: Appointment) => (
     <Card key={appointment.id}>
       <CardContent className="pt-6">
         <div className="flex items-start justify-between mb-3">
@@ -105,6 +111,12 @@ export const MyAppointments = () => {
         </div>
         
         <div className="flex gap-2 mt-4">
+          {appointment.status === 'pending' && (
+            <div className="text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+              <strong>Waiting for doctor approval</strong> - Your appointment is pending confirmation from the doctor.
+            </div>
+          )}
+
           {appointment.status === 'upcoming' && (
             <>
               {appointment.type === 'video' && (
@@ -114,7 +126,7 @@ export const MyAppointments = () => {
                 </Button>
               )}
               {appointment.type === 'chat' && (
-                <Button size="sm" onClick={handleStartChat}>
+                <Button size="sm" onClick={() => handleStartChat(appointment.id)}>
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Start Chat
                 </Button>
@@ -153,7 +165,11 @@ export const MyAppointments = () => {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-              <Button size="sm" variant="outline" className="text-red-600" onClick={() => handleCancel(appointment.id)}>
+              <Button size="sm" variant="outline" className="text-red-600" onClick={() => {
+                if (window.confirm('Are you sure you want to cancel this appointment?')) {
+                  handleCancel(appointment.id);
+                }
+              }}>
                 Cancel
               </Button>
             </>
@@ -161,14 +177,26 @@ export const MyAppointments = () => {
           
           {appointment.status === 'completed' && (
             <>
-              <Button size="sm" variant="outline" onClick={() => toast.success('Opening prescription...')}>
+              <Button size="sm" variant="outline" onClick={() => {
+                if (window.confirm('Are you sure you want to view the prescription?')) {
+                  toast.success('Opening prescription...');
+                }
+              }}>
                 <FileText className="h-4 w-4 mr-2" />
                 View Prescription
               </Button>
-              <Button size="sm" variant="outline" onClick={() => toast.success('Downloading report...')}>
+              <Button size="sm" variant="outline" onClick={() => {
+                if (window.confirm('Are you sure you want to download the report?')) {
+                  toast.success('Downloading report...');
+                }
+              }}>
                 Download Report
               </Button>
-              <Button size="sm" onClick={() => toast.success('Redirecting to book follow-up...')}>
+              <Button size="sm" onClick={() => {
+                if (window.confirm('Are you sure you want to book a follow-up appointment?')) {
+                  toast.success('Redirecting to book follow-up...');
+                }
+              }}>
                 Book Follow-up
               </Button>
             </>
@@ -187,6 +215,9 @@ export const MyAppointments = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
+          <TabsTrigger value="pending">
+            Pending ({pendingAppointments.length})
+          </TabsTrigger>
           <TabsTrigger value="upcoming">
             Upcoming ({upcomingAppointments.length})
           </TabsTrigger>
@@ -197,6 +228,18 @@ export const MyAppointments = () => {
             Cancelled ({cancelledAppointments.length})
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="pending" className="space-y-4">
+          {pendingAppointments.length > 0 ? (
+            pendingAppointments.map(renderAppointmentCard)
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center text-gray-500">
+                No pending appointments
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
         <TabsContent value="upcoming" className="space-y-4">
           {upcomingAppointments.length > 0 ? (

@@ -373,7 +373,6 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
 
       if (response.success) {
         // Store analysis results
-        console.log('Meal analysis:', response.data);
       }
     } catch (error) {
       console.error('Meal analysis error:', error);

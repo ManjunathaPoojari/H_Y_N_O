@@ -5,6 +5,9 @@
 
   export default defineConfig({
     plugins: [react()],
+    define: {
+      global: 'globalThis',
+    },
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: {
@@ -55,6 +58,7 @@
     },
     server: {
       port: 3000,
+      host: true,
       open: true,
     },
   });

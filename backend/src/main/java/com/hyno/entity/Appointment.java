@@ -2,6 +2,7 @@ package com.hyno.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ public class Appointment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id", nullable = false)
+    @JsonIgnore
     private Patient patient;
 
     @Column(name = "patient_name", nullable = false)
@@ -24,6 +26,7 @@ public class Appointment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = false)
+    @JsonIgnore
     private Doctor doctor;
 
     @Column(name = "doctor_name", nullable = false)
@@ -31,6 +34,7 @@ public class Appointment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hospital_id")
+    @JsonIgnore
     private Hospital hospital;
 
     @Enumerated(EnumType.STRING)
@@ -45,6 +49,14 @@ public class Appointment {
 
     @Enumerated(EnumType.STRING)
     private AppointmentStatus status = AppointmentStatus.UPCOMING;
+
+    public String getPatientId() {
+        return patient != null ? patient.getId() : null;
+    }
+
+    public LocalTime getTime() {
+        return appointmentTime;
+    }
 
     @Column(length = 1000)
     private String reason;

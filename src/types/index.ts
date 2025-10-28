@@ -25,10 +25,12 @@ export interface Doctor {
   experience: number;
   rating: number;
   available: boolean;
+  hospital?: Hospital;
   hospitalId?: string;
   consultationFee: number;
   avatar?: string;
   status: 'approved' | 'pending' | 'suspended';
+  password?: string;
 }
 
 export interface Hospital {

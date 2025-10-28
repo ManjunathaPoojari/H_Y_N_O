@@ -1,3 +1,4 @@
+
 // API Client for Spring Boot Backend Integration
 import { API_URL } from './config';
 
@@ -8,8 +9,8 @@ async function apiCall<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = localStorage.getItem('authToken');
-  
+  const token = localStorage.getItem('token');
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
@@ -23,15 +24,24 @@ async function apiCall<T>(
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    
+
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'API Error');
+      let errorMessage = 'API Error';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch (parseError) {
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
     }
-    
-    return await response.json();
+
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error('API Call Error:', error);
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Network error: Please check your connection and try again.');
+    }
     throw error;
   }
 }
@@ -60,161 +70,220 @@ export const authAPI = {
 
 // Patient API
 export const patientAPI = {
-  getAll: () => apiCall<any[]>('/patients'),
-  
-  getById: (id: string) => apiCall<any>(`/patients/${id}`),
-  
-  create: (patient: any) => 
-    apiCall<any>('/patients', {
+  getAll: (page?: number, size?: number, sortBy?: string, sortDir?: string, search?: string) => {
+    const params = new URLSearchParams();
+    if (page !== undefined) params.append('page', page.toString());
+    if (size !== undefined) params.append('size', size.toString());
+    if (sortBy) params.append('sortBy', sortBy);
+    if (sortDir) params.append('sortDir', sortDir);
+    if (search) params.append('search', search);
+    return apiCall<any>(`/api/patients?${params.toString()}`);
+  },
+
+  getById: (id: string) => apiCall<any>(`/api/patients/${id}`),
+
+  create: (patient: any) =>
+    apiCall<any>('/api/patients', {
       method: 'POST',
       body: JSON.stringify(patient),
     }),
-  
+
   update: (id: string, patient: any) =>
-    apiCall<any>(`/patients/${id}`, {
+    apiCall<any>(`/api/patients/${id}`, {
       method: 'PUT',
       body: JSON.stringify(patient),
     }),
-  
+
   delete: (id: string) =>
-    apiCall<void>(`/patients/${id}`, {
+    apiCall<void>(`/api/patients/${id}`, {
       method: 'DELETE',
     }),
+
+  search: (query: string) =>
+    apiCall<any[]>(`/api/patients/search?query=${encodeURIComponent(query)}`),
 };
 
 // Doctor API
 export const doctorAPI = {
-  getAll: () => apiCall<any[]>('/doctors'),
-  
-  getById: (id: string) => apiCall<any>(`/doctors/${id}`),
-  
+  getAll: () => apiCall<any[]>('/api/doctors'),
+
+  getById: (id: string) => apiCall<any>(`/api/doctors/${id}`),
+
   create: (doctor: any) =>
-    apiCall<any>('/doctors', {
+    apiCall<any>('/api/doctors', {
       method: 'POST',
       body: JSON.stringify(doctor),
     }),
-  
+
   update: (id: string, doctor: any) =>
-    apiCall<any>(`/doctors/${id}`, {
+    apiCall<any>(`/api/doctors/${id}`, {
       method: 'PUT',
       body: JSON.stringify(doctor),
     }),
-  
+
   approve: (id: string) =>
-    apiCall<any>(`/doctors/${id}/approve`, {
+    apiCall<any>(`/api/doctors/${id}/approve`, {
       method: 'PUT',
     }),
-  
+
   suspend: (id: string) =>
-    apiCall<any>(`/doctors/${id}/suspend`, {
+    apiCall<any>(`/api/doctors/${id}/suspend`, {
       method: 'PUT',
     }),
-  
+
   delete: (id: string) =>
-    apiCall<void>(`/doctors/${id}`, {
+    apiCall<void>(`/api/doctors/${id}`, {
       method: 'DELETE',
+    }),
+
+  // Schedule management
+  getSchedule: (doctorId: string) => apiCall<any>(`/api/doctors/${doctorId}/schedule`),
+  addScheduleSlot: (doctorId: string, slot: any) =>
+    apiCall<any>(`/api/doctors/${doctorId}/schedule/slots`, {
+      method: 'POST',
+      body: JSON.stringify(slot),
+    }),
+  updateScheduleSlot: (doctorId: string, slotId: string, slot: any) =>
+    apiCall<any>(`/api/doctors/${doctorId}/schedule/slots/${slotId}`, {
+      method: 'PUT',
+      body: JSON.stringify(slot),
+    }),
+  deleteScheduleSlot: (doctorId: string, slotId: string) =>
+    apiCall<any>(`/api/doctors/${doctorId}/schedule/slots/${slotId}`, {
+      method: 'DELETE',
+    }),
+
+  // Patient management
+  getPatients: (doctorId: string) => apiCall<any[]>(`/api/doctors/${doctorId}/patients`),
+  getPatientDetails: (doctorId: string, patientId: string) =>
+    apiCall<any>(`/api/doctors/${doctorId}/patients/${patientId}`),
+  addPatientNote: (doctorId: string, patientId: string, note: string) =>
+    apiCall<any>(`/api/doctors/${doctorId}/patients/${patientId}/notes`, {
+      method: 'POST',
+      body: JSON.stringify({ note }),
     }),
 };
 
 // Hospital API
 export const hospitalAPI = {
-  getAll: () => apiCall<any[]>('/hospitals'),
-  
-  getById: (id: string) => apiCall<any>(`/hospitals/${id}`),
-  
+  getAll: () => apiCall<any[]>('/api/hospitals'),
+
+  getById: (id: string) => apiCall<any>(`/api/hospitals/${id}`),
+
   create: (hospital: any) =>
-    apiCall<any>('/hospitals', {
+    apiCall<any>('/api/hospitals', {
       method: 'POST',
       body: JSON.stringify(hospital),
     }),
-  
+
   update: (id: string, hospital: any) =>
-    apiCall<any>(`/hospitals/${id}`, {
+    apiCall<any>(`/api/hospitals/${id}`, {
       method: 'PUT',
       body: JSON.stringify(hospital),
     }),
-  
+
   approve: (id: string) =>
-    apiCall<any>(`/hospitals/${id}/approve`, {
+    apiCall<any>(`/api/hospitals/${id}/approve`, {
       method: 'PUT',
     }),
-  
+
   reject: (id: string) =>
-    apiCall<any>(`/hospitals/${id}/reject`, {
+    apiCall<any>(`/api/hospitals/${id}/reject`, {
       method: 'PUT',
     }),
-  
+
   delete: (id: string) =>
-    apiCall<void>(`/hospitals/${id}`, {
+    apiCall<void>(`/api/hospitals/${id}`, {
       method: 'DELETE',
     }),
 };
 
 // Appointment API
 export const appointmentAPI = {
-  getAll: () => apiCall<any[]>('/appointments'),
-  
-  getById: (id: string) => apiCall<any>(`/appointments/${id}`),
-  
+  getAll: () => apiCall<any[]>('/api/appointments'),
+
+  getById: (id: string) => apiCall<any>(`/api/appointments/${id}`),
+
   getByPatient: (patientId: string) =>
-    apiCall<any[]>(`/appointments/patient/${patientId}`),
-  
+    apiCall<any[]>(`/api/appointments/patient/${patientId}`),
+
   getByDoctor: (doctorId: string) =>
-    apiCall<any[]>(`/appointments/doctor/${doctorId}`),
-  
+    apiCall<any[]>(`/api/appointments/doctor/${doctorId}`),
+
   create: (appointment: any) =>
-    apiCall<any>('/appointments', {
+    apiCall<any>('/api/appointments', {
       method: 'POST',
-      body: JSON.stringify(appointment),
+      body: JSON.stringify({
+        patient: { id: appointment.patientId },
+        patientName: appointment.patientName,
+        doctor: { id: appointment.doctorId },
+        doctorName: appointment.doctorName,
+        hospital: appointment.hospitalId ? { id: appointment.hospitalId } : null,
+        type: appointment.type?.toUpperCase(),
+        appointmentDate: appointment.date,
+        appointmentTime: appointment.time,
+        status: appointment.status?.toUpperCase() || 'UPCOMING',
+        reason: appointment.reason,
+      }),
     }),
-  
+
   update: (id: string, appointment: any) =>
-    apiCall<any>(`/appointments/${id}`, {
+    apiCall<any>(`/api/appointments/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(appointment),
+      body: JSON.stringify({
+        status: appointment.status?.toUpperCase(),
+        notes: appointment.notes,
+        prescription: appointment.prescription,
+        reason: appointment.reason,
+      }),
     }),
-  
+
   cancel: (id: string) =>
-    apiCall<any>(`/appointments/${id}/cancel`, {
+    apiCall<any>(`/api/appointments/${id}/cancel`, {
       method: 'PUT',
     }),
-  
+
   complete: (id: string, notes?: string) =>
-    apiCall<any>(`/appointments/${id}/complete`, {
+    apiCall<any>(`/api/appointments/${id}/complete`, {
       method: 'PUT',
       body: JSON.stringify({ notes }),
     }),
-  
+
   reschedule: (id: string, date: string, time: string) =>
-    apiCall<any>(`/appointments/${id}/reschedule`, {
+    apiCall<any>(`/api/appointments/${id}/reschedule`, {
       method: 'PUT',
-      body: JSON.stringify({ date, time }),
+      body: JSON.stringify({ appointmentDate: date, appointmentTime: time }),
+    }),
+
+  confirmAppointment: (id: string) =>
+    apiCall<any>(`/api/appointments/${id}/confirm`, {
+      method: 'PUT',
     }),
 };
 
 // Medicine API
 export const medicineAPI = {
-  getAll: () => apiCall<any[]>('/medicines'),
-  
-  getById: (id: string) => apiCall<any>(`/medicines/${id}`),
-  
+  getAll: () => apiCall<any[]>('/api/medicines'),
+
+  getById: (id: string) => apiCall<any>(`/api/medicines/${id}`),
+
   search: (query: string) =>
-    apiCall<any[]>(`/medicines/search?q=${encodeURIComponent(query)}`),
-  
+    apiCall<any[]>(`/api/medicines/search?q=${encodeURIComponent(query)}`),
+
   create: (medicine: any) =>
-    apiCall<any>('/medicines', {
+    apiCall<any>('/api/medicines', {
       method: 'POST',
       body: JSON.stringify(medicine),
     }),
-  
+
   update: (id: string, medicine: any) =>
-    apiCall<any>(`/medicines/${id}`, {
+    apiCall<any>(`/api/medicines/${id}`, {
       method: 'PUT',
       body: JSON.stringify(medicine),
     }),
-  
+
   delete: (id: string) =>
-    apiCall<void>(`/medicines/${id}`, {
+    apiCall<void>(`/api/medicines/${id}`, {
       method: 'DELETE',
     }),
 };
@@ -225,28 +294,28 @@ export const prescriptionAPI = {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('patientId', patientId);
-    
-    const token = localStorage.getItem('authToken');
-    const response = await fetch(`${API_BASE_URL}/prescriptions/upload`, {
+
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/api/prescriptions/upload`, {
       method: 'POST',
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: formData,
     });
-    
+
     if (!response.ok) {
       throw new Error('Upload failed');
     }
-    
+
     return response.json();
   },
-  
+
   getByPatient: (patientId: string) =>
-    apiCall<any[]>(`/prescriptions/patient/${patientId}`),
-  
+    apiCall<any[]>(`/api/prescriptions/patient/${patientId}`),
+
   create: (prescription: any) =>
-    apiCall<any>('/prescriptions', {
+    apiCall<any>('/api/prescriptions', {
       method: 'POST',
       body: JSON.stringify(prescription),
     }),
@@ -255,18 +324,18 @@ export const prescriptionAPI = {
 // Order API (Pharmacy)
 export const orderAPI = {
   create: (order: any) =>
-    apiCall<any>('/orders', {
+    apiCall<any>('/api/orders', {
       method: 'POST',
       body: JSON.stringify(order),
     }),
-  
+
   getByPatient: (patientId: string) =>
-    apiCall<any[]>(`/orders/patient/${patientId}`),
-  
-  getById: (id: string) => apiCall<any>(`/orders/${id}`),
-  
+    apiCall<any[]>(`/api/orders/patient/${patientId}`),
+
+  getById: (id: string) => apiCall<any>(`/api/orders/${id}`),
+
   updateStatus: (id: string, status: string) =>
-    apiCall<any>(`/orders/${id}/status`, {
+    apiCall<any>(`/api/orders/${id}/status`, {
       method: 'PUT',
       body: JSON.stringify({ status }),
     }),
@@ -274,45 +343,91 @@ export const orderAPI = {
 
 // Nutrition API
 export const nutritionAPI = {
-  getPlans: () => apiCall<any[]>('/nutrition/plans'),
-  
+  getPlans: () => apiCall<any[]>('/api/nutrition/plans'),
+
   getPlanByPatient: (patientId: string) =>
-    apiCall<any>(`/nutrition/plans/patient/${patientId}`),
-  
+    apiCall<any>(`/api/nutrition/plans/patient/${patientId}`),
+
   createPlan: (plan: any) =>
-    apiCall<any>('/nutrition/plans', {
+    apiCall<any>('/api/nutrition/plans', {
       method: 'POST',
       body: JSON.stringify(plan),
     }),
-  
+
   updatePlan: (id: string, plan: any) =>
-    apiCall<any>(`/nutrition/plans/${id}`, {
+    apiCall<any>(`/api/nutrition/plans/${id}`, {
       method: 'PUT',
       body: JSON.stringify(plan),
     }),
-  
-  getMeals: () => apiCall<any[]>('/nutrition/meals'),
-  
+
+  getMeals: () => apiCall<any[]>('/api/nutrition/meals'),
+
   getRecipesByDisease: (disease: string) =>
-    apiCall<any[]>(`/nutrition/recipes?disease=${encodeURIComponent(disease)}`),
+    apiCall<any[]>(`/api/nutrition/recipes?disease=${encodeURIComponent(disease)}`),
+};
+
+// Chat API
+export const chatAPI = {
+  getChatRooms: (userId: string, userType: string) =>
+    apiCall<any[]>(`/api/chat/rooms?userId=${userId}&userType=${userType}`),
+
+  getChatRoom: (chatRoomId: string) =>
+    apiCall<any>(`/api/chat/rooms/${chatRoomId}`),
+
+  createChatRoom: (appointmentId: string) =>
+    apiCall<any>(`/api/chat/rooms/create?appointmentId=${appointmentId}`, {
+      method: 'POST',
+    }),
+
+  getChatMessages: (chatRoomId: string) =>
+    apiCall<any[]>(`/api/chat/rooms/${chatRoomId}/messages`),
+
+  sendMessage: (chatRoomId: string, messageData: {
+    senderId: string;
+    senderName: string;
+    senderRole: string;
+    content: string;
+  }) =>
+    apiCall<any>(`/api/chat/rooms/${chatRoomId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(messageData),
+    }),
+
+  markMessagesAsRead: (chatRoomId: string, userId: string, userType: string) =>
+    apiCall<void>(`/api/chat/rooms/${chatRoomId}/read?userId=${userId}&userType=${userType}`, {
+      method: 'PUT',
+    }),
+
+  markMessagesAsDelivered: (chatRoomId: string, userId: string, userType: string) =>
+    apiCall<void>(`/api/chat/rooms/${chatRoomId}/delivered?userId=${userId}&userType=${userType}`, {
+      method: 'PUT',
+    }),
+
+  getUnreadCount: (userId: string, userType: string) =>
+    apiCall<{ unreadCount: number }>(`/api/chat/unread?userId=${userId}&userType=${userType}`),
+
+  archiveChatRoom: (chatRoomId: string) =>
+    apiCall<void>(`/api/chat/rooms/${chatRoomId}/archive`, {
+      method: 'PUT',
+    }),
 };
 
 // Yoga API
 export const yogaAPI = {
-  getTrainers: () => apiCall<any[]>('/yoga/trainers'),
-  
-  getTrainerById: (id: string) => apiCall<any>(`/yoga/trainers/${id}`),
-  
+  getTrainers: () => apiCall<any[]>('/api/yoga/trainers'),
+
+  getTrainerById: (id: string) => apiCall<any>(`/api/yoga/trainers/${id}`),
+
   bookSession: (booking: any) =>
-    apiCall<any>('/yoga/sessions', {
+    apiCall<any>('/api/yoga/sessions', {
       method: 'POST',
       body: JSON.stringify(booking),
     }),
-  
+
   getSessionsByPatient: (patientId: string) =>
-    apiCall<any[]>(`/yoga/sessions/patient/${patientId}`),
-  
-  getVideos: () => apiCall<any[]>('/yoga/videos'),
+    apiCall<any[]>(`/api/yoga/sessions/patient/${patientId}`),
+
+  getVideos: () => apiCall<any[]>('/api/yoga/videos'),
 };
 
 // Admin API
@@ -320,15 +435,23 @@ export const adminAPI = {
   getStats: () => apiCall<any>('/api/admin/stats'),
 
   // Patient management
-  getAllPatients: () => apiCall<any[]>('/api/admin/patients'),
-  getPatientById: (id: string) => apiCall<any>(`/api/admin/patients/${id}`),
+  getAllPatients: (page?: number, size?: number, sortBy?: string, sortDir?: string, search?: string) => {
+    const params = new URLSearchParams();
+    if (page !== undefined) params.append('page', page.toString());
+    if (size !== undefined) params.append('size', size.toString());
+    if (sortBy) params.append('sortBy', sortBy);
+    if (sortDir) params.append('sortDir', sortDir);
+    if (search) params.append('search', search);
+    return apiCall<any>(`/api/patients?${params.toString()}`);
+  },
+  getPatientById: (id: string) => apiCall<any>(`/api/patients/${id}`),
   updatePatient: (id: string, patient: any) =>
-    apiCall<any>(`/api/admin/patients/${id}`, {
+    apiCall<any>(`/api/patients/${id}`, {
       method: 'PUT',
       body: JSON.stringify(patient),
     }),
   deletePatient: (id: string) =>
-    apiCall<void>(`/api/admin/patients/${id}`, {
+    apiCall<void>(`/api/patients/${id}`, {
       method: 'DELETE',
     }),
 
@@ -404,6 +527,10 @@ export const adminAPI = {
   getPendingHospitals: () => apiCall<any[]>('/api/admin/pending/hospitals'),
 };
 
+
+
+
+
 // Export all APIs
 export const api = {
   auth: authAPI,
@@ -416,6 +543,7 @@ export const api = {
   orders: orderAPI,
   nutrition: nutritionAPI,
   yoga: yogaAPI,
+  chat: chatAPI,
   admin: adminAPI,
 };
 

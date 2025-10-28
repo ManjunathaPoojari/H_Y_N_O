@@ -5,6 +5,7 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Activity, ArrowLeft } from 'lucide-react';
 import { useApp } from '../lib/app-context';
+import { toast } from 'sonner';
 
 interface RegisterPageProps {
   onNavigate: (path: string) => void;
@@ -34,12 +35,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      toast.error('Passwords do not match');
       return;
     }
 
     if (formData.password.length < 6) {
-      alert('Password must be at least 6 characters long');
+      toast.error('Password must be at least 6 characters long');
       return;
     }
 
@@ -54,13 +55,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       });
 
       if (success) {
+        toast.success('Account created successfully!');
         onNavigate('/patient/dashboard');
       } else {
-        alert('Registration failed. Please try again.');
+        toast.error('Registration failed. Please try again.');
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      alert('Registration failed. Please try again.');
+      toast.error('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

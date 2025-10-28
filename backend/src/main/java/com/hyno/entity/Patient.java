@@ -2,6 +2,7 @@ package com.hyno.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,6 +24,7 @@ public class Patient {
     private Integer age;
     private String gender;
     private String bloodGroup;
+    private LocalDate dateOfBirth;
 
     @ElementCollection
     @CollectionTable(name = "patient_allergies", joinColumns = @JoinColumn(name = "patient_id"))
@@ -33,6 +35,11 @@ public class Patient {
     @CollectionTable(name = "patient_medical_history", joinColumns = @JoinColumn(name = "patient_id"))
     @Column(name = "condition_name")
     private List<String> medicalHistory;
+
+    @ElementCollection
+    @CollectionTable(name = "patient_current_medications", joinColumns = @JoinColumn(name = "patient_id"))
+    @Column(name = "medication")
+    private List<String> currentMedications;
 
     private String address;
     private String emergencyContact;

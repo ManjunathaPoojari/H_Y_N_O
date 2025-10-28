@@ -29,6 +29,8 @@
             "@radix-ui/react-toggle": "^1.1.2",
             "@radix-ui/react-toggle-group": "^1.1.2",
             "@radix-ui/react-tooltip": "^1.1.8",
+            "@stomp/stompjs": "^7.2.1",
+            "@types/sockjs-client": "^1.5.4",
             "axios": "^1.12.2",
             "class-variance-authority": "^0.7.1",
             "clsx": "*",
@@ -47,12 +49,16 @@
             "react-resizable-panels": "^2.1.7",
             "react-router-dom": "^7.9.4",
             "recharts": "^2.15.2",
+            "sockjs-client": "^1.6.1",
             "sonner": "^2.0.3",
+            "stompjs": "^2.3.3",
             "tailwind-merge": "*",
             "vaul": "^1.1.2"
       },
       "devDependencies": {
             "@types/node": "^20.10.0",
+            "@types/react": "^19.2.2",
+            "@types/react-dom": "^19.2.2",
             "@vitejs/plugin-react-swc": "^3.10.2",
             "vite": "6.3.5"
       },

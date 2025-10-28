@@ -104,7 +104,8 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
               { icon: Video, label: 'Video Call', path: '/patient/book/video', gradient: 'from-blue-500 to-blue-600' },
               { icon: MessageSquare, label: 'Chat', path: '/patient/book/chat', gradient: 'from-green-500 to-emerald-600' },
               { icon: MapPin, label: 'In-Person', path: '/patient/book/inperson', gradient: 'from-purple-500 to-pink-600' },
-              { icon: Hospital, label: 'Hospital', path: '/patient/book/hospital', gradient: 'from-orange-500 to-amber-600' }
+              { icon: Hospital, label: 'Hospital', path: '/patient/book/hospital', gradient: 'from-orange-500 to-amber-600' },
+              { icon: Calendar, label: 'My Meetings', path: '/patient/meetings', gradient: 'from-indigo-500 to-purple-600' }
             ].map((action, index) => (
               <Button
                 key={index}
@@ -150,7 +151,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600 mb-3">{appointment.reason}</p>
-                    <Button size="sm" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                    <Button size="sm" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" onClick={() => onNavigate('/patient/appointments')}>
                       View Details
                     </Button>
                   </div>

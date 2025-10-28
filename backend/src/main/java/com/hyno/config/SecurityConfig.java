@@ -18,6 +18,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/api/health").permitAll() // Allow health check without authentication
                 .requestMatchers("/api/**").permitAll() // Allow all API endpoints for now (development)
+                .requestMatchers("/ws/**").permitAll() // Allow WebSocket connections
+                .requestMatchers("/ws/info").permitAll() // Allow SockJS info endpoint
                 .anyRequest().permitAll() // Allow all other requests
             )
             .sessionManagement(session -> session
