@@ -11,8 +11,15 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { doctorAPI } from '../../lib/api-client';
+import { HospitalDoctors } from './HospitalDoctors';
+import { HospitalAppointments } from './HospitalAppointments';
+import { HospitalPatients } from './HospitalPatients';
 
-export const HospitalDashboard = () => {
+interface HospitalDashboardProps {
+  onNavigate?: (path: string) => void;
+}
+
+export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate }) => {
   const { doctors, appointments, updateAppointment } = useAppStore();
   const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
   const [doctorForm, setDoctorForm] = useState({
@@ -248,15 +255,15 @@ export const HospitalDashboard = () => {
                 </div>
               </DialogContent>
             </Dialog>
-            <Button className="h-auto py-4 flex flex-col gap-2">
+            <Button className="h-auto py-4 flex flex-col gap-2" onClick={() => onNavigate?.('/hospital/appointments')}>
               <Calendar className="h-5 w-5" />
               <span className="text-sm">View Appointments</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2">
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => onNavigate?.('/hospital/doctors')}>
               <Stethoscope className="h-5 w-5" />
               <span className="text-sm">Manage Doctors</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2">
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => onNavigate?.('/hospital/reports')}>
               <TrendingUp className="h-5 w-5" />
               <span className="text-sm">View Reports</span>
             </Button>

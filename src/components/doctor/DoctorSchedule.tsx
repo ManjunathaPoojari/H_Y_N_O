@@ -11,8 +11,18 @@ import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
 import { Calendar as CalendarIcon, Clock, Plus, Edit, Trash2, Users, Loader2 } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
-import { API_URL } from '../../lib/config';
+import { doctorAPI } from '../../lib/api-client';
 import { toast } from 'sonner';
+
+interface IndividualSlot {
+  id: string;
+  parentSlotId: string;
+  startTime: string;
+  endTime: string;
+  isBooked: boolean;
+  patientId?: string;
+  patientName?: string;
+}
 
 interface ScheduleSlot {
   id: string;
@@ -21,8 +31,10 @@ interface ScheduleSlot {
   endTime: string;
   isAvailable: boolean;
   maxAppointments: number;
+  appointmentDuration: number; // 15, 30, 45, or 60 minutes
   appointmentType: string;
   notes: string;
+  generatedSlots?: IndividualSlot[];
 }
 
 interface Appointment {
@@ -48,9 +60,39 @@ export const DoctorSchedule = () => {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [maxAppointments, setMaxAppointments] = useState(1);
+  const [appointmentDuration, setAppointmentDuration] = useState(30);
   const [appointmentType, setAppointmentType] = useState('general');
   const [isAvailable, setIsAvailable] = useState(true);
   const [slotNotes, setSlotNotes] = useState('');
+
+  // Helper function to generate time slots
+  const generateTimeSlots = (startTime: string, endTime: string, duration: number): IndividualSlot[] => {
+    const slots: IndividualSlot[] = [];
+    const start = new Date(`1970-01-01T${startTime}:00`);
+    const end = new Date(`1970-01-01T${endTime}:00`);
+    const durationMs = duration * 60 * 1000; // Convert minutes to milliseconds
+
+    let current = new Date(start);
+    let id = 1;
+
+    while (current < end) {
+      const nextTime = new Date(current.getTime() + durationMs);
+      if (nextTime > end) break;
+
+      slots.push({
+        id: `${Date.now()}-${id}`,
+        parentSlotId: '', // Will be set when creating the slot
+        startTime: current.toTimeString().slice(0, 5),
+        endTime: nextTime.toTimeString().slice(0, 5),
+        isBooked: false
+      });
+
+      current = nextTime;
+      id++;
+    }
+
+    return slots;
+  };
 
   useEffect(() => {
     if (user?.id) {
@@ -63,35 +105,25 @@ export const DoctorSchedule = () => {
 
     try {
       setLoading(true);
+      // Call the actual API to get schedule data
+      const scheduleData = await doctorAPI.getSchedule(user.id);
 
-      // Call the backend API to get schedule data
-      const response = await fetch(`${API_URL}/doctors/${user.id}/schedule`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch schedule data');
-      }
-
-      const scheduleData = await response.json();
-
-      // Transform the backend data to match our frontend interface
-      const slots: ScheduleSlot[] = (scheduleData.availableSlots || []).map((slot: any) => ({
-        id: slot.id,
+      // Transform the API response to match our component's data structure
+      const transformedSlots: ScheduleSlot[] = scheduleData.availableSlots.map((slot: any) => ({
+        id: slot.id.toString(),
         date: slot.date,
         startTime: slot.startTime,
         endTime: slot.endTime,
         isAvailable: slot.isAvailable,
-        maxAppointments: slot.maxAppointments,
-        appointmentType: slot.appointmentType,
-        notes: slot.notes
+        maxAppointments: 1, // Default value, can be updated based on API
+        appointmentDuration: 30, // Default value, can be updated based on API
+        appointmentType: 'general', // Default value, can be updated based on API
+        notes: slot.notes || '',
+        generatedSlots: [] // Will be populated if needed
       }));
 
-      // For appointments, we need to get them from the appointments API
-      // For now, we'll keep mock appointments until we have the full appointments API
+      setScheduleSlots(transformedSlots);
+      // For now, keep mock appointments - this can be updated when appointments API is available
       const mockAppointments: Appointment[] = [
         {
           id: '1',
@@ -110,8 +142,6 @@ export const DoctorSchedule = () => {
           reason: 'Follow-up visit'
         }
       ];
-
-      setScheduleSlots(slots);
       setAppointments(mockAppointments);
     } catch (error) {
       console.error('Error loading schedule data:', error);
@@ -127,46 +157,28 @@ export const DoctorSchedule = () => {
       return;
     }
 
+    // Validate time: end time should be after start time
+    if (startTime >= endTime) {
+      toast.error('End time must be after start time');
+      return;
+    }
+
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      return;
+    }
+
     try {
       const slotData = {
         date: slotDate,
         startTime,
         endTime,
-        isAvailable,
-        maxAppointments,
-        appointmentType,
         notes: slotNotes
       };
 
-      const response = await fetch(`${API_URL}/doctors/${user?.id}/schedule/slots`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(slotData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to add schedule slot');
-      }
-
-      const result = await response.json();
-
-      // Add the new slot to the local state
-      const newSlot: ScheduleSlot = {
-        id: result.id,
-        date: slotDate,
-        startTime,
-        endTime,
-        isAvailable,
-        maxAppointments,
-        appointmentType,
-        notes: slotNotes
-      };
-
-      setScheduleSlots(prev => [...prev, newSlot]);
+      await doctorAPI.addScheduleSlot(user.id, slotData);
       toast.success('Schedule slot added successfully');
+      loadScheduleData(); // Refresh the data
 
       // Reset form
       resetForm();
@@ -192,46 +204,29 @@ export const DoctorSchedule = () => {
   const handleUpdateSlot = async () => {
     if (!editingSlot) return;
 
+    // Validate time: end time should be after start time
+    if (startTime >= endTime) {
+      toast.error('End time must be after start time');
+      return;
+    }
+
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      return;
+    }
+
     try {
       const slotData = {
         date: slotDate,
         startTime,
         endTime,
-        isAvailable,
-        maxAppointments,
-        appointmentType,
         notes: slotNotes
       };
 
-      const response = await fetch(`${API_URL}/doctors/${user?.id}/schedule/slots/${editingSlot.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(slotData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update schedule slot');
-      }
-
-      const updatedSlot: ScheduleSlot = {
-        ...editingSlot,
-        date: slotDate,
-        startTime,
-        endTime,
-        isAvailable,
-        maxAppointments,
-        appointmentType,
-        notes: slotNotes
-      };
-
-      setScheduleSlots(prev => prev.map(slot =>
-        slot.id === editingSlot.id ? updatedSlot : slot
-      ));
-
+      await doctorAPI.updateScheduleSlot(user.id, editingSlot.id, slotData);
       toast.success('Schedule slot updated successfully');
+      loadScheduleData(); // Refresh the data
+
       resetForm();
       setEditingSlot(null);
       setShowAddSlot(false);
@@ -241,27 +236,10 @@ export const DoctorSchedule = () => {
     }
   };
 
-  const handleDeleteSlot = async (slotId: string) => {
+  const handleDeleteSlot = (slotId: string) => {
     if (window.confirm('Are you sure you want to delete this schedule slot?')) {
-      try {
-        const response = await fetch(`${API_URL}/doctors/${user?.id}/schedule/slots/${slotId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to delete schedule slot');
-        }
-
-        setScheduleSlots(prev => prev.filter(slot => slot.id !== slotId));
-        toast.success('Schedule slot deleted successfully');
-      } catch (error) {
-        console.error('Error deleting schedule slot:', error);
-        toast.error('Failed to delete schedule slot');
-      }
+      setScheduleSlots(prev => prev.filter(slot => slot.id !== slotId));
+      toast.success('Schedule slot deleted successfully');
     }
   };
 
@@ -312,7 +290,14 @@ export const DoctorSchedule = () => {
         </div>
         <Dialog open={showAddSlot} onOpenChange={setShowAddSlot}>
           <DialogTrigger asChild>
-            <Button onClick={() => { resetForm(); setEditingSlot(null); }}>
+            <Button onClick={() => {
+              resetForm();
+              setEditingSlot(null);
+              // Pre-fill the date with selected date
+              if (selectedDate) {
+                setSlotDate(selectedDate.toISOString().split('T')[0]);
+              }
+            }}>
               <Plus className="h-4 w-4 mr-2" />
               Add Time Slot
             </Button>

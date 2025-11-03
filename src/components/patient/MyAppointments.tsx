@@ -19,7 +19,7 @@ export const MyAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState<string>('');
 
   const pendingAppointments = appointments.filter(a => a.status === 'pending');
-  const upcomingAppointments = appointments.filter(a => a.status === 'upcoming');
+  const upcomingAppointments = appointments.filter(a => a.status === 'booked');
   const completedAppointments = appointments.filter(a => a.status === 'completed');
   const cancelledAppointments = appointments.filter(a => a.status === 'cancelled');
 
@@ -38,11 +38,12 @@ export const MyAppointments = () => {
     setSelectedAppointment('');
   };
 
-  const handleJoinVideo = () => {
+  const handleJoinVideo = (appointmentId: string) => {
     if (window.confirm('Are you sure you want to join the video call?')) {
       toast.success('Connecting to video call...');
       setTimeout(() => {
-        window.location.href = 'http://localhost:3001/patient/meetings';
+        // Navigate to video call page with appointment ID
+        window.location.href = `/video-call?appointmentId=${appointmentId}`;
       }, 1000);
     }
   };
@@ -79,8 +80,8 @@ export const MyAppointments = () => {
                 {getIcon(appointment.type)}
                 {appointment.type}
               </Badge>
-              <Badge variant={appointment.status === 'upcoming' ? 'default' : 
-                             appointment.status === 'completed' ? 'secondary' : 
+              <Badge variant={appointment.status === 'booked' ? 'default' :
+                             appointment.status === 'completed' ? 'secondary' :
                              'destructive'}>
                 {appointment.status}
               </Badge>
@@ -117,12 +118,22 @@ export const MyAppointments = () => {
             </div>
           )}
 
-          {appointment.status === 'upcoming' && (
+          {appointment.status === 'booked' && (
             <>
               {appointment.type === 'video' && (
-                <Button size="sm" onClick={handleJoinVideo}>
+                <Button size="sm" onClick={() => handleJoinVideo(appointment.id)}>
                   <Video className="h-4 w-4 mr-2" />
                   Join Video Call
+                </Button>
+              )}
+              {appointment.type === 'video' && appointment.status === 'booked' && (
+                <Button size="sm" variant="outline" onClick={() => {
+                  if (window.confirm('Are you sure you want to reschedule this appointment?')) {
+                    // Handle reschedule logic here
+                    toast.success('Reschedule functionality coming soon');
+                  }
+                }}>
+                  Reschedule
                 </Button>
               )}
               {appointment.type === 'chat' && (

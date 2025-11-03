@@ -45,6 +45,9 @@ public class Patient {
     private String emergencyContact;
     private String password;
 
+    @Column(name = "hospital_id")
+    private String hospitalId;
+
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

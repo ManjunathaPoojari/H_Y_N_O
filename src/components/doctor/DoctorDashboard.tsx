@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Calendar, Users, Video, MessageSquare, Clock, FileText, Loader2 } from 'lucide-react';
+import { Calendar, Users, Video, MessageSquare, Clock, FileText, Loader2, Settings } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
 import { appointmentAPI, doctorAPI, patientAPI, chatAPI } from '../../lib/api-client';
 import { toast } from 'sonner';
@@ -232,6 +232,8 @@ export const DoctorDashboard = () => {
         </Card>
       </div>
 
+
+
       {/* Quick Actions */}
       <Card>
         <CardHeader>
@@ -306,13 +308,13 @@ export const DoctorDashboard = () => {
                 </div>
                 <div className="flex gap-2">
                   {appointment.type === 'video' && (
-                    <Button size="sm" onClick={handleStartVideo}>
+                    <Button size="sm" onClick={() => handleStartVideo(appointment.id)}>
                       <Video className="h-4 w-4 mr-2" />
                       Start Video
                     </Button>
                   )}
                   {appointment.type === 'chat' && (
-                    <Button size="sm" onClick={handleStartChat}>
+                    <Button size="sm" onClick={() => handleStartChat(appointment.id)}>
                       <MessageSquare className="h-4 w-4 mr-2" />
                       Start Chat
                     </Button>

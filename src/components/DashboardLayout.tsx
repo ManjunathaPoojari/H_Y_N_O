@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import {
@@ -8,7 +8,11 @@ import {
   Pill, User, Hospital, Stethoscope, Apple, Dumbbell
 } from 'lucide-react';
 import { Input } from './ui/input';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { Badge } from './ui/badge';
 import { useAuth } from '../lib/auth-context';
+import { useSearch } from '../lib/search-context';
+import { useNotifications } from '../lib/notification-context';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -24,6 +28,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   currentPath
 }) => {
   const { user, logout } = useAuth();
+  const { searchQuery, setSearchQuery } = useSearch();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   const handleLogout = () => {
     logout();
@@ -163,16 +169,80 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   <Input
                     placeholder="Search..."
                     className="pl-9 w-full"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        // Handle search redirects for admin
+                        if (role === 'admin') {
+                          const query = searchQuery.toLowerCase().trim();
+                          if (query === 'doctor') {
+                            window.location.href = '/admin/doctors';
+                          } else if (query === 'patient') {
+                            window.location.href = '/admin/patients';
+                          } else if (query === 'hospital') {
+                            window.location.href = '/admin/hospitals';
+                          }
+                        }
+                        e.currentTarget.blur();
+                      }
+                    }}
                   />
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  <div className="p-4 border-b">
+                    <h3 className="font-semibold">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <Badge variant="secondary" className="mt-1">
+                        {unreadCount} unread
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.map((notification) => (
+                      <DropdownMenuItem
+                        key={notification.id}
+                        className="p-4 cursor-pointer"
+                        onClick={() => markAsRead(notification.id)}
+                      >
+                        <div className="flex flex-col gap-1 w-full">
+                          <div className="flex items-start justify-between">
+                            <h4 className="font-medium text-sm">{notification.title}</h4>
+                            {notification.unread && (
+                              <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600">{notification.message}</p>
+                          <span className="text-xs text-gray-400">{notification.time}</span>
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
+                  <div className="p-2 border-t">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full"
+                      onClick={markAllAsRead}
+                    >
+                      Mark All as Read
+                    </Button>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>{user?.name.charAt(0) || 'U'}</AvatarFallback>

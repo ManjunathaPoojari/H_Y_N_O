@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
+  fallback?: ReactNode;
 }
 
 interface State {
@@ -26,8 +27,14 @@ class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      // If a custom fallback is provided, use it
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
+      // Default fallback UI
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="min-h-[200px] flex items-center justify-center bg-gray-50 rounded-lg">
           <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
             <div className="flex items-center justify-center mb-4">
               <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -37,15 +44,21 @@ class ErrorBoundary extends Component<Props, State> {
               </div>
             </div>
             <h1 className="text-xl font-semibold text-center text-gray-900 mb-2">
-              Something went wrong
+              Video Call Error
             </h1>
             <p className="text-gray-600 text-center mb-4">
-              We're sorry, but something unexpected happened. Please try refreshing the page.
+              Unable to start video call. Please check your camera and microphone permissions.
             </p>
             <div className="text-center">
               <button
+                onClick={() => this.setState({ hasError: false, error: undefined })}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors mr-2"
+              >
+                Try Again
+              </button>
+              <button
                 onClick={() => window.location.reload()}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+                className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
               >
                 Refresh Page
               </button>

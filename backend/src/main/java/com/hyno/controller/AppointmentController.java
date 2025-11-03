@@ -235,6 +235,17 @@ public class AppointmentController {
                 }
             }
 
+            // Handle schedule slot reservation
+            if (request.get("scheduleSlot") != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> slotMap = (Map<String, Object>) request.get("scheduleSlot");
+                if (slotMap.get("id") != null) {
+                    com.hyno.entity.ScheduleSlot slot = new com.hyno.entity.ScheduleSlot();
+                    slot.setId(Long.valueOf(slotMap.get("id").toString()));
+                    appointment.setScheduleSlot(slot);
+                }
+            }
+
             Appointment createdAppointment = appointmentService.createAppointment(appointment);
             logger.info("Appointment created successfully with ID: {}", createdAppointment.getId());
             return createdAppointment;

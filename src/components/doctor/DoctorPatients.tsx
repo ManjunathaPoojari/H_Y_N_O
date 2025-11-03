@@ -130,6 +130,23 @@ export const DoctorPatients = () => {
     window.location.href = `/doctor/appointments?patientId=${patientId}`;
   };
 
+  const handleStartVideoCall = async (patientId: string) => {
+    try {
+      toast.success('Initiating video call...');
+      // Find an appointment with this patient to create video call
+      const patientAppointment = appointments.find(app => app.patientId === patientId);
+      if (patientAppointment) {
+        // Navigate to video call page or open video call modal
+        window.location.href = `/doctor/video-call?appointmentId=${patientAppointment.id}&patientId=${patientId}`;
+      } else {
+        toast.error('No active appointment found for video call');
+      }
+    } catch (error) {
+      console.error('Error starting video call:', error);
+      toast.error('Failed to start video call');
+    }
+  };
+
   const handleAddNote = async () => {
     if (!selectedPatient || !noteText.trim()) return;
 
@@ -268,6 +285,14 @@ export const DoctorPatients = () => {
                         >
                           <Calendar className="h-4 w-4 mr-2" />
                           Schedule
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleStartVideoCall(patient.id)}
+                        >
+                          <Video className="h-4 w-4 mr-2" />
+                          Video Call
                         </Button>
                       </div>
                     </div>

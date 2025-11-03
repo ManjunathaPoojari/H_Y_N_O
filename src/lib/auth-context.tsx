@@ -44,7 +44,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return true;
       }
     } catch (err) {
-      // Login error handled by toast notification
+      console.error('Login failed:', err);
     }
     return false;
   };
@@ -57,7 +57,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return await login(userData.email, userData.password, userData.role);
       }
     } catch (err) {
-      // Registration error handled by toast notification
+      console.error('Registration failed:', err);
     }
     return false;
   };

@@ -1,295 +1,176 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Video, Calendar, Clock, MessageSquare, Play, Users } from 'lucide-react';
+import { Calendar, Clock, Video, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
 import { useAppStore } from '../../lib/app-store';
-import { appointmentAPI, chatAPI } from '../../lib/api-client';
-import { toast } from 'sonner';
+import { Appointment } from '../../types';
 
-interface PatientMeeting {
+interface Meeting {
   id: string;
-  appointmentId: string;
   doctorName: string;
-  doctorId: string;
-  scheduledDate: string;
-  scheduledTime: string;
-  duration: number; // in minutes
-  status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
-  meetingType: 'video' | 'audio';
-  meetingUrl?: string;
-  notes: string;
-  recordingUrl?: string;
+  doctorSpecialty: string;
+  date: string;
+  time: string;
+  type: 'video' | 'chat';
+  status: 'booked' | 'completed' | 'cancelled';
+  appointmentId: string;
 }
 
-export const PatientMeetings = () => {
+const PatientMeetings: React.FC = () => {
   const { user } = useAuth();
-  const { appointments, doctors } = useAppStore();
-  const [meetings, setMeetings] = useState<PatientMeeting[]>([]);
+  const { appointments } = useAppStore();
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.id && appointments.length > 0) {
-      loadMeetings();
-    }
-  }, [user, appointments]);
-
-  const loadMeetings = async () => {
     if (!user?.id) return;
 
-    try {
-      setLoading(true);
-      // Get video appointments for this patient
-      const patientAppointments = appointments.filter(
-        app => app.patientId === user.id && app.type === 'video'
-      );
+    const fetchMeetings = () => {
+      try {
+        setLoading(true);
+        // Filter appointments that are video or chat consultations
+        const videoChatAppointments = appointments.filter(app =>
+          (app.type === 'video' || app.type === 'chat') &&
+          app.patientId === user.id
+        );
 
-      // Convert appointments to meetings
-      const meetingsData: PatientMeeting[] = patientAppointments.map(app => {
-        return {
+        // Convert appointments to meetings format
+        const meetingsData: Meeting[] = videoChatAppointments.map(app => ({
           id: `meeting-${app.id}`,
-          appointmentId: app.id,
-          doctorName: app.doctorName || 'Doctor',
-          doctorId: app.doctorId,
-          scheduledDate: app.date,
-          scheduledTime: app.time,
-          duration: 30, // Default 30 minutes
-          status: app.status === 'upcoming' ? 'scheduled' :
-                  app.status === 'completed' ? 'completed' : 'cancelled',
-          meetingType: 'video',
-          meetingUrl: `https://meet.google.com/${app.id}`,
-          notes: app.notes || '',
-          recordingUrl: undefined
-        };
-      });
+          doctorName: app.doctorName,
+          doctorSpecialty: 'General Practice', // You might want to add this to the appointment data
+          date: app.date,
+          time: app.time,
+          type: app.type as 'video' | 'chat',
+          status: app.status as 'booked' | 'completed' | 'cancelled',
+          appointmentId: app.id
+        }));
 
-      setMeetings(meetingsData);
-    } catch (error) {
-      console.error('Error loading meetings:', error);
-      toast.error('Failed to load meetings');
-    } finally {
-      setLoading(false);
+        setMeetings(meetingsData);
+      } catch (error) {
+        console.error('Error processing meetings:', error);
+        setMeetings([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMeetings();
+  }, [user?.id, appointments]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'booked': return 'bg-blue-100 text-blue-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const handleJoinMeeting = (meeting: PatientMeeting) => {
-    if (meeting.meetingUrl) {
-      window.open(meeting.meetingUrl, '_blank');
-      toast.success('Opening meeting in new tab');
-    } else {
-      toast.error('Meeting URL not available');
-    }
-  };
-
-  const handleOpenChat = async (meeting: PatientMeeting) => {
-    try {
-      await chatAPI.createChatRoom(meeting.appointmentId);
-      window.location.href = 'http://localhost:3001/patient/chat?appointmentId=' + meeting.appointmentId;
-    } catch (error) {
-      console.error('Error opening chat:', error);
-      toast.error('Failed to open chat');
-    }
-  };
-
-  const getUpcomingMeetings = () => {
-    const now = new Date();
-    return meetings.filter(meeting => {
-      if (meeting.status !== 'scheduled') return false;
-      const meetingDateTime = new Date(`${meeting.scheduledDate}T${meeting.scheduledTime}`);
-      return meetingDateTime > now;
-    }).sort((a, b) => {
-      const aTime = new Date(`${a.scheduledDate}T${a.scheduledTime}`);
-      const bTime = new Date(`${b.scheduledDate}T${b.scheduledTime}`);
-      return aTime.getTime() - bTime.getTime();
-    });
-  };
-
-  const getTodayMeetings = () => {
-    const today = new Date().toISOString().split('T')[0];
-    return meetings.filter(meeting => meeting.scheduledDate === today);
-  };
-
-  const getCompletedMeetings = () => {
-    return meetings.filter(meeting => meeting.status === 'completed');
+  const getTypeIcon = (type: string) => {
+    return type === 'video' ? <Video className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />;
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Loading meetings...</span>
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold">My Meetings</h1>
+        <div className="grid gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
-  const upcomingMeetings = getUpcomingMeetings();
-  const todayMeetings = getTodayMeetings();
-  const completedMeetings = getCompletedMeetings();
-
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl mb-2">Video Consultations</h1>
-        <p className="text-gray-600">Your scheduled video consultation meetings</p>
+        <h1 className="text-3xl font-bold">My Meetings</h1>
+        <p className="text-gray-600">View and manage your video consultations and chat sessions</p>
       </div>
 
-      {/* Today's Meetings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Today's Meetings ({todayMeetings.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {todayMeetings.length > 0 ? (
-              todayMeetings.map((meeting) => (
-                <div key={meeting.id} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="text-lg">Dr. {meeting.doctorName}</h4>
-                        <Badge variant={meeting.status === 'scheduled' ? 'default' :
-                                       meeting.status === 'in-progress' ? 'destructive' : 'secondary'}>
-                          {meeting.status}
-                        </Badge>
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <Video className="h-3 w-3" />
-                          {meeting.meetingType}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {meeting.scheduledDate}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {meeting.scheduledTime} ({meeting.duration}min)
-                        </span>
-                      </div>
-                      {meeting.notes && (
-                        <p className="text-sm text-gray-700 mt-2">{meeting.notes}</p>
-                      )}
-                    </div>
+      <div className="grid gap-4">
+        {meetings.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-lg font-semibold mb-2">No meetings scheduled</h3>
+              <p className="text-gray-600">You don't have any upcoming or past meetings.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          meetings.map((meeting) => (
+            <Card key={meeting.id} className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">{meeting.doctorName}</CardTitle>
+                  <Badge className={getStatusColor(meeting.status)}>
+                    {meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1)}
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-600">{meeting.doctorSpecialty}</p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm">{new Date(meeting.date).toLocaleDateString()}</span>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm">{meeting.time}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getTypeIcon(meeting.type)}
+                    <span className="text-sm capitalize">{meeting.type} Call</span>
+                  </div>
+                </div>
 
+                {meeting.status === 'booked' && (
                   <div className="flex gap-2">
-                    {meeting.status === 'scheduled' && (
-                      <Button size="sm" onClick={() => handleJoinMeeting(meeting)}>
-                        <Video className="h-4 w-4 mr-2" />
-                        Join Meeting
-                      </Button>
-                    )}
-                    {meeting.status === 'in-progress' && (
-                      <Button size="sm" onClick={() => handleJoinMeeting(meeting)}>
-                        <Video className="h-4 w-4 mr-2" />
-                        Rejoin Meeting
-                      </Button>
-                    )}
-                    {meeting.status === 'completed' && meeting.recordingUrl && (
-                      <Button size="sm" variant="outline" onClick={() => window.open(meeting.recordingUrl, '_blank')}>
-                        <Play className="h-4 w-4 mr-2" />
-                        View Recording
-                      </Button>
-                    )}
-                    <Button size="sm" variant="outline" onClick={() => handleOpenChat(meeting)}>
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Chat with Doctor
+                    <Button
+                      size="sm"
+                      className="flex items-center gap-2"
+                      onClick={() => {
+                        if (meeting.type === 'video') {
+                          // Navigate to video call component with appointment ID
+                          window.location.href = `/video-call?appointmentId=${meeting.appointmentId}`;
+                        } else if (meeting.type === 'chat') {
+                          // Navigate to chat with appointment ID
+                          window.location.href = `/patient/chat?appointmentId=${meeting.appointmentId}`;
+                        }
+                      }}
+                    >
+                      {getTypeIcon(meeting.type)}
+                      Join {meeting.type === 'video' ? 'Video Call' : 'Chat'}
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      Reschedule
                     </Button>
                   </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Video className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>No meetings scheduled for today</p>
-                <p className="text-sm">Book a video consultation to get started</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                )}
 
-      {/* Upcoming Meetings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Upcoming Meetings ({upcomingMeetings.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {upcomingMeetings.slice(0, 5).map((meeting) => (
-              <div key={meeting.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Video className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <h4 className="text-sm font-medium">Dr. {meeting.doctorName}</h4>
-                    <p className="text-xs text-gray-600">
-                      {meeting.scheduledDate} at {meeting.scheduledTime} ({meeting.duration}min)
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleJoinMeeting(meeting)}>
+                {meeting.status === 'completed' && (
+                  <Button variant="outline" size="sm">
                     View Details
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleOpenChat(meeting)}>
-                    <MessageSquare className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            {upcomingMeetings.length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-4">No upcoming meetings</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Meeting History */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Recent Meetings ({completedMeetings.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {completedMeetings.slice(0, 10).map((meeting) => (
-              <div key={meeting.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Video className="h-5 w-5 text-green-600" />
-                  <div>
-                    <h4 className="text-sm font-medium">Dr. {meeting.doctorName}</h4>
-                    <p className="text-xs text-gray-600">
-                      {meeting.scheduledDate} • {meeting.duration}min • Completed
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {meeting.recordingUrl && (
-                    <Button size="sm" variant="outline" onClick={() => window.open(meeting.recordingUrl, '_blank')}>
-                      <Play className="h-3 w-3" />
-                    </Button>
-                  )}
-                  <Button size="sm" variant="outline" onClick={() => handleOpenChat(meeting)}>
-                    <MessageSquare className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            {completedMeetings.length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-4">No completed meetings yet</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 };
+
+export { PatientMeetings };

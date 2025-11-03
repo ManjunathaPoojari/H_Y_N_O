@@ -46,6 +46,9 @@ async function apiCall<T>(
   }
 }
 
+// Export apiCall function
+export { apiCall };
+
 // Authentication API
 export const authAPI = {
   login: async (email: string, password: string, role: string) => {
@@ -54,16 +57,16 @@ export const authAPI = {
       body: JSON.stringify({ email, password, role }),
     });
   },
-  
+
   register: async (userData: any) => {
     return apiCall<{ token: string; user: any }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
   },
-  
+
   logout: async () => {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('token');
     return Promise.resolve();
   },
 };
@@ -163,12 +166,13 @@ export const doctorAPI = {
       body: JSON.stringify({ note }),
     }),
 };
-
 // Hospital API
 export const hospitalAPI = {
   getAll: () => apiCall<any[]>('/api/hospitals'),
 
   getById: (id: string) => apiCall<any>(`/api/hospitals/${id}`),
+
+  getDoctors: (hospitalId: string) => apiCall<any[]>(`/api/hospitals/${hospitalId}/doctors`),
 
   create: (hospital: any) =>
     apiCall<any>('/api/hospitals', {
@@ -194,6 +198,34 @@ export const hospitalAPI = {
 
   delete: (id: string) =>
     apiCall<void>(`/api/hospitals/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // Patient management
+  getPatients: (hospitalId: string) =>
+    apiCall<any[]>(`/api/hospitals/${hospitalId}/patients`),
+  getPatientDetails: (hospitalId: string, patientId: string) =>
+    apiCall<any>(`/api/hospitals/${hospitalId}/patients/${patientId}`),
+  addPatientNote: (hospitalId: string, patientId: string, note: string) =>
+    apiCall<any>(`/api/hospitals/${hospitalId}/patients/${patientId}/notes`, {
+      method: 'POST',
+      body: JSON.stringify({ note }),
+    }),
+
+  // Schedule management
+  getSchedule: (hospitalId: string) => apiCall<any>(`/api/hospitals/${hospitalId}/schedule`),
+  addScheduleSlot: (hospitalId: string, slot: any) =>
+    apiCall<any>(`/api/hospitals/${hospitalId}/schedule/slots`, {
+      method: 'POST',
+      body: JSON.stringify(slot),
+    }),
+  updateScheduleSlot: (hospitalId: string, slotId: string, slot: any) =>
+    apiCall<any>(`/api/hospitals/${hospitalId}/schedule/slots/${slotId}`, {
+      method: 'PUT',
+      body: JSON.stringify(slot),
+    }),
+  deleteScheduleSlot: (hospitalId: string, slotId: string) =>
+    apiCall<any>(`/api/hospitals/${hospitalId}/schedule/slots/${slotId}`, {
       method: 'DELETE',
     }),
 };
@@ -430,6 +462,73 @@ export const yogaAPI = {
   getVideos: () => apiCall<any[]>('/api/yoga/videos'),
 };
 
+// Payment API
+export const paymentAPI = {
+  getAll: () => apiCall<any[]>('/api/payments'),
+
+  getById: (id: string) => apiCall<any>(`/api/payments/${id}`),
+
+  getByPatient: (patientId: string) => apiCall<any[]>(`/api/payments/patient/${patientId}`),
+
+  getByAppointment: (appointmentId: string) => apiCall<any[]>(`/api/payments/appointment/${appointmentId}`),
+
+  create: (payment: any) =>
+    apiCall<any>('/api/payments', {
+      method: 'POST',
+      body: JSON.stringify(payment),
+    }),
+
+  process: (id: string) =>
+    apiCall<any>(`/api/payments/${id}/process`, {
+      method: 'PUT',
+    }),
+
+  refund: (id: string, reason: string) =>
+    apiCall<any>(`/api/payments/${id}/refund`, {
+      method: 'PUT',
+      body: JSON.stringify({ reason }),
+    }),
+
+  getCompletedByPatient: (patientId: string) => apiCall<any[]>(`/api/payments/patient/${patientId}/completed`),
+
+  getPaymentStats: (patientId: string) => apiCall<any>(`/api/payments/patient/${patientId}/stats`),
+};
+
+// Feedback API
+export const feedbackAPI = {
+  getAll: () => apiCall<any[]>('/api/feedback'),
+
+  getById: (id: string) => apiCall<any>(`/api/feedback/${id}`),
+
+  getByPatient: (patientId: string) => apiCall<any[]>(`/api/feedback/patient/${patientId}`),
+
+  getByDoctor: (doctorId: string) => apiCall<any[]>(`/api/feedback/doctor/${doctorId}`),
+
+  getByAppointment: (appointmentId: string) => apiCall<any[]>(`/api/feedback/appointment/${appointmentId}`),
+
+  create: (feedback: any) =>
+    apiCall<any>('/api/feedback', {
+      method: 'POST',
+      body: JSON.stringify(feedback),
+    }),
+
+  update: (id: string, feedback: any) =>
+    apiCall<any>(`/api/feedback/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(feedback),
+    }),
+
+  getDoctorRating: (doctorId: string) => apiCall<any>(`/api/feedback/doctor/${doctorId}/rating`),
+
+  getRecentByType: (type: string, limit?: number) =>
+    apiCall<any[]>(`/api/feedback/recent/${type}?limit=${limit || 10}`),
+
+  delete: (id: string) =>
+    apiCall<void>(`/api/feedback/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
 // Admin API
 export const adminAPI = {
   getStats: () => apiCall<any>('/api/admin/stats'),
@@ -544,6 +643,8 @@ export const api = {
   nutrition: nutritionAPI,
   yoga: yogaAPI,
   chat: chatAPI,
+  payments: paymentAPI,
+  feedback: feedbackAPI,
   admin: adminAPI,
 };
 

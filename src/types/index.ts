@@ -51,13 +51,13 @@ export interface Appointment {
   id: string;
   patientId: string;
   patientName: string;
-  doctorId: string;
+  doctorId?: string;
   doctorName: string;
   hospitalId?: string;
   type: 'video' | 'chat' | 'inperson' | 'hospital';
   date: string;
   time: string;
-  status: 'upcoming' | 'completed' | 'cancelled' | 'pending';
+  status: 'pending' | 'booked' | 'completed' | 'cancelled';
   reason?: string;
   prescription?: string;
   notes?: string;
@@ -121,10 +121,84 @@ export interface YogaTrainer {
   mode: ('virtual' | 'inperson')[];
 }
 
+export interface ScheduleSlot {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  isAvailable: boolean;
+  status: 'available' | 'reserved' | 'booked';
+  availableSpots: number;
+}
+
+export interface Payment {
+  id: string;
+  appointmentId: string;
+  patientId: string;
+  amount: number;
+  method: 'card' | 'upi' | 'cash' | 'wallet';
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  transactionId?: string;
+  createdAt: string;
+}
+
+export interface Feedback {
+  id: string;
+  appointmentId: string;
+  patientId: string;
+  doctorId: string;
+  rating: number;
+  comments?: string;
+  suggestions?: string;
+  type: 'doctor_rating' | 'hospital_rating' | 'service_rating' | 'overall_experience';
+  createdAt: string;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
   role: 'patient' | 'doctor' | 'hospital' | 'admin';
   avatar?: string;
+}
+
+// Video Call Types
+export interface VideoCall {
+  id: string;
+  appointmentId: string;
+  callerId: string;
+  receiverId: string;
+  status: 'initiating' | 'ringing' | 'connected' | 'ended' | 'missed' | 'declined';
+  startTime?: string;
+  endTime?: string;
+  duration?: number;
+  callType: 'appointment' | 'emergency' | 'followup';
+  recordingUrl?: string;
+}
+
+export interface VideoCallState {
+  isInCall: boolean;
+  currentCall?: VideoCall;
+  localStream?: MediaStream;
+  remoteStream?: MediaStream;
+  isMuted: boolean;
+  isVideoEnabled: boolean;
+  callDuration: number;
+  connectionQuality: 'good' | 'fair' | 'poor';
+}
+
+export interface WebRTCSignal {
+  type: 'offer' | 'answer' | 'ice-candidate';
+  callId: string;
+  fromUserId: string;
+  toUserId: string;
+  data: any;
+}
+
+export interface VideoCallParticipant {
+  userId: string;
+  userName: string;
+  userRole: 'patient' | 'doctor';
+  isConnected: boolean;
+  joinedAt?: string;
 }

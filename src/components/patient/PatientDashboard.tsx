@@ -3,6 +3,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Calendar, Video, MessageSquare, FileText, Clock, MapPin, User, Hospital, TrendingUp, Activity, Heart, Sparkles } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
+import { useAuth } from '../../lib/auth-context';
 
 interface PatientDashboardProps {
   onNavigate: (path: string) => void;
@@ -10,7 +11,8 @@ interface PatientDashboardProps {
 
 export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }) => {
   const { appointments } = useAppStore();
-  const upcomingAppointments = appointments.filter(a => a.status === 'upcoming').slice(0, 3);
+  const { user } = useAuth();
+  const upcomingAppointments = appointments.filter(a => a.status === 'booked').slice(0, 3);
   const recentReports = [
     { id: 1, name: 'Blood Test Report', date: '2025-10-12', type: 'Lab Report' },
     { id: 2, name: 'X-Ray Chest', date: '2025-10-08', type: 'Radiology' },
@@ -27,7 +29,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl mb-2 bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent">
-            Welcome back, Rahul!
+            Welcome back, {user?.name || 'User'}!
           </h1>
           <p className="text-gray-600 flex items-center gap-2">
             <Activity className="h-4 w-4 text-green-500 animate-pulse" />
@@ -51,7 +53,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
             </div>
           </CardHeader>
           <CardContent className="relative z-10">
-            <div className="text-3xl mb-1">P001</div>
+            <div className="text-3xl mb-1">{user?.id || 'P001'}</div>
             <p className="text-sm text-blue-100">Your unique health ID</p>
           </CardContent>
         </Card>
@@ -104,8 +106,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
               { icon: Video, label: 'Video Call', path: '/patient/book/video', gradient: 'from-blue-500 to-blue-600' },
               { icon: MessageSquare, label: 'Chat', path: '/patient/book/chat', gradient: 'from-green-500 to-emerald-600' },
               { icon: MapPin, label: 'In-Person', path: '/patient/book/inperson', gradient: 'from-purple-500 to-pink-600' },
-              { icon: Hospital, label: 'Hospital', path: '/patient/book/hospital', gradient: 'from-orange-500 to-amber-600' },
-              { icon: Calendar, label: 'My Meetings', path: '/patient/meetings', gradient: 'from-indigo-500 to-purple-600' }
+              { icon: Hospital, label: 'Hospital', path: '/patient/book/hospital', gradient: 'from-orange-500 to-amber-600' }
             ].map((action, index) => (
               <Button
                 key={index}

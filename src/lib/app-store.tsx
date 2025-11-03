@@ -104,12 +104,11 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, []);
 
-
-
   const loadDataFromBackend = async () => {
     try {
       // Load different data based on user role
       const userRole = localStorage.getItem('userRole');
+      const userId = localStorage.getItem('userId');
 
       let patientsData: any[] = [];
       let doctorsData: any[] = [];
@@ -122,57 +121,145 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
         try {
           patientsData = await api.admin.getAllPatients();
         } catch (error) {
-          // Failed to load patients from backend - using empty array
+          console.error('Failed to load patients from backend:', error);
           patientsData = [];
         }
 
         try {
           doctorsData = await api.admin.getAllDoctors();
         } catch (error) {
-          // Failed to load doctors from backend - using empty array
+          console.error('Failed to load doctors from backend:', error);
           doctorsData = [];
         }
 
         try {
           hospitalsData = await api.admin.getAllHospitals();
         } catch (error) {
-          // Failed to load hospitals from backend - using empty array
+          console.error('Failed to load hospitals from backend:', error);
           hospitalsData = [];
         }
 
         try {
           appointmentsData = await api.admin.getAllAppointments();
         } catch (error) {
-          // Failed to load appointments from backend - using empty array
+          console.error('Failed to load appointments from backend:', error);
           appointmentsData = [];
         }
 
         try {
           medicinesData = await api.medicines.getAll();
         } catch (error) {
-          // Failed to load medicines from backend - using empty array
+          console.error('Failed to load medicines from backend:', error);
           medicinesData = [];
         }
-      } else {
-        // Regular users load their own data - handle each API call separately
+      } else if (userRole === 'patient' && userId) {
+        // Patient loads their data
         try {
           patientsData = await api.patients.getAll();
         } catch (error) {
-          // Failed to load patients from backend - using empty array
+          console.error('Failed to load patients from backend:', error);
           patientsData = [];
         }
 
         try {
           doctorsData = await api.doctors.getAll();
         } catch (error) {
-          // Failed to load doctors from backend - using empty array
+          console.error('Failed to load doctors from backend:', error);
           doctorsData = [];
         }
 
         try {
           hospitalsData = await api.hospitals.getAll();
         } catch (error) {
-          // Failed to load hospitals from backend - using empty array
+          console.error('Failed to load hospitals from backend:', error);
+          hospitalsData = [];
+        }
+
+        try {
+          appointmentsData = await api.appointments.getByPatient(userId);
+          // Normalize status and type values to lowercase for frontend consistency
+          appointmentsData = appointmentsData.map(apt => ({
+            ...apt,
+            status: apt.status?.toLowerCase() === 'upcoming' ? 'booked' : apt.status?.toLowerCase(),
+            type: apt.type?.toLowerCase(),
+            date: apt.appointmentDate,
+            time: apt.appointmentTime,
+          }));
+        } catch (error) {
+          console.error('Failed to load appointments from backend:', error);
+          appointmentsData = [];
+        }
+
+        try {
+          medicinesData = await api.medicines.getAll();
+        } catch (error) {
+          console.error('Failed to load medicines from backend:', error);
+          medicinesData = [];
+        }
+      } else if (userRole === 'doctor' && userId) {
+        // Doctor loads their data
+        try {
+          patientsData = await api.doctors.getPatients(userId);
+        } catch (error) {
+          console.error('Failed to load patients from backend:', error);
+          patientsData = [];
+        }
+
+        try {
+          doctorsData = await api.doctors.getAll();
+        } catch (error) {
+          console.error('Failed to load doctors from backend:', error);
+          doctorsData = [];
+        }
+
+        try {
+          hospitalsData = await api.hospitals.getAll();
+        } catch (error) {
+          console.error('Failed to load hospitals from backend:', error);
+          hospitalsData = [];
+        }
+
+        try {
+          appointmentsData = await api.appointments.getByDoctor(userId);
+          // Normalize status and type values to lowercase for frontend consistency
+          appointmentsData = appointmentsData.map(apt => ({
+            ...apt,
+            status: apt.status?.toLowerCase() === 'upcoming' ? 'booked' : apt.status?.toLowerCase(),
+            type: apt.type?.toLowerCase(),
+            date: apt.appointmentDate,
+            time: apt.appointmentTime,
+          }));
+        } catch (error) {
+          console.error('Failed to load appointments from backend:', error);
+          appointmentsData = [];
+        }
+
+        try {
+          medicinesData = await api.medicines.getAll();
+        } catch (error) {
+          console.error('Failed to load medicines from backend:', error);
+          medicinesData = [];
+        }
+      } else {
+        // Fallback for other roles or no userId - load general data
+        try {
+          patientsData = await api.patients.getAll();
+        } catch (error) {
+          console.error('Failed to load patients from backend:', error);
+          patientsData = [];
+        }
+
+        try {
+          doctorsData = await api.doctors.getAll();
+        } catch (error) {
+          console.error('Failed to load doctors from backend:', error);
+          doctorsData = [];
+        }
+
+        try {
+          hospitalsData = await api.hospitals.getAll();
+        } catch (error) {
+          console.error('Failed to load hospitals from backend:', error);
           hospitalsData = [];
         }
 
@@ -181,20 +268,20 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
           // Normalize status and type values to lowercase for frontend consistency
           appointmentsData = appointmentsData.map(apt => ({
             ...apt,
-            status: apt.status?.toLowerCase(),
+            status: apt.status?.toLowerCase() === 'upcoming' ? 'booked' : apt.status?.toLowerCase(),
             type: apt.type?.toLowerCase(),
             date: apt.appointmentDate,
             time: apt.appointmentTime,
           }));
         } catch (error) {
-          // Failed to load appointments from backend - using empty array
+          console.error('Failed to load appointments from backend:', error);
           appointmentsData = [];
         }
 
         try {
           medicinesData = await api.medicines.getAll();
         } catch (error) {
-          // Failed to load medicines from backend - using empty array
+          console.error('Failed to load medicines from backend:', error);
           medicinesData = [];
         }
       }
@@ -428,15 +515,6 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       try {
         const newAppointment = await api.appointments.create(appointmentData);
         setAppointments([...appointments, newAppointment]);
-
-        // Create chat room for the appointment
-        try {
-          await api.chat.createChatRoom(newAppointment.id);
-        } catch (chatError) {
-          console.warn('Failed to create chat room for appointment:', chatError);
-          // Don't fail the appointment booking if chat room creation fails
-        }
-
         toast.success('Appointment booked successfully!');
       } catch (error: any) {
         const errorMessage = error?.response?.data?.message || error?.message || 'Failed to book appointment';

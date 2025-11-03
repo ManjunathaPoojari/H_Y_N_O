@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -8,10 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../ui/textarea';
 import { Users, Building2, UserCog, Calendar, AlertCircle, CheckCircle, XCircle, TrendingUp, Plus } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
+import { useSearch } from '../../lib/search-context';
 import api from '../../lib/api-client';
 
 export const AdminDashboard = () => {
   const { patients, doctors, hospitals, appointments, approveHospital, rejectHospital, approveDoctor, suspendDoctor, addDoctor } = useAppStore();
+  const { searchQuery } = useSearch();
   const [stats, setStats] = useState({
     totalPatients: 0,
     totalDoctors: 0,
@@ -57,7 +60,7 @@ export const AdminDashboard = () => {
           totalHospitals: hospitals.length,
           pendingApprovals: hospitals.filter(h => h.status === 'pending').length +
                             doctors.filter(d => d.status === 'pending').length,
-          activeAppointments: appointments.filter(a => a.status === 'upcoming').length,
+          activeAppointments: appointments.filter(a => a.status === 'booked').length,
           emergencies: 2,
         });
       }
@@ -66,8 +69,35 @@ export const AdminDashboard = () => {
     loadStats();
   }, [patients, doctors, hospitals, appointments]);
 
-  const pendingHospitals = hospitals.filter(h => h.status === 'pending');
-  const pendingDoctors = doctors.filter(d => d.status === 'pending');
+  // Filter data based on search query
+  const filteredHospitals = (Array.isArray(hospitals) ? hospitals : []).filter(h => {
+    const query = searchQuery.toLowerCase();
+    if (query === 'hospital') return true;
+    return (h.name?.toLowerCase() || '').includes(query) ||
+      (h.city?.toLowerCase() || '').includes(query) ||
+      (h.state?.toLowerCase() || '').includes(query);
+  });
+
+  const filteredDoctors = (Array.isArray(doctors) ? doctors : []).filter(d => {
+    const query = searchQuery.toLowerCase();
+    if (query === 'doctor') return true;
+    return (d.name?.toLowerCase() || '').includes(query) ||
+      (d.specialization?.toLowerCase() || '').includes(query) ||
+      (d.email?.toLowerCase() || '').includes(query);
+  });
+
+  const filteredPatients = (Array.isArray(patients) ? patients : []).filter(p => {
+    const query = searchQuery.toLowerCase();
+    if (query === 'patient') return true;
+    return (p.name?.toLowerCase() || '').includes(query) ||
+      (p.email?.toLowerCase() || '').includes(query) ||
+      (p.phone || '').includes(query);
+  });
+
+  const pendingHospitals = filteredHospitals.filter(h => h.status === 'pending');
+  const pendingDoctors = filteredDoctors.filter(d => d.status === 'pending');
+
+
 
   // Handle Add Doctor Form
   const handleAddDoctor = async () => {
@@ -398,6 +428,8 @@ export const AdminDashboard = () => {
           </CardContent>
         </Card>
       )}
+
+
 
       {/* Quick Actions */}
       <Card>

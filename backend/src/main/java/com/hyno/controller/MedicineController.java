@@ -1,4 +1,4 @@
-spackage com.hyno.controller;
+package com.hyno.controller;
 
 import com.hyno.entity.Medicine;
 import com.hyno.service.MedicineService;

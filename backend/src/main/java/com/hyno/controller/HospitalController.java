@@ -1,13 +1,16 @@
 package com.hyno.controller;
 
-import com.hyno.entity.Hospital;
+import com.hyno.entity.ScheduleSlot;
+import com.hyno.service.DoctorService;
 import com.hyno.service.HospitalService;
+import com.hyno.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/hospitals")
@@ -17,65 +20,87 @@ public class HospitalController {
     @Autowired
     private HospitalService hospitalService;
 
+    @Autowired
+    private ScheduleService scheduleService;
+
+    @Autowired
+    private DoctorService doctorService;
+
     @GetMapping
-    public List<Hospital> getAllHospitals() {
-        return hospitalService.getAllHospitals();
+    public ResponseEntity<List<com.hyno.entity.Hospital>> getAllHospitals() {
+        try {
+            List<com.hyno.entity.Hospital> hospitals = hospitalService.getAllHospitals();
+            return ResponseEntity.ok(hospitals);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Hospital> getHospitalById(@PathVariable String id) {
-        Optional<Hospital> hospital = hospitalService.getHospitalById(id);
-        return hospital.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    @GetMapping("/{hospitalId}/doctors")
+    public ResponseEntity<List<com.hyno.entity.Doctor>> getDoctorsByHospital(@PathVariable String hospitalId) {
+        try {
+            List<com.hyno.entity.Doctor> doctors = doctorService.getDoctorsByHospital(hospitalId);
+            return ResponseEntity.ok(doctors);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
-    @GetMapping("/email/{email}")
-    public ResponseEntity<Hospital> getHospitalByEmail(@PathVariable String email) {
-        Hospital hospital = hospitalService.getHospitalByEmail(email);
-        return hospital != null ? ResponseEntity.ok(hospital) : ResponseEntity.notFound().build();
+    @GetMapping("/{hospitalId}/reports/overview")
+    public ResponseEntity<Map<String, Object>> getHospitalOverviewReport(
+            @PathVariable String hospitalId,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        try {
+            Map<String, Object> report = hospitalService.generateHospitalOverviewReport(hospitalId, startDate, endDate);
+            return ResponseEntity.ok(report);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
-    @GetMapping("/registration/{registrationNumber}")
-    public ResponseEntity<Hospital> getHospitalByRegistrationNumber(@PathVariable String registrationNumber) {
-        Hospital hospital = hospitalService.getHospitalByRegistrationNumber(registrationNumber);
-        return hospital != null ? ResponseEntity.ok(hospital) : ResponseEntity.notFound().build();
-    }
+    // Hospital Schedule
+    @GetMapping("/{hospitalId}/schedule-slots")
+    public ResponseEntity<Map<String, Object>> getHospitalSchedule(@PathVariable String hospitalId) {
+        try {
+            Map<String, Object> scheduleData = new HashMap<>();
+            scheduleData.put("hospitalId", hospitalId);
 
-    @GetMapping("/status/{status}")
-    public List<Hospital> getHospitalsByStatus(@PathVariable String status) {
-        return hospitalService.getHospitalsByStatus(status);
-    }
+            // Get available slots from today onwards
+            LocalDate today = LocalDate.now();
+            List<ScheduleSlot> availableSlots = scheduleService.getAvailableSlotsByHospitalAndDate(hospitalId, today);
 
-    @GetMapping("/city/{city}")
-    public List<Hospital> getHospitalsByCity(@PathVariable String city) {
-        return hospitalService.getHospitalsByCity(city);
-    }
+            // Convert to the expected format
+            List<Map<String, Object>> slotsData = availableSlots.stream()
+                .map(slot -> Map.<String, Object>of(
+                    "id", slot.getId().toString(),
+                    "date", slot.getSlotDate().toString(),
+                    "startTime", slot.getStartTime().toString(),
+                    "endTime", slot.getEndTime().toString(),
+                    "isAvailable", slot.isAvailable(),
+                    "maxAppointments", slot.getMaxAppointments(),
+                    "appointmentType", slot.getSchedule().getAppointmentType().toString().toLowerCase(),
+                    "notes", slot.getNotes(),
+                    "availableSpots", slot.getAvailableSpots()
+                ))
+                .collect(Collectors.toList());
 
-    @PostMapping
-    public Hospital createHospital(@RequestBody Hospital hospital) {
-        return hospitalService.createHospital(hospital);
-    }
+            scheduleData.put("availableSlots", slotsData);
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Hospital> updateHospital(@PathVariable String id, @RequestBody Hospital hospitalDetails) {
-        Hospital updatedHospital = hospitalService.updateHospital(id, hospitalDetails);
-        return updatedHospital != null ? ResponseEntity.ok(updatedHospital) : ResponseEntity.notFound().build();
-    }
+            // Get weekly schedule pattern (mock for now, could be derived from schedules)
+            scheduleData.put("weeklySchedule", Map.of(
+                "monday", List.of("08:00-18:00"),
+                "tuesday", List.of("08:00-18:00"),
+                "wednesday", List.of("08:00-18:00"),
+                "thursday", List.of("08:00-18:00"),
+                "friday", List.of("08:00-18:00"),
+                "saturday", List.of("09:00-14:00"),
+                "sunday", List.of("10:00-16:00")
+            ));
 
-    @PutMapping("/{id}/approve")
-    public ResponseEntity<Hospital> approveHospital(@PathVariable String id) {
-        Hospital approvedHospital = hospitalService.approveHospital(id);
-        return approvedHospital != null ? ResponseEntity.ok(approvedHospital) : ResponseEntity.notFound().build();
-    }
-
-    @PutMapping("/{id}/reject")
-    public ResponseEntity<Hospital> rejectHospital(@PathVariable String id) {
-        Hospital rejectedHospital = hospitalService.rejectHospital(id);
-        return rejectedHospital != null ? ResponseEntity.ok(rejectedHospital) : ResponseEntity.notFound().build();
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteHospital(@PathVariable String id) {
-        hospitalService.deleteHospital(id);
-        return ResponseEntity.ok().build();
+            return ResponseEntity.ok(scheduleData);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

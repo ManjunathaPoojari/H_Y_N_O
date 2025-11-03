@@ -45,7 +45,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return true;
       }
     } catch (err) {
-      // Login error handled by toast notification
+      console.error('Login failed:', err);
     }
     return false;
   };
@@ -58,7 +58,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return await login(userData.email, userData.password);
       }
     } catch (err) {
-      // Registration error handled by toast notification
+      console.error('Registration failed:', err);
     }
     return false;
   };

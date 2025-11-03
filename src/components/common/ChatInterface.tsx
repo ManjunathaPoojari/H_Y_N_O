@@ -1,15 +1,19 @@
 
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { Send, Paperclip, Smile, Wifi, WifiOff, FileText, Pill, User, MessageCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Send, Paperclip, Smile, Wifi, WifiOff, FileText, Pill, User, MessageCircle, Video } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
 import { useAppStore } from '../../lib/app-store';
 import { websocketClient, ChatMessage, ChatRoom, TypingIndicator } from '../../lib/websocket-client';
 import { chatAPI } from '../../lib/api-client';
+import { VideoCall } from './VideoCall';
+import ErrorBoundary from './ErrorBoundary';
 import { toast } from 'sonner';
 
 interface Message extends ChatMessage {
@@ -31,6 +35,8 @@ interface ChatRoomUI {
   doctorName: string;
   doctorSpecialty: string;
   appointmentId?: string;
+  patientId?: string;
+  doctorId?: string;
   status?: string;
 }
 
@@ -45,20 +51,36 @@ export const ChatInterface = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showVideoCall, setShowVideoCall] = useState(false);
+
+  // Clear chat state when user changes (e.g., switching login)
+  useEffect(() => {
+    setSelectedChatRoomId(null);
+    setMessages([]);
+    setChatRooms([]);
+  }, [user?.id]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Get appointment ID from URL params
   const urlParams = new URLSearchParams(window.location.search);
-  const appointmentId = urlParams.get('appointmentId');
+  const appointmentIdFromUrl = urlParams.get('appointmentId');
+
+  // Reload chat rooms when URL changes (e.g., direct navigation to chat with appointmentId)
+  useEffect(() => {
+    if (user?.id && appointmentIdFromUrl) {
+      loadChatRooms();
+    }
+  }, [appointmentIdFromUrl, user?.id]);
 
   // Helper function to format timestamp safely
-  const formatTimestamp = (timestamp?: string | Date | null) => {
+  const formatTimestamp = (timestamp?: string | Date | null): string => {
     try {
       if (!timestamp || timestamp === 'null' || timestamp === '') return '';
       const date = new Date(timestamp);
       if (isNaN(date.getTime())) {
-        return 'Invalid Date';
+        return 'UPCOMING';
       }
       return date.toLocaleTimeString('en-US', {
         hour: '2-digit',
@@ -66,7 +88,7 @@ export const ChatInterface = () => {
       });
     } catch (error) {
       console.error('Error formatting timestamp:', error);
-      return 'Invalid Date';
+      return 'UPCOMING';
     }
   };
 
@@ -94,14 +116,14 @@ export const ChatInterface = () => {
     if (user?.id) {
       initializeChat();
     }
-  }, [user?.id, appointments, doctors]); // Include appointments and doctors to reload when they change
+  }, [user?.id, appointmentIdFromUrl]); // Include appointmentIdFromUrl to reload when URL changes
 
   // Reload chat rooms when appointments or doctors change
   useEffect(() => {
     if (user?.id && appointments.length > 0 && doctors.length > 0) {
       loadChatRooms();
     }
-  }, [appointments, doctors, user?.id]);
+  }, [appointments, doctors, user?.id, appointmentIdFromUrl]);
 
   // WebSocket connection management
   useEffect(() => {
@@ -128,65 +150,139 @@ export const ChatInterface = () => {
     }
   }, [selectedChatRoomId, isConnected]);
 
+  // Ensure chat room exists before sending messages
+  const ensureChatRoomExists = async (appointmentId: string) => {
+    try {
+      await chatAPI.createChatRoom(appointmentId);
+    } catch (error) {
+      console.warn('Chat room might already exist:', error);
+    }
+  };
+
   const loadChatRooms = async () => {
     try {
       if (!user?.id) return;
 
-      // For patients, create chat rooms based on their appointments
-      if (user.role === 'patient') {
-        const patientAppointments = appointments.filter(apt => apt.patientId === user.id);
-        const uiRooms: ChatRoomUI[] = patientAppointments.map((appointment) => {
-          const doctor = doctors.find(d => d.id === appointment.doctorId);
-          return {
-            id: `chat-${appointment.id}`,
-            name: `Chat with ${doctor?.name || 'Doctor'}`,
-            participants: [user.id, appointment.doctorId],
-            createdAt: appointment.date,
-            lastMessage: null,
-            lastMessageTime: '',
-            unreadCount: 0,
-            doctorName: doctor?.name || 'Doctor',
-            doctorSpecialty: doctor?.specialization || 'General Physician',
-            appointmentId: appointment.id,
-            status: 'active',
-          };
-        });
+      // Get user-specific appointments
+      const userAppointments = user.role === 'patient'
+        ? appointments.filter(apt => apt.patientId === user.id)
+        : appointments.filter(apt => apt.doctorId === user.id);
 
-        setChatRooms(uiRooms);
+      // Try to load chat rooms from API first
+      let apiRooms: any[] = [];
+      try {
+        apiRooms = await chatAPI.getChatRooms(user.id, user.role);
+      } catch (apiError) {
+        console.error('Failed to load chat rooms from API:', apiError);
+      }
 
-        // Select room based on appointmentId from URL or default to first room
-        if (appointmentId) {
-          const matchingRoom = uiRooms.find(room => room.appointmentId === appointmentId);
-          if (matchingRoom) {
-            setSelectedChatRoomId(matchingRoom.id);
-            // Load messages for the selected room
-            loadMessages(matchingRoom.id);
-          } else if (uiRooms.length > 0) {
-            // If no matching room found, select first available
-            setSelectedChatRoomId(uiRooms[0].id);
-            loadMessages(uiRooms[0].id);
+      // Create UI rooms from API rooms - deduplicate by doctor/patient to avoid multiples
+      const roomMap = new Map<string, any>();
+      apiRooms.forEach((room: any) => {
+        const key = user.role === 'doctor' ? room.patientId : room.doctorId;
+        if (!roomMap.has(key)) {
+          roomMap.set(key, room);
+        }
+      });
+      const uniqueApiRooms = Array.from(roomMap.values());
+
+      let uiRooms: ChatRoomUI[] = uniqueApiRooms.map((room: any) => ({
+        ...room,
+        doctorName: user.role === 'doctor' ? (room.patientName || 'Unknown Patient') : (room.doctorName || 'Doctor'),
+        doctorSpecialty: user.role === 'doctor' ? 'Patient' : (room.doctor?.specialization || 'General Physician'),
+        lastMessageTime: room.lastMessageTime ? formatTimestamp(room.lastMessageTime) : '',
+        appointmentId: room.appointment?.id,
+        status: room.status || 'active',
+      }));
+
+      // For appointments that don't have chat rooms yet, create UI-only rooms
+      // and ensure chat rooms exist in backend
+      for (const appointment of userAppointments) {
+        const existingRoom = uiRooms.find(room => room.appointmentId === appointment.id);
+        if (!existingRoom) {
+          // Try to create chat room in backend
+          try {
+            const createdRoom = await chatAPI.createChatRoom(appointment.id);
+            // Add the created room to UI rooms
+            const doctor = user.role === 'patient'
+              ? doctors.find(d => d.id === appointment.doctorId)
+              : null;
+            const patientName = user.role === 'doctor'
+              ? (appointment.patientName || 'Unknown Patient')
+              : (user.name || 'Patient');
+
+            uiRooms.push({
+              id: createdRoom.id,
+              name: user.role === 'patient'
+                ? `Chat with ${doctor?.name || 'Doctor'}`
+                : `Chat with ${patientName}`,
+              participants: [appointment.patientId, appointment.doctorId],
+              createdAt: appointment.date || new Date().toISOString(),
+              lastMessage: null,
+              lastMessageTime: '',
+              unreadCount: 0,
+              doctorName: user.role === 'patient' ? (doctor?.name || 'Doctor') : patientName,
+              doctorSpecialty: user.role === 'patient'
+                ? (doctor?.specialization || 'General Physician')
+                : 'Patient',
+              appointmentId: appointment.id,
+              patientId: appointment.patientId,
+              doctorId: appointment.doctorId,
+              status: 'active',
+            });
+          } catch (createError) {
+            console.error('Failed to create chat room for appointment:', appointment.id, createError);
+            // Fallback: create UI-only room
+            const doctor = user.role === 'patient'
+              ? doctors.find(d => d.id === appointment.doctorId)
+              : null;
+            const patientName = user.role === 'doctor'
+              ? (appointment.patientName || 'Unknown Patient')
+              : (user.name || 'Patient');
+
+            uiRooms.push({
+              id: `chat-${appointment.id}`,
+              name: user.role === 'patient'
+                ? `Chat with ${doctor?.name || 'Doctor'}`
+                : `Chat with ${patientName}`,
+              participants: [appointment.patientId, appointment.doctorId],
+              createdAt: appointment.date || new Date().toISOString(),
+              lastMessage: null,
+              lastMessageTime: '',
+              unreadCount: 0,
+              doctorName: user.role === 'patient' ? (doctor?.name || 'Doctor') : patientName,
+              doctorSpecialty: user.role === 'patient'
+                ? (doctor?.specialization || 'General Physician')
+                : 'Patient',
+              appointmentId: appointment.id,
+              patientId: appointment.patientId,
+              doctorId: appointment.doctorId,
+              status: 'active',
+            });
           }
-        } else if (uiRooms.length > 0 && !selectedChatRoomId) {
+        }
+      }
+
+      // Remove duplicates based on doctor/patient ID to prevent multiple entries for same person
+      const uniqueUiRooms = uiRooms.filter((room, index, self) =>
+        index === self.findIndex(r => (user.role === 'doctor' ? r.patientId : r.doctorId) === (user.role === 'doctor' ? room.patientId : room.doctorId))
+      );
+
+      setChatRooms(uniqueUiRooms);
+
+      // Select room based on appointmentId from URL or default to first room
+      if (appointmentIdFromUrl) {
+        const matchingRoom = uiRooms.find(room => room.appointmentId === appointmentIdFromUrl);
+        if (matchingRoom) {
+          setSelectedChatRoomId(matchingRoom.id);
+          loadMessages(matchingRoom.id);
+        } else if (uiRooms.length > 0) {
           setSelectedChatRoomId(uiRooms[0].id);
           loadMessages(uiRooms[0].id);
         }
-      } else {
-        // For doctors, load chat rooms from backend
-        const rooms = await chatAPI.getChatRooms(user.id, user.role);
-        const uiRooms: ChatRoomUI[] = rooms.map((room: any) => ({
-          ...room,
-          doctorName: room.doctorName,
-          doctorSpecialty: room.doctor?.specialization || 'General Physician',
-          lastMessageTime: room.lastMessageTime ? formatTimestamp(room.lastMessageTime) : '',
-          appointmentId: room.appointment?.id,
-        }));
-
-        setChatRooms(uiRooms);
-
-        if (uiRooms.length > 0 && !selectedChatRoomId) {
-          setSelectedChatRoomId(uiRooms[0].id);
-          loadMessages(uiRooms[0].id);
-        }
+      } else if (uiRooms.length > 0 && !selectedChatRoomId) {
+        setSelectedChatRoomId(uiRooms[0].id);
+        loadMessages(uiRooms[0].id);
       }
     } catch (error) {
       console.error('Failed to load chat rooms:', error);
@@ -200,6 +296,8 @@ export const ChatInterface = () => {
     try {
       await chatAPI.createChatRoom(appointmentId);
       toast.success('Chat room created for appointment');
+      // Reload chat rooms after creating new one
+      loadChatRooms();
     } catch (error) {
       console.error('Failed to create chat room:', error);
       toast.error('Failed to create chat room');
@@ -212,21 +310,13 @@ export const ChatInterface = () => {
       setMessages([]);
 
       const msgs = await chatAPI.getChatMessages(chatRoomId);
-      // Only load messages from the last 24 hours to keep it real-time focused
-      const oneDayAgo = new Date();
-      oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-      const recentMsgs = msgs.filter((msg: any) => {
-        const msgDate = new Date(msg.timestamp);
-        return msgDate >= oneDayAgo;
-      });
-
-      const uiMessages: Message[] = recentMsgs.map((msg: any) => ({
+      const uiMessages: Message[] = msgs.map((msg: any) => ({
         ...msg,
         sender: msg.senderName,
         senderRole: msg.senderRole.toLowerCase(),
         message: msg.content,
-        timestamp: formatTimestamp(msg.timestamp),
+        timestamp: formatTimestamp(msg.createdAt),
       }));
       setMessages(uiMessages);
     } catch (error) {
@@ -235,25 +325,33 @@ export const ChatInterface = () => {
     }
   };
 
-  const handleIncomingMessage = useCallback((message: ChatMessage, chatRoomId: string) => {
-    if (chatRoomId === selectedChatRoomId) {
-      const uiMessage: Message = {
-        ...message,
-        sender: message.senderName,
-        senderRole: message.senderRole.toLowerCase() as 'patient' | 'doctor',
-        message: message.content,
-        timestamp: formatTimestamp(message.timestamp),
-      };
-      setMessages(prev => [...prev, uiMessage]);
-    }
+    const handleIncomingMessage = useCallback((message: ChatMessage, chatRoomId: string) => {
+      if (chatRoomId === selectedChatRoomId) {
+        // Check if message already exists to prevent duplicates
+        setMessages(prev => {
+          const messageExists = prev.some(msg => msg.id === message.id);
+          if (messageExists) {
+            return prev; // Don't add duplicate
+          }
 
-    // Update chat room's last message
-    setChatRooms(prev => prev.map(room =>
-      room.id === chatRoomId
-        ? { ...room, lastMessage: message, lastMessageTime: formatTimestamp(message.timestamp) }
-        : room
-    ));
-  }, [selectedChatRoomId]);
+          const uiMessage: Message = {
+            ...message,
+            sender: message.senderName,
+            senderRole: message.senderRole.toLowerCase() as 'patient' | 'doctor',
+            message: message.content,
+            timestamp: formatTimestamp(message.createdAt),
+          };
+          return [...prev, uiMessage];
+        });
+      }
+
+      // Update chat room's last message
+      setChatRooms(prev => prev.map(room =>
+        room.id === chatRoomId
+          ? { ...room, lastMessage: message, lastMessageTime: formatTimestamp(message.createdAt) }
+          : room
+      ));
+    }, [selectedChatRoomId]);
 
   const handleTypingIndicator = useCallback((indicator: TypingIndicator, chatRoomId: string) => {
     if (chatRoomId === selectedChatRoomId && indicator.userId !== user?.id) {
@@ -277,6 +375,7 @@ export const ChatInterface = () => {
       }
     } catch (error) {
       console.error('Failed to mark messages as read:', error);
+      // Don't throw error to prevent UI disruption
     }
   };
 
@@ -287,6 +386,29 @@ export const ChatInterface = () => {
     }
 
     try {
+      let chatRoomIdToUse = selectedChatRoomId;
+      const selectedRoom = chatRooms.find(room => room.id === selectedChatRoomId);
+      const appointmentId = selectedRoom?.appointmentId;
+
+      // If it's a fallback ID (starts with 'chat-'), create the real chat room
+      if (selectedChatRoomId.startsWith('chat-') && appointmentId) {
+        const createdRoom = await chatAPI.createChatRoom(appointmentId);
+        chatRoomIdToUse = createdRoom.id;
+
+        // Update the chat room ID in the UI
+        setChatRooms(prev => prev.map(room =>
+          room.id === selectedChatRoomId
+            ? { ...room, id: createdRoom.id }
+            : room
+        ));
+        setSelectedChatRoomId(createdRoom.id);
+      } else {
+        // Ensure chat room exists for real IDs
+        if (appointmentId) {
+          await ensureChatRoomExists(appointmentId);
+        }
+      }
+
       const messageData = {
         senderId: user.id,
         senderName: user.name,
@@ -294,26 +416,10 @@ export const ChatInterface = () => {
         content: newMessage,
       };
 
-      // Send via API first (fallback if WebSocket fails)
-      await chatAPI.sendMessage(selectedChatRoomId, messageData);
+      // Send via WebSocket only - backend will handle persistence
+      websocketClient.sendMessage(chatRoomIdToUse, messageData);
 
-      // Send via WebSocket
-      websocketClient.sendMessage(selectedChatRoomId, messageData);
-
-      // Optimistically add to UI
-      const optimisticMessage: Message = {
-        id: `temp-${Date.now()}`,
-        senderId: user.id,
-        senderName: user.name,
-        senderRole: user.role as 'patient' | 'doctor',
-        content: newMessage,
-        sender: user.name,
-        message: newMessage,
-        timestamp: formatTimestamp(new Date()),
-        read: false,
-      };
-
-      setMessages(prev => [...prev, optimisticMessage]);
+      // Clear input immediately
       setNewMessage('');
 
       // Stop typing indicator
@@ -363,6 +469,25 @@ export const ChatInterface = () => {
   const handleInputChange = (value: string) => {
     setNewMessage(value);
     handleTypingStart();
+  };
+
+  // Helper function to check if video call should be enabled
+  const isVideoCallEnabled = () => {
+    if (!user || user.role !== 'patient' || !selectedChatRoomId) return false;
+
+    const selectedRoom = chatRooms.find(room => room.id === selectedChatRoomId);
+    if (!selectedRoom?.appointmentId) return false;
+
+    const appointment = appointments.find(apt => apt.id === selectedRoom.appointmentId);
+    if (!appointment || appointment.status !== 'booked') return false;
+
+    // Check if current time is within 15 minutes before appointment time
+    const now = new Date();
+    const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
+    const timeDiff = appointmentDateTime.getTime() - now.getTime();
+    const fifteenMinutes = 15 * 60 * 1000; // 15 minutes in milliseconds
+
+    return timeDiff > 0 && timeDiff <= fifteenMinutes;
   };
 
   return (
@@ -467,9 +592,34 @@ export const ChatInterface = () => {
                     Patient History
                   </Button>
                 )}
-                <Button size="sm" variant="outline" disabled>
-                  Video Call
-                </Button>
+                {isVideoCallEnabled() && user?.role === 'patient' && selectedChatRoomId && (
+                  <Dialog open={showVideoCall} onOpenChange={setShowVideoCall}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <Video className="h-4 w-4 mr-2" />
+                        Video Call
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[80vh] w-[95vw] sm:w-[90vw]">
+                      <DialogHeader>
+                        <DialogTitle>Video Consultation</DialogTitle>
+                      </DialogHeader>
+                      <div className="h-[60vh]">
+                        <ErrorBoundary>
+                          <VideoCall
+                            appointmentId={chatRooms.find(room => room.id === selectedChatRoomId)?.appointmentId || ''}
+                          />
+                        </ErrorBoundary>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+                {!isVideoCallEnabled() && user?.role === 'patient' && selectedChatRoomId && (
+                  <Button size="sm" variant="outline" disabled>
+                    <Video className="h-4 w-4 mr-2" />
+                    Video Call
+                  </Button>
+                )}
               </div>
             </div>
           </CardHeader>

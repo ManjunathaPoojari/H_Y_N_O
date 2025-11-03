@@ -55,25 +55,43 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
     ? doctors.filter(d => d.hospitalId === selectedHospital && d.available && d.status === 'approved')
     : doctors.filter(d => d.available && d.status === 'approved');
 
-  // Fetch available slots when doctor is selected
+  // Fetch available slots when doctor is selected (or hospital for hospital appointments)
   useEffect(() => {
     const fetchAvailableSlots = async () => {
-      if (!selectedDoctor) {
+      if (type === 'hospital' && !selectedHospital) {
+        setAvailableSlots([]);
+        return;
+      }
+      if (type !== 'hospital' && !selectedDoctor) {
         setAvailableSlots([]);
         return;
       }
 
       setLoadingSlots(true);
       try {
-        const scheduleData = await api.doctors.getSchedule(selectedDoctor);
-        const slots = scheduleData.availableSlots || [];
-        // Filter only available slots for future dates
-        const now = new Date();
-        const futureSlots = slots.filter((slot: ScheduleSlot) => {
-          const slotDateTime = new Date(`${slot.date}T${slot.startTime}`);
-          return slot.isAvailable && slotDateTime > now;
-        });
-        setAvailableSlots(futureSlots);
+        if (type === 'hospital') {
+          // For hospital appointments, fetch hospital-wide slots
+          const scheduleData = await api.hospitals.getSchedule(selectedHospital);
+          const slots = scheduleData.availableSlots || [];
+          // Filter only available slots for future dates
+          const now = new Date();
+          const futureSlots = slots.filter((slot: ScheduleSlot) => {
+            const slotDateTime = new Date(`${slot.date}T${slot.startTime}`);
+            return slot.isAvailable && slotDateTime > now;
+          });
+          setAvailableSlots(futureSlots);
+        } else {
+          // For doctor appointments, fetch doctor-specific slots
+          const scheduleData = await api.doctors.getSchedule(selectedDoctor);
+          const slots = scheduleData.availableSlots || [];
+          // Filter only available slots for future dates
+          const now = new Date();
+          const futureSlots = slots.filter((slot: ScheduleSlot) => {
+            const slotDateTime = new Date(`${slot.date}T${slot.startTime}`);
+            return slot.isAvailable && slotDateTime > now;
+          });
+          setAvailableSlots(futureSlots);
+        }
       } catch (error) {
         console.error('Failed to fetch available slots:', error);
         toast.error('Failed to load available time slots');
@@ -84,10 +102,14 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
     };
 
     fetchAvailableSlots();
-  }, [selectedDoctor]);
+  }, [selectedDoctor, selectedHospital, type]);
 
   const handleBooking = async () => {
-    if (!selectedDoctor || !selectedSlot || !reason) {
+    if (type === 'hospital' && (!selectedHospital || !selectedSlot || !reason)) {
+      toast.error('Please select a hospital, time slot, and provide a reason');
+      return;
+    }
+    if (type !== 'hospital' && (!selectedDoctor || !selectedSlot || !reason)) {
       toast.error('Please select a doctor, time slot, and provide a reason');
       return;
     }
@@ -98,20 +120,21 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
       return;
     }
 
-    const doctor = doctors.find(d => d.id === selectedDoctor);
+    const doctor = selectedDoctor ? doctors.find(d => d.id === selectedDoctor) : null;
     const slot = availableSlots.find(s => s.id === selectedSlot);
 
-    if (!doctor || !slot) {
+    if ((type !== 'hospital' && !doctor) || !slot) {
       toast.error('Invalid doctor or time slot selected');
       return;
     }
 
     try {
+      // Book the primary appointment
       await bookAppointment({
         patientId: user.id,
         patientName: user.name,
-        doctorId: doctor.id,
-        doctorName: doctor.name,
+        doctorId: doctor?.id || undefined,
+        doctorName: doctor?.name || 'Hospital Appointment',
         hospitalId: selectedHospital || undefined,
         type: type,
         date: slot.date,
@@ -119,6 +142,22 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
         status: 'pending', // All appointments start as pending for doctor approval
         reason,
       });
+
+      // If booking a video consultation, also create a chat consultation for follow-up
+      if (type === 'video') {
+        await bookAppointment({
+          patientId: user.id,
+          patientName: user.name,
+          doctorId: doctor?.id || undefined,
+          doctorName: doctor?.name || 'Hospital Appointment',
+          hospitalId: selectedHospital || undefined,
+          type: 'chat',
+          date: slot.date,
+          time: slot.startTime,
+          status: 'pending',
+          reason: `${reason} (Follow-up chat for video consultation)`,
+        });
+      }
 
       toast.success('Appointment booked successfully!');
 
@@ -145,6 +184,13 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
           {titles[type]}
         </h1>
       <p className="text-gray-600">Select a hospital/clinic, doctor and choose your preferred time slot</p>
+      {type === 'video' && (
+        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-sm text-blue-800">
+            <strong>Note:</strong> Booking a video consultation also creates a chat consultation for follow-up purposes.
+          </p>
+        </div>
+      )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -179,7 +225,7 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
           </Card>
 
           {/* Doctor Selection */}
-          {selectedHospital && (
+          {selectedHospital && type !== 'hospital' && (
             <Card>
               <CardHeader>
                 <CardTitle>Select Doctor</CardTitle>
@@ -223,7 +269,7 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
           )}
 
           {/* Available Time Slots */}
-          {selectedHospital && selectedDoctor && (
+          {selectedHospital && (selectedDoctor || type === 'hospital') && (
             <Card>
               <CardHeader>
                 <CardTitle>Available Time Slots</CardTitle>
@@ -278,8 +324,8 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <Clock className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                    <p>No available time slots for this doctor</p>
-                    <p className="text-sm">Please select a different doctor or try again later</p>
+                    <p>No available time slots for this {type === 'hospital' ? 'hospital' : 'doctor'}</p>
+                    <p className="text-sm">Please select a different {type === 'hospital' ? 'hospital' : 'doctor'} or try again later</p>
                   </div>
                 )}
               </CardContent>
@@ -287,7 +333,7 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
           )}
 
           {/* Appointment Details */}
-          {selectedHospital && selectedDoctor && selectedSlot && (
+          {selectedHospital && (selectedDoctor || type === 'hospital') && selectedSlot && (
             <Card>
               <CardHeader>
                 <CardTitle>Appointment Details</CardTitle>
@@ -324,20 +370,22 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
               <CardTitle>Booking Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {selectedDoctor ? (
+              {selectedDoctor || (type === 'hospital' && selectedHospital) ? (
                 <>
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Consultation Type</p>
                     <Badge className="capitalize">{type}</Badge>
                   </div>
 
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Doctor</p>
-                    <p>{doctors.find(d => d.id === selectedDoctor)?.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {doctors.find(d => d.id === selectedDoctor)?.specialization}
-                    </p>
-                  </div>
+                  {selectedDoctor && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Doctor</p>
+                      <p>{doctors.find(d => d.id === selectedDoctor)?.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {doctors.find(d => d.id === selectedDoctor)?.specialization}
+                      </p>
+                    </div>
+                  )}
 
                   {selectedHospital && (
                     <div>
@@ -370,20 +418,22 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                     </div>
                   )}
 
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-gray-600">Consultation Fee</span>
-                      <span>₹{doctors.find(d => d.id === selectedDoctor)?.consultationFee}</span>
+                  {selectedDoctor && (
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-600">Consultation Fee</span>
+                        <span>₹{doctors.find(d => d.id === selectedDoctor)?.consultationFee}</span>
+                      </div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-600">Platform Fee</span>
+                        <span>₹50</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t">
+                        <span>Total</span>
+                        <span className="text-lg">₹{(doctors.find(d => d.id === selectedDoctor)?.consultationFee || 0) + 50}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-gray-600">Platform Fee</span>
-                      <span>₹50</span>
-                    </div>
-                    <div className="flex justify-between items-center pt-2 border-t">
-                      <span>Total</span>
-                      <span className="text-lg">₹{(doctors.find(d => d.id === selectedDoctor)?.consultationFee || 0) + 50}</span>
-                    </div>
-                  </div>
+                  )}
                 </>
               ) : (
                 <p className="text-gray-500 text-center py-8">Select a hospital/clinic and doctor to see booking summary</p>

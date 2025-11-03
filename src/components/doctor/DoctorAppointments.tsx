@@ -2,14 +2,15 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Calendar, Users, Video, MessageSquare, Clock, FileText, Loader2, CheckCircle, XCircle, Edit } from 'lucide-react';
+import { Calendar, Users, Video, MessageSquare, Clock, FileText, Loader2, CheckCircle, XCircle, Edit, Save, X } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
 import { appointmentAPI, chatAPI } from '../../lib/api-client';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
 
 interface Appointment {
   id: string;
@@ -30,8 +31,11 @@ export const DoctorAppointments = () => {
   const [loading, setLoading] = useState(true);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [newDate, setNewDate] = useState('');
   const [newTime, setNewTime] = useState('');
+  const [notes, setNotes] = useState('');
+  const [prescription, setPrescription] = useState('');
 
   useEffect(() => {
     if (user?.id) {
@@ -54,12 +58,12 @@ export const DoctorAppointments = () => {
     }
   };
 
-  const handleStartVideo = async (appointmentId: string) => {
+  const handleStartVideo = async (appointmentId: string, patientId: string) => {
     try {
       toast.success('Starting video consultation...');
       await chatAPI.createChatRoom(appointmentId);
       setTimeout(() => {
-        window.open('https://meet.google.com/new', '_blank');
+        window.location.href = `/doctor/video-call?appointmentId=${appointmentId}&patientId=${patientId}`;
       }, 1000);
     } catch (error) {
       console.error('Error starting video call:', error);
@@ -79,13 +83,21 @@ export const DoctorAppointments = () => {
     }
   };
 
-  const handleApproveAppointment = async (appointmentId: string) => {
+  const handleApproveAppointment = async (appointment: Appointment) => {
     try {
-      await appointmentAPI.confirmAppointment(appointmentId);
+      await appointmentAPI.confirmAppointment(appointment.id);
       toast.success('Appointment approved');
       loadAppointments();
       // Dispatch custom event to notify dashboard to refresh
       window.dispatchEvent(new CustomEvent('appointmentUpdated'));
+
+      // Redirect based on appointment type
+      if (appointment.type === 'video') {
+        window.location.href = `/doctor/video-call?appointmentId=${appointment.id}&patientId=${appointment.patientId}`;
+      } else if (appointment.type === 'chat') {
+        window.location.href = `/doctor/chat?appointmentId=${appointment.id}`;
+      }
+      // For other types (e.g., inperson), stay on the page
     } catch (error: any) {
       console.error('Error approving appointment:', error);
       const errorMessage = error?.response?.data?.message || error?.message || 'Failed to approve appointment';
@@ -137,6 +149,26 @@ export const DoctorAppointments = () => {
     } catch (error) {
       console.error('Error rescheduling appointment:', error);
       toast.error('Failed to reschedule appointment');
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    if (!selectedAppointment) return;
+
+    try {
+      await appointmentAPI.update(selectedAppointment.id, {
+        notes: notes,
+        prescription: prescription
+      });
+      toast.success('Notes and prescription saved');
+      setIsNotesOpen(false);
+      setSelectedAppointment(null);
+      setNotes('');
+      setPrescription('');
+      loadAppointments();
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      toast.error('Failed to save notes');
     }
   };
 
@@ -216,10 +248,10 @@ export const DoctorAppointments = () => {
                     </div>
                   </div>
                   <div className="flex gap-2 flex-wrap">
-                    {appointment.type === 'video' && appointment.status.toLowerCase() === 'upcoming' && (
-                      <Button size="sm" onClick={() => handleStartVideo(appointment.id)}>
+                    {appointment.type.toLowerCase() === 'video' && appointment.status.toLowerCase() === 'upcoming' && (
+                      <Button size="sm" onClick={() => handleStartVideo(appointment.id, appointment.patientId)}>
                         <Video className="h-4 w-4 mr-2" />
-                        Start Video
+                        Start Video Call
                       </Button>
                     )}
                     {appointment.type === 'chat' && appointment.status.toLowerCase() === 'upcoming' && (
@@ -232,7 +264,7 @@ export const DoctorAppointments = () => {
                       <>
                         <Button
                           size="sm"
-                          onClick={() => handleApproveAppointment(appointment.id)}
+                          onClick={() => handleApproveAppointment(appointment)}
                         >
                           <CheckCircle className="h-4 w-4 mr-2" />
                           Approve
@@ -255,6 +287,62 @@ export const DoctorAppointments = () => {
                         <CheckCircle className="h-4 w-4 mr-2" />
                         Complete
                       </Button>
+                    )}
+                    {appointment.status.toLowerCase() === 'completed' && (
+                      <Dialog open={isNotesOpen && selectedAppointment?.id === appointment.id} onOpenChange={setIsNotesOpen}>
+                        <DialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedAppointment(appointment);
+                              setNotes(appointment.notes || '');
+                              setPrescription(appointment.prescription || '');
+                              setIsNotesOpen(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Add Notes/Prescription
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Add Notes and Prescription</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="notes">Notes</Label>
+                              <Textarea
+                                id="notes"
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="Enter consultation notes..."
+                                rows={4}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="prescription">Prescription</Label>
+                              <Textarea
+                                id="prescription"
+                                value={prescription}
+                                onChange={(e) => setPrescription(e.target.value)}
+                                placeholder="Enter prescription details..."
+                                rows={4}
+                              />
+                            </div>
+                            <DialogFooter>
+                              <Button onClick={handleSaveNotes}>
+                                <Save className="h-4 w-4 mr-2" />
+                                Save
+                              </Button>
+                              <Button variant="outline" onClick={() => setIsNotesOpen(false)}>
+                                <X className="h-4 w-4 mr-2" />
+                                Cancel
+                              </Button>
+                            </DialogFooter>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     )}
                     <Dialog open={isRescheduleOpen && selectedAppointment?.id === appointment.id} onOpenChange={setIsRescheduleOpen}>
                       <DialogTrigger asChild>

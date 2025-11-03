@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './lib/auth-context';
 import { AppProvider } from './lib/app-context';
 import { AppStoreProvider } from './lib/app-store';
+import { SearchProvider } from './lib/search-context';
+import { NotificationProvider } from './lib/notification-context';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { RegisterPage } from './components/RegisterPage';
@@ -10,10 +12,10 @@ import { PatientDashboard } from './components/patient/PatientDashboard';
 import { BookAppointment } from './components/patient/BookAppointment';
 import { MyAppointments } from './components/patient/MyAppointments';
 import { PatientProfile } from './components/patient/PatientProfile';
-import { PatientMeetings } from './components/patient/PatientMeetings';
 import { OnlinePharmacy } from './components/patient/OnlinePharmacy';
 import { NutritionWellness } from './components/patient/NutritionWellness';
 import { YogaFitness } from './components/patient/YogaFitness';
+import { PatientMeetings } from './components/patient/PatientMeetings';
 import { ChatInterface } from './components/common/ChatInterface';
 import { DoctorDashboard } from './components/doctor/DoctorDashboard';
 import { DoctorProfile } from './components/doctor/DoctorProfile';
@@ -21,9 +23,18 @@ import { DoctorAppointments } from './components/doctor/DoctorAppointments';
 import { DoctorPatients } from './components/doctor/DoctorPatients';
 import { DoctorSchedule } from './components/doctor/DoctorSchedule';
 import { DoctorMeetings } from './components/doctor/DoctorMeetings';
+import { VideoCall } from './components/doctor/VideoCall';
 import { HospitalDashboard } from './components/hospital/HospitalDashboard';
 import { HospitalProfile } from './components/hospital/HospitalProfile';
+import { HospitalDoctors } from './components/hospital/HospitalDoctors';
+import { HospitalAppointments } from './components/hospital/HospitalAppointments';
+import { HospitalPatients } from './components/hospital/HospitalPatients';
+import { HospitalReports } from './components/hospital/HospitalReports';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import { AdminPatients } from './components/admin/AdminPatients';
+import { AdminAppointments } from './components/admin/AdminAppointments';
+import { AdminReports } from './components/admin/AdminReports';
+import { AdminSettings } from './components/admin/AdminSettings';
 import { HospitalManagement } from './components/admin/HospitalManagement';
 import { DoctorManagement } from './components/admin/DoctorManagement';
 import { ConfigStatus } from './components/ConfigStatus';
@@ -151,6 +162,14 @@ function AppContent() {
           {currentPath === '/patient/appointments' && <MyAppointments />}
           {currentPath === '/patient/chat' && <ChatInterface />}
           {currentPath === '/patient/meetings' && <PatientMeetings />}
+          {currentPath === '/video-call' && (
+            <ErrorBoundary>
+              <VideoCall
+                appointmentId={new URLSearchParams(window.location.search).get('appointmentId') || undefined}
+                patientId={user?.id}
+              />
+            </ErrorBoundary>
+          )}
           {currentPath === '/patient/reports' && (
             <div className="space-y-4">
               <h1 className="text-3xl">Medical Reports</h1>
@@ -177,7 +196,23 @@ function AppContent() {
           {currentPath === '/doctor/patients' && <DoctorPatients />}
           {currentPath === '/doctor/schedule' && <DoctorSchedule />}
           {currentPath === '/doctor/chat' && <ChatInterface />}
-          {currentPath === '/doctor/meetings' && <DoctorMeetings />}
+          {currentPath === '/doctor/meetings' && <DoctorMeetings onNavigate={navigate} />}
+          {currentPath === '/video-call' && (
+            <ErrorBoundary>
+              <VideoCall
+                appointmentId={new URLSearchParams(window.location.search).get('appointmentId') || undefined}
+                patientId={new URLSearchParams(window.location.search).get('patientId') || undefined}
+              />
+            </ErrorBoundary>
+          )}
+          {currentPath === '/doctor/video-call' && (
+            <ErrorBoundary>
+              <VideoCall
+                appointmentId={new URLSearchParams(window.location.search).get('appointmentId') || undefined}
+                patientId={new URLSearchParams(window.location.search).get('patientId') || undefined}
+              />
+            </ErrorBoundary>
+          )}
           {currentPath === '/doctor/profile' && <DoctorProfile />}
         </DashboardLayout>
       );
@@ -187,34 +222,11 @@ function AppContent() {
     if (user?.role === 'hospital') {
       return (
         <DashboardLayout role="hospital" onNavigate={navigate} currentPath={currentPath}>
-          {currentPath === '/hospital-dashboard' && <HospitalDashboard />}
-          {currentPath === '/hospital/doctors' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">Manage Doctors</h1>
-              <p className="text-gray-600">Add and manage doctors at your facility</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Doctor management will be displayed here</p>
-              </div>
-            </div>
-          )}
-          {currentPath === '/hospital/appointments' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">Appointments</h1>
-              <p className="text-gray-600">Manage hospital appointments</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Appointment management will be displayed here</p>
-              </div>
-            </div>
-          )}
-          {currentPath === '/hospital/patients' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">Patients</h1>
-              <p className="text-gray-600">View patient records</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Patient records will be displayed here</p>
-              </div>
-            </div>
-          )}
+          {currentPath === '/hospital-dashboard' && <HospitalDashboard onNavigate={navigate} />}
+          {currentPath === '/hospital/doctors' && <HospitalDoctors />}
+          {currentPath === '/hospital/appointments' && <HospitalAppointments />}
+          {currentPath === '/hospital/patients' && <HospitalPatients />}
+          {currentPath === '/hospital/reports' && <HospitalReports />}
           {currentPath === '/hospital/profile' && <HospitalProfile />}
         </DashboardLayout>
       );
@@ -227,24 +239,8 @@ function AppContent() {
           {currentPath === '/admin-dashboard' && <AdminDashboard />}
           {currentPath === '/admin/hospitals' && <HospitalManagement />}
           {currentPath === '/admin/doctors' && <DoctorManagement />}
-          {currentPath === '/admin/patients' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">Patients</h1>
-              <p className="text-gray-600">View and manage patient records</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Patient records will be displayed here</p>
-              </div>
-            </div>
-          )}
-          {currentPath === '/admin/appointments' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">All Appointments</h1>
-              <p className="text-gray-600">Monitor system-wide appointments</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Appointment monitoring will be displayed here</p>
-              </div>
-            </div>
-          )}
+          {currentPath === '/admin/patients' && <AdminPatients />}
+          {currentPath === '/admin/appointments' && <AdminAppointments />}
           {currentPath === '/admin/emergency' && (
             <div className="space-y-4">
               <h1 className="text-3xl">Emergency Requests</h1>
@@ -254,24 +250,8 @@ function AppContent() {
               </div>
             </div>
           )}
-          {currentPath === '/admin/reports' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">System Reports</h1>
-              <p className="text-gray-600">Generate and export system reports</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Reports will be displayed here</p>
-              </div>
-            </div>
-          )}
-          {currentPath === '/admin/settings' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">System Settings</h1>
-              <p className="text-gray-600">Configure system settings</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Settings will be displayed here</p>
-              </div>
-            </div>
-          )}
+          {currentPath === '/admin/reports' && <AdminReports />}
+          {currentPath === '/admin/settings' && <AdminSettings />}
         </DashboardLayout>
       );
     }
@@ -293,7 +273,11 @@ export default function App() {
     <ErrorBoundary>
       <AuthProvider>
         <AppStoreProvider>
-          <AppContent />
+          <SearchProvider>
+            <NotificationProvider>
+              <AppContent />
+            </NotificationProvider>
+          </SearchProvider>
         </AppStoreProvider>
       </AuthProvider>
     </ErrorBoundary>

@@ -32,6 +32,9 @@ public class Appointment {
     @Column(name = "doctor_name", nullable = false)
     private String doctorName;
 
+    @Column(name = "hospital_name")
+    private String hospitalName;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hospital_id")
     @JsonIgnore
@@ -48,7 +51,12 @@ public class Appointment {
     private LocalTime appointmentTime;
 
     @Enumerated(EnumType.STRING)
-    private AppointmentStatus status = AppointmentStatus.UPCOMING;
+    private AppointmentStatus status = AppointmentStatus.PENDING;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schedule_slot_id")
+    @JsonIgnore
+    private ScheduleSlot scheduleSlot;
 
     public String getPatientId() {
         return patient != null ? patient.getId() : null;

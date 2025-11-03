@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -27,10 +28,18 @@ public class AppointmentService {
     @Autowired
     private com.hyno.repository.HospitalRepository hospitalRepository;
 
+    @Autowired
+    private ScheduleService scheduleService;
+
     public List<Appointment> getAllAppointments() {
         logger.info("Fetching all appointments");
         try {
-            List<Appointment> appointments = appointmentRepository.findAll();
+            List<Appointment> appointments = appointmentRepository.findAllWithHospital();
+            for (Appointment appointment : appointments) {
+                if (appointment.getHospital() != null) {
+                    appointment.setHospitalName(appointment.getHospital().getName());
+                }
+            }
             logger.info("Retrieved {} appointments", appointments.size());
             return appointments;
         } catch (Exception e) {
@@ -139,6 +148,7 @@ public class AppointmentService {
         }
     }
 
+    @Transactional
     public Appointment createAppointment(Appointment appointment) {
         logger.info("Creating new appointment for patient: {}", appointment.getPatientName());
         try {
@@ -169,6 +179,19 @@ public class AppointmentService {
                     throw new IllegalArgumentException("Hospital not found with ID: " + appointment.getHospital().getId());
                 }
                 appointment.setHospital(hospital.get());
+                appointment.setHospitalName(hospital.get().getName());
+            }
+
+            // Validate schedule slot availability if provided
+            if (appointment.getScheduleSlot() != null) {
+                Long slotId = appointment.getScheduleSlot().getId();
+                if (!scheduleService.isSlotAvailable(slotId)) {
+                    throw new IllegalArgumentException("Schedule slot is not available");
+                }
+                // Reserve the slot temporarily (15 minutes)
+                if (!scheduleService.reserveSlot(slotId, appointment.getPatient().getId(), 15)) {
+                    throw new IllegalArgumentException("Failed to reserve schedule slot");
+                }
             }
 
             // Generate ID if not provided
@@ -234,6 +257,12 @@ public class AppointmentService {
             if (optionalAppointment.isPresent()) {
                 Appointment appointment = optionalAppointment.get();
                 appointment.setStatus(Appointment.AppointmentStatus.CANCELLED);
+
+                // Release the schedule slot if it was booked
+                if (appointment.getScheduleSlot() != null) {
+                    scheduleService.cancelSlotBooking(appointment.getScheduleSlot().getId());
+                }
+
                 Appointment cancelledAppointment = appointmentRepository.save(appointment);
                 logger.info("Appointment cancelled successfully: {}", id);
                 return cancelledAppointment;
@@ -274,6 +303,17 @@ public class AppointmentService {
             if (optionalAppointment.isPresent()) {
                 Appointment appointment = optionalAppointment.get();
                 appointment.setStatus(Appointment.AppointmentStatus.UPCOMING);
+
+                // Confirm the slot reservation by booking it permanently
+                if (appointment.getScheduleSlot() != null) {
+                    Long slotId = appointment.getScheduleSlot().getId();
+                    if (scheduleService.isSlotReservedByUser(slotId, appointment.getPatient().getId())) {
+                        scheduleService.bookSlot(slotId);
+                    } else {
+                        logger.warn("Slot {} not reserved by user {} for appointment {}", slotId, appointment.getPatient().getId(), id);
+                    }
+                }
+
                 Appointment confirmedAppointment = appointmentRepository.save(appointment);
                 logger.info("Appointment confirmed successfully: {}", id);
                 return confirmedAppointment;

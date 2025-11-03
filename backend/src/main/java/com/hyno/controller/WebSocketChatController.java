@@ -22,7 +22,7 @@ public class WebSocketChatController {
     private SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/chat.send")
-    public ChatMessage sendMessage(
+    public WebSocketMessageResponse sendMessage(
             @Payload ChatMessageRequest messageRequest) {
 
         String chatRoomId = messageRequest.getChatRoomId();
@@ -36,10 +36,21 @@ public class WebSocketChatController {
             messageRequest.getContent()
         );
 
-        // Broadcast message to all subscribers of this chat room
-        messagingTemplate.convertAndSend("/topic/chat/" + chatRoomId, message);
+        // Create response for frontend
+        WebSocketMessageResponse response = new WebSocketMessageResponse();
+        response.setId(message.getId());
+        response.setSenderId(message.getSenderId());
+        response.setSenderName(message.getSenderName());
+        response.setSenderRole(message.getSenderRole().name().toLowerCase());
+        response.setContent(message.getContent());
+        response.setTimestamp(message.getCreatedAt().toString());
+        response.setRead(false);
+        response.setMessageType("text");
 
-        return message;
+        // Broadcast message to all subscribers of this chat room
+        messagingTemplate.convertAndSend("/topic/chat/" + chatRoomId, response);
+
+        return response;
     }
 
     @MessageMapping("/chat/{chatRoomId}/markAsRead")
@@ -136,5 +147,41 @@ public class WebSocketChatController {
         // Getters
         public String getReaderId() { return readerId; }
         public LocalDateTime getReadAt() { return readAt; }
+    }
+
+    public static class WebSocketMessageResponse {
+        private String id;
+        private String senderId;
+        private String senderName;
+        private String senderRole;
+        private String content;
+        private String timestamp;
+        private boolean read;
+        private String messageType;
+
+        // Getters and setters
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+
+        public String getSenderId() { return senderId; }
+        public void setSenderId(String senderId) { this.senderId = senderId; }
+
+        public String getSenderName() { return senderName; }
+        public void setSenderName(String senderName) { this.senderName = senderName; }
+
+        public String getSenderRole() { return senderRole; }
+        public void setSenderRole(String senderRole) { this.senderRole = senderRole; }
+
+        public String getContent() { return content; }
+        public void setContent(String content) { this.content = content; }
+
+        public String getTimestamp() { return timestamp; }
+        public void setTimestamp(String timestamp) { this.timestamp = timestamp; }
+
+        public boolean isRead() { return read; }
+        public void setRead(boolean read) { this.read = read; }
+
+        public String getMessageType() { return messageType; }
+        public void setMessageType(String messageType) { this.messageType = messageType; }
     }
 }
