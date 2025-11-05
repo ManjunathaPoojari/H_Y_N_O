@@ -63,6 +63,16 @@ public class DataInitializer implements CommandLineRunner {
             patient.setEmail("patient@example.com");
             patient.setPhone("1234567890");
             patient.setPassword("password123");
+            patient.setAge(30);
+            patient.setGender("Male");
+            patient.setBloodGroup("O+");
+            patient.setDateOfBirth(LocalDate.parse("1994-01-15"));
+            patient.setAddress("123 Main St, City, State");
+            patient.setEmergencyContact("Jane Doe - 0987654321");
+            patient.setAllergies(List.of("Penicillin", "Peanuts"));
+            patient.setMedicalHistory(List.of("Hypertension", "Diabetes"));
+            patient.setCurrentMedications(List.of("Metformin 500mg", "Lisinopril 10mg"));
+            patient.setNotes("Patient has been compliant with medication regimen");
             patientRepository.save(patient);
         }
 

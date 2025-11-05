@@ -12,6 +12,7 @@ import { PatientDashboard } from './components/patient/PatientDashboard';
 import { BookAppointment } from './components/patient/BookAppointment';
 import { MyAppointments } from './components/patient/MyAppointments';
 import { PatientProfile } from './components/patient/PatientProfile';
+import { PatientReports } from './components/patient/PatientReports';
 import { OnlinePharmacy } from './components/patient/OnlinePharmacy';
 import { NutritionWellness } from './components/patient/NutritionWellness';
 import { YogaFitness } from './components/patient/YogaFitness';
@@ -30,11 +31,13 @@ import { HospitalDoctors } from './components/hospital/HospitalDoctors';
 import { HospitalAppointments } from './components/hospital/HospitalAppointments';
 import { HospitalPatients } from './components/hospital/HospitalPatients';
 import { HospitalReports } from './components/hospital/HospitalReports';
+import { HospitalEmergency } from './components/hospital/HospitalEmergency';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminPatients } from './components/admin/AdminPatients';
 import { AdminAppointments } from './components/admin/AdminAppointments';
 import { AdminReports } from './components/admin/AdminReports';
 import { AdminSettings } from './components/admin/AdminSettings';
+import { AdminEmergency } from './components/admin/AdminEmergency';
 import { HospitalManagement } from './components/admin/HospitalManagement';
 import { DoctorManagement } from './components/admin/DoctorManagement';
 import { ConfigStatus } from './components/ConfigStatus';
@@ -170,15 +173,7 @@ function AppContent() {
               />
             </ErrorBoundary>
           )}
-          {currentPath === '/patient/reports' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">Medical Reports</h1>
-              <p className="text-gray-600">View and download your medical reports</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Reports list will be displayed here</p>
-              </div>
-            </div>
-          )}
+          {currentPath === '/patient/reports' && <PatientReports />}
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
           {currentPath === '/patient/yoga' && <YogaFitness onNavigate={navigate} />}
@@ -226,6 +221,7 @@ function AppContent() {
           {currentPath === '/hospital/doctors' && <HospitalDoctors />}
           {currentPath === '/hospital/appointments' && <HospitalAppointments />}
           {currentPath === '/hospital/patients' && <HospitalPatients />}
+          {currentPath === '/hospital/emergency' && <HospitalEmergency />}
           {currentPath === '/hospital/reports' && <HospitalReports />}
           {currentPath === '/hospital/profile' && <HospitalProfile />}
         </DashboardLayout>
@@ -241,15 +237,7 @@ function AppContent() {
           {currentPath === '/admin/doctors' && <DoctorManagement />}
           {currentPath === '/admin/patients' && <AdminPatients />}
           {currentPath === '/admin/appointments' && <AdminAppointments />}
-          {currentPath === '/admin/emergency' && (
-            <div className="space-y-4">
-              <h1 className="text-3xl">Emergency Requests</h1>
-              <p className="text-gray-600">Handle emergency consultations</p>
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <p className="text-gray-500">Emergency management will be displayed here</p>
-              </div>
-            </div>
-          )}
+          {currentPath === '/admin/emergency' && <AdminEmergency />}
           {currentPath === '/admin/reports' && <AdminReports />}
           {currentPath === '/admin/settings' && <AdminSettings />}
         </DashboardLayout>

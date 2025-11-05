@@ -105,6 +105,8 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, []);
 
   const loadDataFromBackend = async () => {
+    let failedLoads = 0; // Track failed API calls to show single toast
+
     try {
       // Load different data based on user role
       const userRole = localStorage.getItem('userRole');
@@ -121,58 +123,66 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
         try {
           patientsData = await api.admin.getAllPatients();
         } catch (error) {
-          console.error('Failed to load patients from backend:', error);
+          console.warn('Failed to load patients from backend:', error);
           patientsData = [];
+          failedLoads++;
         }
 
         try {
           doctorsData = await api.admin.getAllDoctors();
         } catch (error) {
-          console.error('Failed to load doctors from backend:', error);
+          console.warn('Failed to load doctors from backend:', error);
           doctorsData = [];
+          failedLoads++;
         }
 
         try {
           hospitalsData = await api.admin.getAllHospitals();
         } catch (error) {
-          console.error('Failed to load hospitals from backend:', error);
+          console.warn('Failed to load hospitals from backend:', error);
           hospitalsData = [];
+          failedLoads++;
         }
 
         try {
           appointmentsData = await api.admin.getAllAppointments();
         } catch (error) {
-          console.error('Failed to load appointments from backend:', error);
+          console.warn('Failed to load appointments from backend:', error);
           appointmentsData = [];
+          failedLoads++;
         }
 
         try {
           medicinesData = await api.medicines.getAll();
         } catch (error) {
-          console.error('Failed to load medicines from backend:', error);
+          console.warn('Failed to load medicines from backend:', error);
           medicinesData = [];
+          failedLoads++;
         }
       } else if (userRole === 'patient' && userId) {
         // Patient loads their data
         try {
           patientsData = await api.patients.getAll();
         } catch (error) {
-          console.error('Failed to load patients from backend:', error);
+          console.warn('Failed to load patients from backend:', error);
           patientsData = [];
+          failedLoads++;
         }
 
         try {
           doctorsData = await api.doctors.getAll();
         } catch (error) {
-          console.error('Failed to load doctors from backend:', error);
+          console.warn('Failed to load doctors from backend:', error);
           doctorsData = [];
+          failedLoads++;
         }
 
         try {
           hospitalsData = await api.hospitals.getAll();
         } catch (error) {
-          console.error('Failed to load hospitals from backend:', error);
+          console.warn('Failed to load hospitals from backend:', error);
           hospitalsData = [];
+          failedLoads++;
         }
 
         try {
@@ -186,37 +196,42 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
             time: apt.appointmentTime,
           }));
         } catch (error) {
-          console.error('Failed to load appointments from backend:', error);
+          console.warn('Failed to load appointments from backend:', error);
           appointmentsData = [];
+          failedLoads++;
         }
 
         try {
           medicinesData = await api.medicines.getAll();
         } catch (error) {
-          console.error('Failed to load medicines from backend:', error);
+          console.warn('Failed to load medicines from backend:', error);
           medicinesData = [];
+          failedLoads++;
         }
       } else if (userRole === 'doctor' && userId) {
         // Doctor loads their data
         try {
           patientsData = await api.doctors.getPatients(userId);
         } catch (error) {
-          console.error('Failed to load patients from backend:', error);
+          console.warn('Failed to load patients from backend:', error);
           patientsData = [];
+          failedLoads++;
         }
 
         try {
           doctorsData = await api.doctors.getAll();
         } catch (error) {
-          console.error('Failed to load doctors from backend:', error);
+          console.warn('Failed to load doctors from backend:', error);
           doctorsData = [];
+          failedLoads++;
         }
 
         try {
           hospitalsData = await api.hospitals.getAll();
         } catch (error) {
-          console.error('Failed to load hospitals from backend:', error);
+          console.warn('Failed to load hospitals from backend:', error);
           hospitalsData = [];
+          failedLoads++;
         }
 
         try {
@@ -230,37 +245,42 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
             time: apt.appointmentTime,
           }));
         } catch (error) {
-          console.error('Failed to load appointments from backend:', error);
+          console.warn('Failed to load appointments from backend:', error);
           appointmentsData = [];
+          failedLoads++;
         }
 
         try {
           medicinesData = await api.medicines.getAll();
         } catch (error) {
-          console.error('Failed to load medicines from backend:', error);
+          console.warn('Failed to load medicines from backend:', error);
           medicinesData = [];
+          failedLoads++;
         }
       } else {
         // Fallback for other roles or no userId - load general data
         try {
           patientsData = await api.patients.getAll();
         } catch (error) {
-          console.error('Failed to load patients from backend:', error);
+          console.warn('Failed to load patients from backend:', error);
           patientsData = [];
+          failedLoads++;
         }
 
         try {
           doctorsData = await api.doctors.getAll();
         } catch (error) {
-          console.error('Failed to load doctors from backend:', error);
+          console.warn('Failed to load doctors from backend:', error);
           doctorsData = [];
+          failedLoads++;
         }
 
         try {
           hospitalsData = await api.hospitals.getAll();
         } catch (error) {
-          console.error('Failed to load hospitals from backend:', error);
+          console.warn('Failed to load hospitals from backend:', error);
           hospitalsData = [];
+          failedLoads++;
         }
 
         try {
@@ -274,15 +294,17 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
             time: apt.appointmentTime,
           }));
         } catch (error) {
-          console.error('Failed to load appointments from backend:', error);
+          console.warn('Failed to load appointments from backend:', error);
           appointmentsData = [];
+          failedLoads++;
         }
 
         try {
           medicinesData = await api.medicines.getAll();
         } catch (error) {
-          console.error('Failed to load medicines from backend:', error);
+          console.warn('Failed to load medicines from backend:', error);
           medicinesData = [];
+          failedLoads++;
         }
       }
 
@@ -292,6 +314,11 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       setAppointments(appointmentsData);
       setMedicines(medicinesData);
 
+      // Show single toast if any loads failed
+      if (failedLoads > 0) {
+        toast.error('Unable to load some data from backend. Continuing in offline mode with available data.');
+      }
+
       // Only show success toast if at least some data was loaded
       const hasData = patientsData.length > 0 || doctorsData.length > 0 || hospitalsData.length > 0 ||
                      appointmentsData.length > 0 || medicinesData.length > 0;
@@ -299,13 +326,17 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
         // toast.success('Connected to backend successfully!');
       }
     } catch (error) {
-      console.error('Backend initialization error, starting with empty data:', error);
+      console.warn('Backend initialization error, starting with empty data:', error);
+      let failedLoads = 5; // Assume all 5 loads failed in outer catch
       // Initialize with empty arrays
       setPatients([]);
       setDoctors([]);
       setHospitals([]);
       setAppointments([]);
       setMedicines([]);
+
+      // Show toast for outer catch
+      toast.error('Unable to load some data from backend. Continuing in offline mode with available data.');
     }
   };
 

@@ -8,10 +8,13 @@ export interface Patient {
   age: number;
   gender: 'Male' | 'Female' | 'Other';
   bloodGroup?: string;
+  dateOfBirth?: string;
   allergies?: string[];
   medicalHistory?: string[];
+  currentMedications?: string[];
   address?: string;
   emergencyContact?: string;
+  notes?: string;
   createdAt: string;
 }
 
@@ -28,7 +31,7 @@ export interface Doctor {
   hospital?: Hospital;
   hospitalId?: string;
   consultationFee: number;
-  avatar?: string;
+  avatarUrl?: string;
   status: 'approved' | 'pending' | 'suspended';
   password?: string;
 }
@@ -201,4 +204,49 @@ export interface VideoCallParticipant {
   userRole: 'patient' | 'doctor';
   isConnected: boolean;
   joinedAt?: string;
+  isMuted?: boolean;
+  isVideoEnabled?: boolean;
+  isHandRaised?: boolean;
+  isScreenSharing?: boolean;
+  avatarUrl?: string;
+}
+
+export interface MeetingInfo {
+  id: string;
+  title: string;
+  startTime: string;
+  participants: VideoCallParticipant[];
+  isRecording?: boolean;
+  meetingCode?: string;
+}
+
+export interface TeamsVideoCallState extends VideoCallState {
+  participants: VideoCallParticipant[];
+  meetingInfo: MeetingInfo;
+  isChatOpen: boolean;
+  isParticipantListOpen: boolean;
+  isScreenSharing: boolean;
+  screenShareStream?: MediaStream;
+  handRaised: boolean;
+  layout: 'gallery' | 'speaker' | 'spotlight';
+}
+
+export interface EmergencyRequest {
+  id: string;
+  patientId: string;
+  patientName: string;
+  patientPhone: string;
+  patientLocation?: string;
+  emergencyType: 'medical' | 'accident' | 'cardiac' | 'respiratory' | 'other';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  symptoms: string;
+  description: string;
+  assignedDoctorId?: string;
+  assignedDoctorName?: string;
+  status: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
+  requestedAt: string;
+  assignedAt?: string;
+  completedAt?: string;
+  notes?: string;
+  priority: number; // 1-5, 5 being highest
 }

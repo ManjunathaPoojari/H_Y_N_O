@@ -3,23 +3,31 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '../ui/table';
-import { 
-  CheckCircle, XCircle, Eye, Search, UserCog, 
-  Star, Phone, Mail, Ban
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '../ui/dialog';
+import {
+  CheckCircle, XCircle, Eye, Search, UserCog,
+  Star, Phone, Mail, Ban, Building, Calendar
 } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
 
 export const DoctorManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'approved' | 'pending' | 'suspended'>('all');
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
   const { doctors, approveDoctor, suspendDoctor } = useAppStore();
 
   const filteredDoctors = doctors.filter(doctor => {
@@ -153,21 +161,112 @@ export const DoctorManagement = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-3 w-3" />
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedDoctor(doctor)}>
+                            <Eye className="h-3 w-3" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Doctor Details - {selectedDoctor?.name}</DialogTitle>
+                          </DialogHeader>
+                          {selectedDoctor && (
+                            <div className="space-y-6">
+                              {/* Basic Information */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <h3 className="font-semibold text-sm text-gray-700">Basic Information</h3>
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <UserCog className="h-4 w-4 text-gray-400" />
+                                      <span className="font-medium">{selectedDoctor.name}</span>
+                                    </div>
+                                    <div className="text-sm text-gray-600">{selectedDoctor.qualification}</div>
+                                    <div className="text-sm text-gray-600">{selectedDoctor.specialization}</div>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <h3 className="font-semibold text-sm text-gray-700">Professional Details</h3>
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <Star className="h-4 w-4 text-yellow-400" />
+                                      <span>{selectedDoctor.rating} rating</span>
+                                    </div>
+                                    <div className="text-sm text-gray-600">{selectedDoctor.experience} years experience</div>
+                                    <div className="text-sm text-gray-600">₹{selectedDoctor.consultationFee} consultation fee</div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Contact Information */}
+                              <div className="space-y-2">
+                                <h3 className="font-semibold text-sm text-gray-700">Contact Information</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="flex items-center gap-2">
+                                    <Phone className="h-4 w-4 text-gray-400" />
+                                    <span className="text-sm">{selectedDoctor.phone}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Mail className="h-4 w-4 text-gray-400" />
+                                    <span className="text-sm">{selectedDoctor.email}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Hospital Affiliation */}
+                              {selectedDoctor.hospital && (
+                                <div className="space-y-2">
+                                  <h3 className="font-semibold text-sm text-gray-700">Hospital Affiliation</h3>
+                                  <div className="flex items-center gap-2">
+                                    <Building className="h-4 w-4 text-gray-400" />
+                                    <span className="text-sm">{selectedDoctor.hospital.name}</span>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Status */}
+                              <div className="space-y-2">
+                                <h3 className="font-semibold text-sm text-gray-700">Status</h3>
+                                <Badge
+                                  variant={
+                                    selectedDoctor.status === 'approved' ? 'default' :
+                                    selectedDoctor.status === 'pending' ? 'secondary' :
+                                    'destructive'
+                                  }
+                                >
+                                  {selectedDoctor.status}
+                                </Badge>
+                              </div>
+
+                              {/* Registration Date */}
+                              {selectedDoctor.createdAt && (
+                                <div className="space-y-2">
+                                  <h3 className="font-semibold text-sm text-gray-700">Registration Date</h3>
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="h-4 w-4 text-gray-400" />
+                                    <span className="text-sm">{new Date(selectedDoctor.createdAt).toLocaleDateString()}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </DialogContent>
+                      </Dialog>
+
                       {doctor.status === 'pending' && (
                         <>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             className="text-green-600 hover:text-green-700"
                             onClick={() => handleApprove(doctor.id)}
                           >
                             <CheckCircle className="h-3 w-3" />
                           </Button>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             className="text-red-600 hover:text-red-700"
                             onClick={() => handleSuspend(doctor.id)}
@@ -177,8 +276,8 @@ export const DoctorManagement = () => {
                         </>
                       )}
                       {doctor.status === 'approved' && (
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           className="text-red-600 hover:text-red-700"
                           onClick={() => handleSuspend(doctor.id)}

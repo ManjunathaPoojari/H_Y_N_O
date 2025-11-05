@@ -75,6 +75,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: Stethoscope, label: 'Doctors', path: '/hospital/doctors' },
           { icon: Calendar, label: 'Appointments', path: '/hospital/appointments' },
           { icon: Users, label: 'Patients', path: '/hospital/patients' },
+          { icon: AlertCircle, label: 'Emergency', path: '/hospital/emergency' },
+          { icon: FileText, label: 'Reports', path: '/hospital/reports' },
           { icon: User, label: 'Profile', path: '/hospital/profile' },
         ];
 

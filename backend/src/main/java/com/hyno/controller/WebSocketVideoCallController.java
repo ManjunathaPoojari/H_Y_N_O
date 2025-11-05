@@ -1,3 +1,4 @@
+
 package com.hyno.controller;
 
 import com.hyno.service.VideoCallService;
@@ -8,6 +9,11 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Controller
 public class WebSocketVideoCallController {
 
@@ -17,10 +23,15 @@ public class WebSocketVideoCallController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    private static Map<String, List<String>> appointmentParticipants = new ConcurrentHashMap<>();
+
     @MessageMapping("/video-call/{appointmentId}/join")
     public void joinVideoCall(
             @DestinationVariable String appointmentId,
             @Payload JoinCallRequest request) {
+
+        // Add participant to the appointment
+        appointmentParticipants.computeIfAbsent(appointmentId, k -> new ArrayList<>()).add(request.getUserId());
 
         // Notify the doctor that a patient wants to join
         messagingTemplate.convertAndSend(
@@ -34,11 +45,18 @@ public class WebSocketVideoCallController {
             @DestinationVariable String appointmentId,
             @Payload WebRTCOffer offer) {
 
-        // Forward the offer to the other participant
-        messagingTemplate.convertAndSend(
-            "/topic/video-call/" + appointmentId + "/offer",
-            offer
-        );
+        // Send offer to other participants
+        List<String> participants = appointmentParticipants.get(appointmentId);
+        if (participants != null) {
+            for (String userId : participants) {
+                if (!userId.equals(offer.getFromUserId())) {
+                    messagingTemplate.convertAndSend(
+                        "/topic/user/" + userId + "/video-call/offer",
+                        offer
+                    );
+                }
+            }
+        }
     }
 
     @MessageMapping("/video-call/{appointmentId}/answer")
@@ -46,11 +64,18 @@ public class WebSocketVideoCallController {
             @DestinationVariable String appointmentId,
             @Payload WebRTCAnswer answer) {
 
-        // Forward the answer to the other participant
-        messagingTemplate.convertAndSend(
-            "/topic/video-call/" + appointmentId + "/answer",
-            answer
-        );
+        // Send answer to other participants
+        List<String> participants = appointmentParticipants.get(appointmentId);
+        if (participants != null) {
+            for (String userId : participants) {
+                if (!userId.equals(answer.getFromUserId())) {
+                    messagingTemplate.convertAndSend(
+                        "/topic/user/" + userId + "/video-call/answer",
+                        answer
+                    );
+                }
+            }
+        }
     }
 
     @MessageMapping("/video-call/{appointmentId}/ice-candidate")
@@ -58,11 +83,18 @@ public class WebSocketVideoCallController {
             @DestinationVariable String appointmentId,
             @Payload IceCandidate candidate) {
 
-        // Forward ICE candidate to the other participant
-        messagingTemplate.convertAndSend(
-            "/topic/video-call/" + appointmentId + "/ice-candidate",
-            candidate
-        );
+        // Send ICE candidate to other participants
+        List<String> participants = appointmentParticipants.get(appointmentId);
+        if (participants != null) {
+            for (String userId : participants) {
+                if (!userId.equals(candidate.getFromUserId())) {
+                    messagingTemplate.convertAndSend(
+                        "/topic/user/" + userId + "/video-call/ice-candidate",
+                        candidate
+                    );
+                }
+            }
+        }
     }
 
     @MessageMapping("/video-call/{appointmentId}/leave")
@@ -70,11 +102,24 @@ public class WebSocketVideoCallController {
             @DestinationVariable String appointmentId,
             @Payload LeaveCallRequest request) {
 
+        // Remove participant from the appointment
+        List<String> participants = appointmentParticipants.get(appointmentId);
+        if (participants != null) {
+            participants.remove(request.getUserId());
+            if (participants.isEmpty()) {
+                appointmentParticipants.remove(appointmentId);
+            }
+        }
+
         // Notify others that someone left the call
-        messagingTemplate.convertAndSend(
-            "/topic/video-call/" + appointmentId + "/leave",
-            new LeaveCallNotification(request.getUserId(), request.getUserName())
-        );
+        if (participants != null) {
+            for (String userId : participants) {
+                messagingTemplate.convertAndSend(
+                    "/topic/user/" + userId + "/video-call/leave",
+                    new LeaveCallNotification(request.getUserId(), request.getUserName())
+                );
+            }
+        }
     }
 
     // DTO classes for WebRTC signaling
@@ -167,6 +212,8 @@ public class WebSocketVideoCallController {
     public static class IceCandidate {
         private String fromUserId;
         private String candidate;
+        private Integer sdpMLineIndex;
+        private String sdpMid;
 
         public IceCandidate() {}
 
@@ -175,12 +222,25 @@ public class WebSocketVideoCallController {
             this.candidate = candidate;
         }
 
+        public IceCandidate(String fromUserId, String candidate, Integer sdpMLineIndex, String sdpMid) {
+            this.fromUserId = fromUserId;
+            this.candidate = candidate;
+            this.sdpMLineIndex = sdpMLineIndex;
+            this.sdpMid = sdpMid;
+        }
+
         // Getters and setters
         public String getFromUserId() { return fromUserId; }
         public void setFromUserId(String fromUserId) { this.fromUserId = fromUserId; }
 
         public String getCandidate() { return candidate; }
         public void setCandidate(String candidate) { this.candidate = candidate; }
+
+        public Integer getSdpMLineIndex() { return sdpMLineIndex; }
+        public void setSdpMLineIndex(Integer sdpMLineIndex) { this.sdpMLineIndex = sdpMLineIndex; }
+
+        public String getSdpMid() { return sdpMid; }
+        public void setSdpMid(String sdpMid) { this.sdpMid = sdpMid; }
     }
 
     public static class LeaveCallRequest {

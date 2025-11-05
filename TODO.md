@@ -1,51 +1,52 @@
-# TODO: Admin Search Bar and Notification System Implementation
+# Video Call Redesign - Microsoft Teams Style
 
-## Completed Tasks
-- [x] Create `src/lib/search-context.tsx` for search state management
-- [x] Create `src/lib/notification-context.tsx` for notification management
-- [x] Update `App.tsx` to include SearchProvider and NotificationProvider
-- [x] Update `DashboardLayout.tsx` to use search and notification contexts
-- [x] Update `AdminDashboard.tsx` to filter data based on search query
-- [x] Fix TypeScript errors in AdminDashboard.tsx
-- [x] Fix runtime error: "patients.filter is not a function" by adding null safety checks
+## Current Status
+- Existing video call implementation is functional but has basic UI
+- Complex WebRTC peer-to-peer setup with custom signaling
+- Simple controls and layout
 
-## Summary
-Successfully implemented:
-1. **Search Functionality**: Header search bar now filters admin dashboard data (hospitals, doctors, patients) in real-time
-2. **Notification System**: Dynamic notifications based on user role with mark as read functionality
-3. **Context Management**: Proper state management using React contexts for search and notifications
-4. **Error Handling**: Added null safety checks to prevent runtime errors during data loading
+## Planned Changes
 
-## Key Features
+### Phase 1: UI Redesign
+- [ ] Create new Teams-inspired VideoCall component
+- [ ] Implement meeting header with title and controls
+- [ ] Add participant gallery/grid view
+- [ ] Create control bar with Teams-style buttons
+- [ ] Add chat sidebar with toggle
+- [ ] Implement participant list panel
+- [ ] Add meeting information display
 
-**Search Bar:**
-- Real-time filtering as you type
-- Searches across multiple fields for each entity type
-- Case-insensitive matching
-- Null-safe implementation to handle loading states
+### Phase 2: Enhanced Controls
+- [ ] Add screen share functionality
+- [ ] Implement hand raise feature
+- [ ] Add more options menu
+- [ ] Improve mute/video toggle states
+- [ ] Add recording indicator (if needed)
+- [ ] Implement picture-in-picture mode
 
-**Notifications:**
-- Role-specific notification content
-- Unread count indicator in header
-- Click to mark as read
-- "Mark All as Read" functionality
-- Different notification types (appointment, approval, system, emergency)
+### Phase 3: Backend Integration
+- [ ] Update WebSocket signaling if needed
+- [ ] Add participant management endpoints
+- [ ] Implement screen share signaling
+- [ ] Add meeting metadata storage
 
-**Technical Implementation:**
-- Uses React Context for state management
-- TypeScript support throughout
-- Clean separation of concerns
-- Extensible design for future enhancements
-- Robust error handling for data loading states
+### Phase 4: Testing & Polish
+- [ ] Test all new features
+- [ ] Ensure responsive design
+- [ ] Add loading states and error handling
+- [ ] Optimize performance
+- [ ] Add accessibility features
 
-## Testing
-- Search bar filters hospitals by name, city, state
-- Search bar filters doctors by name, specialization, email
-- Search bar filters patients by name, email, phone
-- Notifications show role-specific content
-- Notifications can be marked as read individually or all at once
-- Notification count updates in real-time
-- Application handles loading states gracefully without runtime errors
+## Files to Modify
+- src/components/common/VideoCall.tsx (complete rewrite)
+- src/components/doctor/VideoCall.tsx (update wrapper)
+- src/lib/websocket-client.ts (add new signaling methods)
+- src/types/index.ts (add new types for Teams features)
 
-## Status: ✅ COMPLETE
-The admin search bar and notification system implementation is now fully functional and error-free.
+## New Components Needed
+- MeetingHeader component
+- ParticipantGrid component
+- ControlBar component
+- ChatSidebar component
+- ParticipantList component
+- MeetingInfo component

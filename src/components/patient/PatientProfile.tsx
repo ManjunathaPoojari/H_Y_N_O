@@ -78,7 +78,7 @@ export const PatientProfile = () => {
     }
   };
 
-  const handleInputChange = (field: keyof Patient, value: any) => {
+  const handleInputChange = (field: keyof Patient, value: string | number | string[]) => {
     if (patient) {
       setPatient({ ...patient, [field]: value });
     }
@@ -211,16 +211,26 @@ export const PatientProfile = () => {
                     disabled={!isEditing || isSaving}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="age">Age</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    value={patient.age || ''}
-                    onChange={(e) => handleInputChange('age', e.target.value)}
-                    disabled={!isEditing || isSaving}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  value={patient.dateOfBirth || ''}
+                  onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                  disabled={!isEditing || isSaving}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="age">Age</Label>
+                <Input
+                  id="age"
+                  type="number"
+                  value={patient.age || ''}
+                  onChange={(e) => handleInputChange('age', e.target.value)}
+                  disabled={!isEditing || isSaving}
+                />
+              </div>
                 <div className="space-y-2">
                   <Label htmlFor="gender">Gender</Label>
                   <Select
@@ -325,11 +335,33 @@ export const PatientProfile = () => {
               </div>
 
               <div className="space-y-2">
+                <Label>Current Medications</Label>
+                <div className="flex flex-wrap gap-2">
+                  {patient.currentMedications && patient.currentMedications.length > 0 ? (
+                    patient.currentMedications.map((medication, index) => (
+                      <Badge key={index} variant="secondary">
+                        {medication}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">No current medications recorded</p>
+                  )}
+                  {isEditing && (
+                    <Button size="sm" variant="outline">
+                      + Add Medication
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="notes">Additional Notes</Label>
                 <Textarea
                   id="notes"
+                  value={patient.notes || ''}
+                  onChange={(e) => handleInputChange('notes', e.target.value)}
                   placeholder="Any additional medical information..."
-                  disabled={!isEditing}
+                  disabled={!isEditing || isSaving}
                   rows={3}
                 />
               </div>

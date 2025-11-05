@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -18,6 +18,9 @@ export const DoctorProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch doctor data from backend
   useEffect(() => {
@@ -25,6 +28,15 @@ export const DoctorProfile = () => {
       fetchDoctorData();
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    // Cleanup preview URL on unmount
+    return () => {
+      if (photoPreview) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
 
   const fetchDoctorData = async () => {
     try {
@@ -50,25 +62,62 @@ export const DoctorProfile = () => {
     }
   };
 
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type and size
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select a valid image file (JPEG or PNG)');
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) { // 2MB
+        toast.error('Image size must be less than 2MB');
+        return;
+      }
+
+      setSelectedPhoto(file);
+      const previewUrl = URL.createObjectURL(file);
+      setPhotoPreview(previewUrl);
+    }
+  };
+
   const handleSave = async () => {
     if (!doctor) return;
 
     setIsSaving(true);
     try {
       const token = localStorage.getItem('token');
+      const formData = new FormData();
+      
+      // Append all doctor fields
+      Object.keys(doctor).forEach(key => {
+        if (key !== 'hospital' && doctor[key as keyof Doctor] !== undefined && doctor[key as keyof Doctor] !== null) {
+          formData.append(key, doctor[key as keyof Doctor] as string);
+        }
+      });
+
+      // Append photo if selected
+      if (selectedPhoto) {
+        formData.append('avatar', selectedPhoto);
+      }
+
       const response = await fetch(`${API_URL}/doctors/${doctor.id}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(doctor),
+        body: formData,
       });
 
       if (response.ok) {
         const updatedDoctor = await response.json();
         setDoctor(updatedDoctor);
         setIsEditing(false);
+        setSelectedPhoto(null);
+        if (photoPreview) {
+          URL.revokeObjectURL(photoPreview);
+          setPhotoPreview(null);
+        }
         toast.success('Profile updated successfully');
       } else {
         toast.error('Failed to update profile');
@@ -121,9 +170,38 @@ export const DoctorProfile = () => {
         <div className="lg:col-span-1 space-y-6">
           <Card>
             <CardContent className="pt-6 text-center">
-              <div className="h-24 w-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Stethoscope className="h-12 w-12 text-blue-600" />
+              <div className="relative mx-auto mb-4">
+                {photoPreview || doctor.avatarUrl ? (
+                  <img
+                    src={photoPreview || doctor.avatarUrl}
+                    alt="Doctor avatar"
+                    className="h-24 w-24 rounded-full object-cover mx-auto"
+                  />
+                ) : (
+                  <div className="h-24 w-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                    <Stethoscope className="h-12 w-12 text-blue-600" />
+                  </div>
+                )}
+                {isEditing && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="absolute -bottom-2 left-1/2 transform -translate-x-1/2"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Change Photo
+                  </Button>
+                )}
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={handlePhotoChange}
+                className="hidden"
+                disabled={!isEditing}
+              />
               <h3 className="text-xl mb-1">Dr. {doctor.name}</h3>
               <Badge className="mb-2">{doctor.specialization}</Badge>
               <Badge variant="outline" className="mb-4">Doctor ID: {doctor.id}</Badge>

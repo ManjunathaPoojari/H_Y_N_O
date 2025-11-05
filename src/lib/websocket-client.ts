@@ -37,6 +37,8 @@ export interface VideoCallSignal {
   userName?: string;
   userRole?: string;
   data?: any;
+  sdpMLineIndex?: number;
+  sdpMid?: string;
 }
 
 class WebSocketClient {
@@ -206,7 +208,9 @@ class WebSocketClient {
         }, appointmentId);
       });
 
-      this.client.subscribe(`/topic/video-call/${appointmentId}/offer`, (message) => {
+      const currentUserId = this.getCurrentUserId();
+
+      this.client.subscribe(`/topic/user/${currentUserId}/video-call/offer`, (message) => {
         const offer = JSON.parse(message.body);
         this.onVideoCallSignal?.({
           type: 'offer',
@@ -215,7 +219,7 @@ class WebSocketClient {
         }, appointmentId);
       });
 
-      this.client.subscribe(`/topic/video-call/${appointmentId}/answer`, (message) => {
+      this.client.subscribe(`/topic/user/${currentUserId}/video-call/answer`, (message) => {
         const answer = JSON.parse(message.body);
         this.onVideoCallSignal?.({
           type: 'answer',
@@ -224,16 +228,18 @@ class WebSocketClient {
         }, appointmentId);
       });
 
-      this.client.subscribe(`/topic/video-call/${appointmentId}/ice-candidate`, (message) => {
+      this.client.subscribe(`/topic/user/${currentUserId}/video-call/ice-candidate`, (message) => {
         const candidate = JSON.parse(message.body);
         this.onVideoCallSignal?.({
           type: 'ice-candidate',
           fromUserId: candidate.fromUserId,
-          data: candidate.candidate
+          data: candidate.candidate,
+          sdpMLineIndex: candidate.sdpMLineIndex,
+          sdpMid: candidate.sdpMid
         }, appointmentId);
       });
 
-      this.client.subscribe(`/topic/video-call/${appointmentId}/leave`, (message) => {
+      this.client.subscribe(`/topic/user/${currentUserId}/video-call/leave`, (message) => {
         const leaveNotification = JSON.parse(message.body);
         this.onVideoCallSignal?.({
           type: 'leave',
@@ -244,6 +250,15 @@ class WebSocketClient {
     } catch (error) {
       console.error('Failed to subscribe to video call:', error);
     }
+  }
+
+  private getCurrentUserId(): string {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      return user.id || '';
+    }
+    return '';
   }
 
   sendMessage(chatRoomId: string, messageData: {
@@ -380,6 +395,8 @@ class WebSocketClient {
   sendIceCandidate(appointmentId: string, candidateData: {
     fromUserId: string;
     candidate: string;
+    sdpMLineIndex?: number;
+    sdpMid?: string;
   }) {
     if (!this.client || !this.connected) {
       throw new Error('WebSocket not connected');

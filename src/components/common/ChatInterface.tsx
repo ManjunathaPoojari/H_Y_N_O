@@ -40,7 +40,11 @@ interface ChatRoomUI {
   status?: string;
 }
 
-export const ChatInterface = () => {
+interface ChatInterfaceProps {
+  onNavigate?: (path: string) => void;
+}
+
+export const ChatInterface = ({ onNavigate }: ChatInterfaceProps) => {
   const { user } = useAuth();
   const { appointments, doctors, refreshData } = useAppStore();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -58,6 +62,7 @@ export const ChatInterface = () => {
     setSelectedChatRoomId(null);
     setMessages([]);
     setChatRooms([]);
+    setLoading(true);
   }, [user?.id]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -116,7 +121,7 @@ export const ChatInterface = () => {
     if (user?.id) {
       initializeChat();
     }
-  }, [user?.id, appointmentIdFromUrl]); // Include appointmentIdFromUrl to reload when URL changes
+  }, [user?.id, appointmentIdFromUrl, refreshData]); // Include appointmentIdFromUrl to reload when URL changes
 
   // Reload chat rooms when appointments or doctors change
   useEffect(() => {
@@ -306,9 +311,6 @@ export const ChatInterface = () => {
 
   const loadMessages = async (chatRoomId: string) => {
     try {
-      // Clear existing messages to ensure real-time only
-      setMessages([]);
-
       const msgs = await chatAPI.getChatMessages(chatRoomId);
 
       const uiMessages: Message[] = msgs.map((msg: any) => ({
@@ -317,41 +319,44 @@ export const ChatInterface = () => {
         senderRole: msg.senderRole.toLowerCase(),
         message: msg.content,
         timestamp: formatTimestamp(msg.createdAt),
+        read: msg.read || false,
       }));
       setMessages(uiMessages);
     } catch (error) {
       console.error('Failed to load messages:', error);
       toast.error('Failed to load messages');
+      // Don't clear messages on error - keep any existing messages
     }
   };
 
-    const handleIncomingMessage = useCallback((message: ChatMessage, chatRoomId: string) => {
-      if (chatRoomId === selectedChatRoomId) {
-        // Check if message already exists to prevent duplicates
-        setMessages(prev => {
-          const messageExists = prev.some(msg => msg.id === message.id);
-          if (messageExists) {
-            return prev; // Don't add duplicate
-          }
+  const handleIncomingMessage = useCallback((message: ChatMessage, chatRoomId: string) => {
+    if (chatRoomId === selectedChatRoomId) {
+      // Check if message already exists to prevent duplicates
+      setMessages(prev => {
+        const messageExists = prev.some(msg => msg.id === message.id);
+        if (messageExists) {
+          return prev; // Don't add duplicate
+        }
 
-          const uiMessage: Message = {
-            ...message,
-            sender: message.senderName,
-            senderRole: message.senderRole.toLowerCase() as 'patient' | 'doctor',
-            message: message.content,
-            timestamp: formatTimestamp(message.createdAt),
-          };
-          return [...prev, uiMessage];
-        });
-      }
+        const uiMessage: Message = {
+          ...message,
+          sender: message.senderName || 'Unknown',
+          senderRole: message.senderRole.toLowerCase() as 'patient' | 'doctor',
+          message: message.content,
+          timestamp: formatTimestamp(message.createdAt),
+          read: false,
+        };
+        return [...prev, uiMessage];
+      });
+    }
 
-      // Update chat room's last message
-      setChatRooms(prev => prev.map(room =>
-        room.id === chatRoomId
-          ? { ...room, lastMessage: message, lastMessageTime: formatTimestamp(message.createdAt) }
-          : room
-      ));
-    }, [selectedChatRoomId]);
+    // Update chat room's last message
+    setChatRooms(prev => prev.map(room =>
+      room.id === chatRoomId
+        ? { ...room, lastMessage: message, lastMessageTime: formatTimestamp(message.createdAt) }
+        : room
+    ));
+  }, [selectedChatRoomId]);
 
   const handleTypingIndicator = useCallback((indicator: TypingIndicator, chatRoomId: string) => {
     if (chatRoomId === selectedChatRoomId && indicator.userId !== user?.id) {
@@ -530,7 +535,7 @@ export const ChatInterface = () => {
                   <div className="flex items-center gap-2 mb-1">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback>
-                        {room.doctorName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        {(room.doctorName || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">

@@ -46,6 +46,16 @@ public class HospitalController {
         }
     }
 
+    @GetMapping("/{hospitalId}/patients")
+    public ResponseEntity<List<com.hyno.entity.Patient>> getPatientsByHospital(@PathVariable String hospitalId) {
+        try {
+            List<com.hyno.entity.Patient> patients = hospitalService.getHospitalPatients(hospitalId);
+            return ResponseEntity.ok(patients);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @GetMapping("/{hospitalId}/reports/overview")
     public ResponseEntity<Map<String, Object>> getHospitalOverviewReport(
             @PathVariable String hospitalId,

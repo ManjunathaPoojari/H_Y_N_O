@@ -119,10 +119,13 @@ public class PatientService {
                 patient.setAge(patientDetails.getAge());
                 patient.setGender(patientDetails.getGender());
                 patient.setBloodGroup(patientDetails.getBloodGroup());
+                patient.setDateOfBirth(patientDetails.getDateOfBirth());
                 patient.setAllergies(patientDetails.getAllergies());
                 patient.setMedicalHistory(patientDetails.getMedicalHistory());
+                patient.setCurrentMedications(patientDetails.getCurrentMedications());
                 patient.setAddress(patientDetails.getAddress());
                 patient.setEmergencyContact(patientDetails.getEmergencyContact());
+                patient.setNotes(patientDetails.getNotes());
                 Patient updatedPatient = patientRepository.save(patient);
                 logger.info("Patient updated successfully: {}", id);
                 return updatedPatient;

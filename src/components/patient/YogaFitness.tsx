@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -15,6 +15,8 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { AIChatAssistant } from '../common/AIChatAssistant';
 import { aiService } from '../../lib/ai-service';
+import apiClient from '../../lib/api-client';
+import { useAuth } from '../../lib/auth-context';
 import { toast } from 'sonner';
 
 interface YogaFitnessProps {
