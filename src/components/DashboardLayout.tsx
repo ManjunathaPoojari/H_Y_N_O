@@ -87,6 +87,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: UserCog, label: 'Doctors', path: '/admin/doctors' },
           { icon: Users, label: 'Patients', path: '/admin/patients' },
           { icon: Calendar, label: 'Appointments', path: '/admin/appointments' },
+          { icon: Pill, label: 'Pharmacy', path: '/admin/pharmacy' },
           { icon: AlertCircle, label: 'Emergency', path: '/admin/emergency' },
           { icon: FileText, label: 'Reports', path: '/admin/reports' },
           { icon: Settings, label: 'Settings', path: '/admin/settings' },
