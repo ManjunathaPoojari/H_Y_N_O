@@ -16,19 +16,19 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
       <div className="fixed bottom-0 left-0 w-96 h-96 bg-emerald-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000 -z-10"></div>
 
       {/* Welcome Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl mb-2 bg-gradient-to-r from-gray-900 via-green-900 to-emerald-900 bg-clip-text text-transparent">
-            Nutrition & Wellness Dashboard
-          </h1>
-          <p className="text-gray-600 flex items-center gap-2">
-            <Activity className="h-4 w-4 text-green-500 animate-pulse" />
-            Personalized nutrition plans and wellness insights
-          </p>
-        </div>
-        <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-200/50 backdrop-blur-sm">
-          <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="text-sm text-green-700">Healthy Living</span>
+      <div className="text-center mb-8">
+        <h1 className="text-5xl md:text-6xl mb-4 text-black font-bold tracking-tight">
+          Nutrition and Wellness
+        </h1>
+        <p className="text-gray-600 flex items-center justify-center gap-2 text-lg">
+          <Activity className="h-5 w-5 text-green-500 animate-pulse" />
+          Elevate your daily wellness with NutriTrack
+        </p>
+        <div className="mt-4 flex justify-center">
+          <div className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-200/50 backdrop-blur-sm">
+            <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-sm text-green-700 font-medium">Healthy Living</span>
+          </div>
         </div>
       </div>
 
