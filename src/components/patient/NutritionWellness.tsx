@@ -24,12 +24,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
           <Activity className="h-5 w-5 text-green-500 animate-pulse" />
           Elevate your daily wellness with NutriTrack
         </p>
-        <div className="mt-4 flex justify-center">
-          <div className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-200/50 backdrop-blur-sm">
-            <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-sm text-green-700 font-medium">Healthy Living</span>
-          </div>
-        </div>
+
       </div>
 
       {/* Nutrition Dashboard Boxes */}
@@ -96,42 +91,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <Card className="border-0 bg-white/60 backdrop-blur-xl shadow-2xl">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-green-600" />
-                Quick Actions
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-1">Get started with your nutrition journey</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { icon: User, label: 'Update Profile', path: '/patient/nutrition/profile', gradient: 'from-blue-500 to-blue-600' },
-              { icon: ChefHat, label: 'Browse Recipes', path: '/patient/nutrition/recipes', gradient: 'from-orange-500 to-red-600' },
-              { icon: Calendar, label: 'View Plans', path: '/patient/nutrition/meal-plans', gradient: 'from-purple-500 to-pink-600' },
-              { icon: Crown, label: 'Go Premium', path: '/patient/nutrition/premium', gradient: 'from-yellow-500 to-amber-600' }
-            ].map((action, index) => (
-              <Button
-                key={index}
-                className={`group h-auto py-6 flex flex-col gap-3 bg-gradient-to-br ${action.gradient} hover:shadow-2xl transition-all duration-300 hover:scale-105 border-0 relative overflow-hidden`}
-                onClick={() => onNavigate(action.path)}
-              >
-                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors"></div>
-                <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <action.icon className="h-6 w-6" />
-                </div>
-                <span className="text-sm">{action.label}</span>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+
 
       <style>{`
         @keyframes blob {
