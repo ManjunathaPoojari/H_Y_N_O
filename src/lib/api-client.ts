@@ -626,9 +626,31 @@ export const adminAPI = {
   getPendingHospitals: () => apiCall<any[]>('/api/admin/pending/hospitals'),
 };
 
-
-
-
+// Pharmacy API
+export const pharmacyAPI = {
+  getMedicines: () => apiCall<any[]>('/api/medicines'),
+  getOrders: () => apiCall<any[]>('/api/orders'),
+  getPrescriptions: () => apiCall<any[]>('/api/prescriptions'),
+  addMedicine: (medicine: any) =>
+    apiCall<any>('/api/medicines', {
+      method: 'POST',
+      body: JSON.stringify(medicine),
+    }),
+  updateMedicine: (id: string, medicine: any) =>
+    apiCall<any>(`/api/medicines/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(medicine),
+    }),
+  deleteMedicine: (id: string) =>
+    apiCall<void>(`/api/medicines/${id}`, {
+      method: 'DELETE',
+    }),
+  updateOrderStatus: (id: string, status: string) =>
+    apiCall<any>(`/api/orders/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    }),
+};
 
 // Export all APIs
 export const api = {
@@ -646,6 +668,7 @@ export const api = {
   payments: paymentAPI,
   feedback: feedbackAPI,
   admin: adminAPI,
+  pharmacy: pharmacyAPI,
 };
 
 export default api;

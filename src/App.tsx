@@ -40,6 +40,7 @@ import { AdminSettings } from './components/admin/AdminSettings';
 import { AdminEmergency } from './components/admin/AdminEmergency';
 import { HospitalManagement } from './components/admin/HospitalManagement';
 import { DoctorManagement } from './components/admin/DoctorManagement';
+import { AdminPharmacy } from './components/admin/AdminPharmacy';
 import { ConfigStatus } from './components/ConfigStatus';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
@@ -237,6 +238,7 @@ function AppContent() {
           {currentPath === '/admin/doctors' && <DoctorManagement />}
           {currentPath === '/admin/patients' && <AdminPatients />}
           {currentPath === '/admin/appointments' && <AdminAppointments />}
+          {currentPath === '/admin/pharmacy' && <AdminPharmacy />}
           {currentPath === '/admin/emergency' && <AdminEmergency />}
           {currentPath === '/admin/reports' && <AdminReports />}
           {currentPath === '/admin/settings' && <AdminSettings />}

@@ -8,7 +8,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from '../ui/label';
 import { Search, ShoppingCart, Upload, Pill, Minus, Plus, Trash2, CreditCard } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
+import { useAuth } from '../../lib/auth-context';
 import { toast } from 'sonner';
+
+interface Order {
+  id: string;
+  items: CartItem[];
+  total: number;
+  date: string;
+  status: 'placed' | 'processing' | 'delivered' | 'cancelled';
+}
 
 interface CartItem {
   medicineId: string;
@@ -19,11 +28,15 @@ interface CartItem {
 }
 
 export const OnlinePharmacy = () => {
-  const { medicines } = useAppStore();
+  const { medicines, getPrescriptionsByPatient } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [prescriptionUploaded, setPrescriptionUploaded] = useState(false);
   const [category, setCategory] = useState<string>('all');
+  const [view, setView] = useState<'catalog'|'orders'|'prescriptions'|'offers'>('catalog');
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  const { user } = useAuth();
 
   const categories = ['All', ...new Set(medicines.map(m => m.category))];
 
@@ -92,6 +105,16 @@ export const OnlinePharmacy = () => {
     }
 
     toast.success('Order placed successfully! You will receive confirmation email shortly.');
+    // Create a lightweight order record for session
+    const deliveryCharge = calculateTotal() > 500 ? 0 : 50;
+    const newOrder: Order = {
+      id: `ORD${String(orders.length + 1).padStart(4, '0')}`,
+      items: cart,
+      total: calculateTotal() + deliveryCharge,
+      date: new Date().toISOString(),
+      status: 'placed',
+    };
+    setOrders([newOrder, ...orders]);
     setCart([]);
   };
 
@@ -100,6 +123,8 @@ export const OnlinePharmacy = () => {
     toast.success('Prescription uploaded successfully');
   };
 
+  const prescriptionsForUser = user ? getPrescriptionsByPatient(user.id) : [];
+
   return (
     <div className="space-y-6">
       <div>
@@ -107,9 +132,23 @@ export const OnlinePharmacy = () => {
         <p className="text-gray-600">Order medicines with prescription upload and home delivery</p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Medicines Catalog */}
-        <div className="lg:col-span-2 space-y-4">
+      {/* Top-level Pharmacy Tabs: Catalog / Orders / Prescriptions / Offers */}
+      <div>
+  <Tabs value={view} onValueChange={(v: string) => setView(v as 'catalog'|'orders'|'prescriptions'|'offers')}>
+          <TabsList className="w-full max-w-md">
+            <TabsTrigger value="catalog">Catalog</TabsTrigger>
+            <TabsTrigger value="orders">My Orders</TabsTrigger>
+            <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
+            <TabsTrigger value="offers">Offers</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* Catalog View */}
+      {view === 'catalog' && (
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Medicines Catalog */}
+          <div className="lg:col-span-2 space-y-4">
           {/* Upload Prescription */}
           <Card>
             <CardContent className="pt-6">
@@ -224,10 +263,10 @@ export const OnlinePharmacy = () => {
               </CardContent>
             </Card>
           )}
-        </div>
+          </div>
 
-        {/* Shopping Cart */}
-        <div>
+          {/* Shopping Cart */}
+          <div>
           <Card className="sticky top-4">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -306,8 +345,148 @@ export const OnlinePharmacy = () => {
               )}
             </CardContent>
           </Card>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Orders View */}
+      {view === 'orders' && (
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>My Orders</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {orders.length === 0 ? (
+                  <div className="text-gray-500 py-8 text-center">You have no orders yet.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {orders.map(order => (
+                      <div key={order.id} className="border rounded-md p-3">
+                        <div className="flex justify-between mb-2">
+                          <div>
+                            <div className="font-medium">Order {order.id}</div>
+                            <div className="text-xs text-gray-500">{new Date(order.date).toLocaleString()}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold">₹{order.total}</div>
+                            <div className="text-xs text-gray-500 capitalize">{order.status}</div>
+                          </div>
+                        </div>
+                        <div className="text-sm">
+                          {order.items.map(i => (
+                            <div key={i.medicineId} className="flex justify-between">
+                              <span>{i.name} x{i.quantity}</span>
+                              <span>₹{i.price * i.quantity}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div>
+            <Card className="sticky top-4">
+              <CardHeader>
+                <CardTitle>Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-gray-500">Select an order to view details.</div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Prescriptions View */}
+      {view === 'prescriptions' && (
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>My Prescriptions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {prescriptionsForUser.length === 0 ? (
+                  <div className="text-gray-500 py-8 text-center">No prescriptions found.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {prescriptionsForUser.map(p => (
+                      <div key={p.id} className="border rounded-md p-3">
+                        <div className="flex justify-between">
+                          <div>
+                            <div className="font-medium">Prescription</div>
+                            <div className="text-xs text-gray-500">Issued: {new Date(p.date).toLocaleDateString()}</div>
+                          </div>
+                          <div className="text-sm">Rx ID: {p.id}</div>
+                        </div>
+                        <div className="mt-2 text-sm text-gray-700">
+                          <div className="font-medium">Diagnosis</div>
+                          <div className="text-sm text-gray-600">{p.diagnosis}</div>
+                          <div className="mt-2 font-medium">Medicines</div>
+                          <ul className="list-disc ml-5 text-sm text-gray-700">
+                            {p.medicines.map(m => (
+                              <li key={m.medicineId}>{m.medicineName} — {m.dosage} ({m.duration})</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div>
+            <Card className="sticky top-4">
+              <CardHeader>
+                <CardTitle>Upload / Manage</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-gray-500">Upload new prescriptions or view upload status here.</div>
+                <div className="mt-4">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button>Upload Prescription</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Upload Prescription</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                          <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                          <p className="text-sm text-gray-600 mb-2">Click to upload or drag and drop</p>
+                          <Input type="file" className="mt-4" accept=".pdf,.jpg,.jpeg,.png" />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={handlePrescriptionUpload}>Upload Prescription</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Offers View (placeholder) */}
+      {view === 'offers' && (
+        <Card>
+          <CardContent>
+            <h3 className="text-lg font-medium mb-2">Offers & Promotions</h3>
+            <p className="text-sm text-gray-600">No current offers. Check back later.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

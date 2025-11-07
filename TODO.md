@@ -1,52 +1,10 @@
-# Video Call Redesign - Microsoft Teams Style
+# TODO: Add Pharmacy Tab to Admin Dashboard
 
-## Current Status
-- Existing video call implementation is functional but has basic UI
-- Complex WebRTC peer-to-peer setup with custom signaling
-- Simple controls and layout
+## Steps to Complete
 
-## Planned Changes
-
-### Phase 1: UI Redesign
-- [ ] Create new Teams-inspired VideoCall component
-- [ ] Implement meeting header with title and controls
-- [ ] Add participant gallery/grid view
-- [ ] Create control bar with Teams-style buttons
-- [ ] Add chat sidebar with toggle
-- [ ] Implement participant list panel
-- [ ] Add meeting information display
-
-### Phase 2: Enhanced Controls
-- [ ] Add screen share functionality
-- [ ] Implement hand raise feature
-- [ ] Add more options menu
-- [ ] Improve mute/video toggle states
-- [ ] Add recording indicator (if needed)
-- [ ] Implement picture-in-picture mode
-
-### Phase 3: Backend Integration
-- [ ] Update WebSocket signaling if needed
-- [ ] Add participant management endpoints
-- [ ] Implement screen share signaling
-- [ ] Add meeting metadata storage
-
-### Phase 4: Testing & Polish
-- [ ] Test all new features
-- [ ] Ensure responsive design
-- [ ] Add loading states and error handling
-- [ ] Optimize performance
-- [ ] Add accessibility features
-
-## Files to Modify
-- src/components/common/VideoCall.tsx (complete rewrite)
-- src/components/doctor/VideoCall.tsx (update wrapper)
-- src/lib/websocket-client.ts (add new signaling methods)
-- src/types/index.ts (add new types for Teams features)
-
-## New Components Needed
-- MeetingHeader component
-- ParticipantGrid component
-- ControlBar component
-- ChatSidebar component
-- ParticipantList component
-- MeetingInfo component
+- [ ] Edit `src/components/DashboardLayout.tsx` to add Pharmacy tab to admin navigation items
+- [ ] Create `src/components/admin/AdminPharmacy.tsx` component with CRUD sections for medicines, orders, pending orders, and prescriptions
+- [ ] Implement basic CRUD functionality in AdminPharmacy.tsx using state and API calls
+- [ ] Update routing in the main app to handle '/admin/pharmacy' path
+- [ ] Test navigation and CRUD operations
+- [ ] Integrate with backend API for data persistence (if needed)
