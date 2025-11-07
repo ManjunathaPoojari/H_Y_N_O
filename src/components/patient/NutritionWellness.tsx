@@ -595,7 +595,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Droplet className="h-5 w-5 text-cyan-600" />
-            Water Tracker
+            Water 
           </CardTitle>
         </CardHeader>
         <CardContent>
