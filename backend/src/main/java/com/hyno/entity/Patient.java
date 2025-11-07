@@ -45,6 +45,7 @@ public class Patient {
     private String address;
     private String emergencyContact;
     private String password;
+    private boolean isVerified = false;
     private String notes;
 
     @Column(name = "hospital_id")

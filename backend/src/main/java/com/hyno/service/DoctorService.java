@@ -106,6 +106,10 @@ public class DoctorService {
     public Doctor createDoctor(Doctor doctor) {
         logger.info("Creating new doctor: {}", doctor.getEmail());
         try {
+            // Generate doctor ID starting from D001 and incrementing
+            String nextId = generateNextDoctorId();
+            doctor.setId(nextId);
+
             // Set hospital relationship if hospitalId is provided
             if (doctor.getHospital() == null && doctor.getHospitalId() != null) {
                 Optional<Hospital> hospital = hospitalRepository.findById(doctor.getHospitalId());
@@ -123,6 +127,22 @@ public class DoctorService {
             logger.error("Error creating doctor: {}", doctor.getEmail(), e);
             throw e;
         }
+    }
+
+    private String generateNextDoctorId() {
+        Optional<Doctor> lastDoctor = doctorRepository.findTopByOrderByIdDesc();
+        if (lastDoctor.isPresent()) {
+            String lastId = lastDoctor.get().getId();
+            if (lastId.startsWith("D")) {
+                try {
+                    int number = Integer.parseInt(lastId.substring(1));
+                    return String.format("D%03d", number + 1);
+                } catch (NumberFormatException e) {
+                    // If parsing fails, start from D001
+                }
+            }
+        }
+        return "D001";
     }
 
     public Doctor updateDoctor(String id, Doctor doctorDetails) {

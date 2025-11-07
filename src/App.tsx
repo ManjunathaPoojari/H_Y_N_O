@@ -7,6 +7,8 @@ import { NotificationProvider } from './lib/notification-context';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { RegisterPage } from './components/RegisterPage';
+import { ForgotPasswordPage } from './components/ForgotPasswordPage';
+import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { DashboardLayout } from './components/DashboardLayout';
 import { PatientDashboard } from './components/patient/PatientDashboard';
 import { BookAppointment } from './components/patient/BookAppointment';
@@ -42,6 +44,9 @@ import { HospitalManagement } from './components/admin/HospitalManagement';
 import { DoctorManagement } from './components/admin/DoctorManagement';
 import { AdminPharmacy } from './components/admin/AdminPharmacy';
 import { ConfigStatus } from './components/ConfigStatus';
+import { AboutUs } from './components/AboutUs';
+import { TermsOfService } from './components/TermsOfService';
+import { PrivacyPolicy } from './components/PrivacyPolicy';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 import { Card, CardContent } from './components/ui/card';
@@ -105,6 +110,26 @@ function AppContent() {
 
     if (currentPath === '/register') {
       return <RegisterPage onNavigate={navigate} />;
+    }
+
+    if (currentPath === '/forgot-password') {
+      return <ForgotPasswordPage onNavigate={navigate} />;
+    }
+
+    if (currentPath === '/reset-password') {
+      return <ResetPasswordPage onNavigate={navigate} />;
+    }
+
+    if (currentPath === '/about') {
+      return <AboutUs />;
+    }
+
+    if (currentPath === '/terms') {
+      return <TermsOfService />;
+    }
+
+    if (currentPath === '/privacy') {
+      return <PrivacyPolicy />;
     }
 
     // Protected routes - require authentication

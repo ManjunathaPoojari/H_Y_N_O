@@ -29,6 +29,7 @@ public class Hospital {
     private Integer totalDoctors = 0;
     private String status = "pending";
     private String password;
+    private boolean isVerified = false;
 
     @ElementCollection
     @CollectionTable(name = "hospital_facilities", joinColumns = @JoinColumn(name = "hospital_id"))

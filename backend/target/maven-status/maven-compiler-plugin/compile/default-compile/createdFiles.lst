@@ -66,6 +66,7 @@ com\hyno\controller\FeedbackController.class
 com\hyno\controller\MedicineController.class
 com\hyno\controller\YogaController.class
 com\hyno\entity\VideoCall.class
+com\hyno\service\JwtService.class
 com\hyno\entity\YogaTrainer.class
 com\hyno\entity\Feedback.class
 com\hyno\repository\PaymentRepository.class
@@ -94,6 +95,7 @@ com\hyno\config\GlobalExceptionHandler.class
 com\hyno\controller\WebSocketChatController$ChatMessageRequest.class
 com\hyno\controller\WebSocketChatController$WebSocketMessageResponse.class
 com\hyno\controller\WebSocketVideoCallController.class
+com\hyno\entity\EmailVerificationToken.class
 com\hyno\entity\Payment$PaymentStatus.class
 com\hyno\controller\WebSocketVideoCallController$JoinCallNotification.class
 com\hyno\entity\ChatMessage$SenderRole.class

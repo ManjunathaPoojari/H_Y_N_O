@@ -40,6 +40,7 @@ public class Doctor {
     private String status = "pending";
     private String avatarUrl;
     private String password;
+    private boolean isVerified = false;
 
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

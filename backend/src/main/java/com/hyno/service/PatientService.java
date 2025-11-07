@@ -86,6 +86,9 @@ public class PatientService {
     public Patient createPatient(Patient patient) {
         logger.info("Creating new patient: {}", patient.getEmail());
         try {
+            // Generate patient ID starting from P001 and incrementing
+            String nextId = generateNextPatientId();
+            patient.setId(nextId);
             Patient savedPatient = patientRepository.save(patient);
             logger.info("Patient created successfully with ID: {}", savedPatient.getId());
             return savedPatient;
@@ -93,6 +96,22 @@ public class PatientService {
             logger.error("Error creating patient: {}", patient.getEmail(), e);
             throw e;
         }
+    }
+
+    private String generateNextPatientId() {
+        Optional<Patient> lastPatient = patientRepository.findTopByOrderByIdDesc();
+        if (lastPatient.isPresent()) {
+            String lastId = lastPatient.get().getId();
+            if (lastId.startsWith("P")) {
+                try {
+                    int number = Integer.parseInt(lastId.substring(1));
+                    return String.format("P%03d", number + 1);
+                } catch (NumberFormatException e) {
+                    // If parsing fails, start from P001
+                }
+            }
+        }
+        return "P001";
     }
 
     public Patient save(Patient patient) {
