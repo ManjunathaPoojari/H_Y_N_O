@@ -46,6 +46,7 @@ interface UserProfile {
   dietaryPreferences: string[];
   bmi: number;
   calorieGoal: number;
+  waterGoal: number;
   activeDietPlan: string;
 }
 
@@ -195,9 +196,11 @@ const diseaseCategories = [
 ];
 
 const dietaryTags = [
-  'Vegetarian', 'Non-Vegetarian', 'Vegan', 'Gluten-Free', 
+  'Vegetarian', 'Non-Vegetarian', 'Vegan', 'Gluten-Free',
   'Lactose-Free', 'High-Protein', 'Low-Carb', 'Keto', 'Low-Fat'
 ];
+
+const defaultWaterGoal = 3000; // Default water goal in ml
 
 export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate }) => {
   const [userProfile, setUserProfile] = useState<UserProfile>({
@@ -209,7 +212,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
     dietaryPreferences: ['Vegetarian'],
     bmi: 24.2,
     calorieGoal: 2000,
-    waterGoal: 3000,
+    waterGoal: defaultWaterGoal,
     activeDietPlan: 'Weight Maintenance'
   });
 
@@ -588,6 +591,82 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
           </CardContent>
         </Card>
       </div>
+
+      {/* Water Tracker */}
+      <Card className="border-0 bg-gradient-to-br from-cyan-50 to-blue-50 shadow-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Droplet className="h-5 w-5 text-cyan-600" />
+            Water Tracker Nutrition
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-600">Daily Goal: {userProfile.waterGoal}ml</span>
+                  <span className="text-sm font-semibold">{Math.round(waterPercentage)}%</span>
+                </div>
+                <Progress value={waterPercentage} className="h-3" />
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={() => addWater(250)} size="sm" className="bg-gradient-to-r from-blue-500 to-cyan-500">
+                  +250ml
+                </Button>
+                <Button onClick={() => addWater(500)} size="sm" className="bg-gradient-to-r from-blue-500 to-cyan-500">
+                  +500ml
+                </Button>
+                <Button onClick={() => addWater(1000)} size="sm" className="bg-gradient-to-r from-blue-500 to-cyan-500">
+                  +1L
+                </Button>
+                <Button onClick={() => setWaterIntake(0)} size="sm" variant="outline">
+                  Reset
+                </Button>
+              </div>
+              {waterStreak > 0 && (
+                <div className="mt-3 text-sm text-slate-600">
+                  🔥 {waterStreak} day streak!
+                </div>
+              )}
+            </div>
+            <div className="ml-8">
+              <div className="relative h-32 w-32">
+                <svg className="transform -rotate-90" viewBox="0 0 120 120">
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    fill="none"
+                    stroke="#e5e7eb"
+                    strokeWidth="10"
+                  />
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    fill="none"
+                    stroke="url(#waterGradient)"
+                    strokeWidth="10"
+                    strokeDasharray={`${2 * Math.PI * 50}`}
+                    strokeDashoffset={`${2 * Math.PI * 50 * (1 - waterPercentage / 100)}`}
+                    strokeLinecap="round"
+                  />
+                  <defs>
+                    <linearGradient id="waterGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#06b6d4" />
+                      <stop offset="100%" stopColor="#3b82f6" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Droplet className="h-8 w-8 text-cyan-500" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Main Tabs */}
       <Tabs defaultValue="meals" className="space-y-6">
