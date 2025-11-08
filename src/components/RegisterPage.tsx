@@ -663,7 +663,7 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 hover:scale-105 text-white font-semibold transition-all duration-200"
+              className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 hover:scale-105 text-black font-semibold transition-all duration-200"
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
