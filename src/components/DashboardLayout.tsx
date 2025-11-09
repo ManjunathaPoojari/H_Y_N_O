@@ -156,8 +156,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <header className="bg-white border-b sticky top-0 z-40">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-4">
-              {role === 'patient' && (
-                <Button variant="outline" size="sm" className="hidden md:flex">
+            {role === 'patient' && (
+                <Button variant="outline" size="sm" className="hidden md:flex" onClick={() => onNavigate('/patient/emergency')}>
                   <AlertCircle className="h-4 w-4 mr-2 text-red-500" />
                   Emergency
                 </Button>
