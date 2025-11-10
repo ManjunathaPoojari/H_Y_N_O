@@ -5,11 +5,17 @@ import com.hyno.entity.Patient;
 import com.hyno.entity.Doctor;
 import com.hyno.entity.Hospital;
 import com.hyno.entity.Appointment;
+import com.hyno.entity.Medicine;
+import com.hyno.entity.Order;
+import com.hyno.entity.Prescription;
 import com.hyno.service.AdminService;
 import com.hyno.service.PatientService;
 import com.hyno.service.DoctorService;
 import com.hyno.service.HospitalService;
 import com.hyno.service.AppointmentService;
+import com.hyno.service.MedicineService;
+import com.hyno.service.OrderService;
+import com.hyno.service.PrescriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping("/api/admin")
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:5173"})
 public class AdminController {
 
@@ -37,6 +43,15 @@ public class AdminController {
 
     @Autowired
     private AppointmentService appointmentService;
+
+    @Autowired
+    private MedicineService medicineService;
+
+    @Autowired
+    private OrderService orderService;
+
+    @Autowired
+    private PrescriptionService prescriptionService;
 
     // Dashboard Statistics
     @GetMapping("/stats")
@@ -276,5 +291,45 @@ public class AdminController {
     @GetMapping("/pending/hospitals")
     public List<Hospital> getPendingHospitals() {
         return hospitalService.getHospitalsByStatus("pending");
+    }
+
+    // Pharmacy Management
+    @GetMapping("/medicines")
+    public List<Medicine> getMedicines() {
+        return medicineService.getAllMedicines();
+    }
+
+    @GetMapping("/orders")
+    public List<Order> getOrders() {
+        return orderService.getAllOrders();
+    }
+
+    @GetMapping("/prescriptions")
+    public List<Prescription> getPrescriptions() {
+        return prescriptionService.getAllPrescriptions();
+    }
+
+    @PostMapping("/medicines")
+    public ResponseEntity<Medicine> addMedicine(@RequestBody Medicine medicine) {
+        Medicine createdMedicine = medicineService.createMedicine(medicine);
+        return ResponseEntity.ok(createdMedicine);
+    }
+
+    @PutMapping("/medicines/{id}")
+    public ResponseEntity<Medicine> updateMedicine(@PathVariable String id, @RequestBody Medicine medicine) {
+        Medicine updatedMedicine = medicineService.updateMedicine(id, medicine);
+        return updatedMedicine != null ? ResponseEntity.ok(updatedMedicine) : ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/medicines/{id}")
+    public ResponseEntity<Void> deleteMedicine(@PathVariable String id) {
+        boolean deleted = medicineService.deleteMedicine(id);
+        return deleted ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/orders/{id}/status")
+    public ResponseEntity<Order> updateOrderStatus(@PathVariable String id, @RequestBody Map<String, String> statusUpdate) {
+        Order updatedOrder = orderService.updateOrderStatus(id, statusUpdate.get("status"));
+        return updatedOrder != null ? ResponseEntity.ok(updatedOrder) : ResponseEntity.notFound().build();
     }
 }

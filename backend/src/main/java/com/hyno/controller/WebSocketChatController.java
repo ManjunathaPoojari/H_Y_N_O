@@ -21,7 +21,7 @@ public class WebSocketChatController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    @MessageMapping("/chat.send")
+    @MessageMapping("/api/chat.send")
     public WebSocketMessageResponse sendMessage(
             @Payload ChatMessageRequest messageRequest) {
 

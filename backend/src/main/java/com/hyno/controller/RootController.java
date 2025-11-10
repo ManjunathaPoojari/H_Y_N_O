@@ -15,7 +15,7 @@ public class RootController {
     @Autowired
     private AdminService adminService;
 
-    @GetMapping("/admins")
+    @GetMapping("/api/admins")
     public ResponseEntity<List<Admin>> getAdmins() {
         List<Admin> admins = adminService.getAllAdmins();
         return ResponseEntity.ok(admins);
