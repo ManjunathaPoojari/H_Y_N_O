@@ -2,9 +2,9 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { User } from '../types';
 import axios from 'axios';
 import { API_URL } from './config';
-
+ 
 const API_BASE = API_URL;
-
+ 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string, role: string) => Promise<boolean>;
@@ -12,12 +12,12 @@ interface AuthContextType {
   register: (userData: any) => Promise<boolean>;
   isAuthenticated: boolean;
 }
-
+ 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
+ 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-
+ 
   // Load user from localStorage on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -26,10 +26,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(JSON.parse(storedUser));
     }
   }, []);
+<<<<<<< Updated upstream
 
   const login = async (email: string, password: string, role: string): Promise<boolean> => {
+=======
+ 
+  const login = async (email: string, password: string, role: string): Promise<User | null> => {
+>>>>>>> Stashed changes
     try {
-      const res = await axios.post(`${API_BASE}/auth/login`, { email, password });
+      const res = await axios.post(`${API_BASE}/auth/login`, { email, password, role });
       if (res.status === 200) {
         const userData = res.data.user;
         // Convert role to lowercase to match frontend expectations
@@ -48,7 +53,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     return false;
   };
-
+ 
   const register = async (userData: any): Promise<boolean> => {
     try {
       const res = await axios.post(`${API_BASE}/auth/register`, userData);
@@ -61,20 +66,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     return false;
   };
-
+ 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
   };
-
+ 
   return (
     <AuthContext.Provider value={{ user, login, logout, register, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
 };
-
+ 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -82,3 +87,5 @@ export const useAuth = () => {
   }
   return context;
 };
+ 
+ 

@@ -6,6 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,6 +19,23 @@ public class AdminService {
 
     @Autowired
     private AdminRepository adminRepository;
+
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @PostConstruct
+    public void init() {
+        // Create default admin user if not exists
+        if (adminRepository.findByEmail("admin@example.com").isEmpty()) {
+            Admin admin = new Admin();
+            admin.setId("admin-1");
+            admin.setName("System Admin");
+            admin.setEmail("admin@example.com");
+            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setRole(Admin.AdminRole.ADMIN);
+            adminRepository.save(admin);
+            logger.info("Default admin user created: admin@example.com");
+        }
+    }
 
     public List<Admin> getAllAdmins() {
         logger.info("Fetching all admins");
@@ -81,6 +101,10 @@ public class AdminService {
     public Admin createAdmin(Admin admin) {
         logger.info("Creating new admin: {}", admin.getEmail());
         try {
+            // Hash password if provided
+            if (admin.getPassword() != null && !admin.getPassword().isEmpty()) {
+                admin.setPassword(passwordEncoder.encode(admin.getPassword()));
+            }
             Admin savedAdmin = adminRepository.save(admin);
             logger.info("Admin created successfully with ID: {}", savedAdmin.getId());
             return savedAdmin;
@@ -134,5 +158,9 @@ public class AdminService {
             logger.error("Error deleting admin: {}", id, e);
             throw e;
         }
+    }
+
+    public PasswordEncoder getPasswordEncoder() {
+        return passwordEncoder;
     }
 }

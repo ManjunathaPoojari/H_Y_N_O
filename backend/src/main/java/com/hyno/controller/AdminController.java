@@ -10,6 +10,7 @@ import com.hyno.service.PatientService;
 import com.hyno.service.DoctorService;
 import com.hyno.service.HospitalService;
 import com.hyno.service.AppointmentService;
+import com.hyno.service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +18,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/")
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:5173"})
 public class AdminController {
 
@@ -37,6 +39,9 @@ public class AdminController {
 
     @Autowired
     private AppointmentService appointmentService;
+
+    @Autowired
+    private JwtService jwtService;
 
     // Dashboard Statistics
     @GetMapping("/stats")
@@ -216,6 +221,39 @@ public class AdminController {
     @GetMapping("/admins")
     public List<Admin> getAllAdmins() {
         return adminService.getAllAdmins();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> adminLogin(@RequestBody Map<String, String> loginRequest) {
+        String email = loginRequest.get("email");
+        String password = loginRequest.get("password");
+
+        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email and password are required"));
+        }
+
+        try {
+            Optional<Admin> admin = adminService.findByEmail(email);
+            if (admin.isPresent() && adminService.getPasswordEncoder().matches(password, admin.get().getPassword())) {
+                Map<String, Object> response = new HashMap<>();
+                Map<String, Object> userData = new HashMap<>();
+                userData.put("id", admin.get().getId());
+                userData.put("name", admin.get().getName());
+                userData.put("email", admin.get().getEmail());
+                userData.put("role", "admin");
+
+                // Generate JWT token
+                String token = jwtService.generateToken(admin.get().getId(), email, "admin");
+
+                response.put("user", userData);
+                response.put("token", token);
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("message", "Invalid email or password"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", "Login failed. Please try again."));
+        }
     }
 
     @GetMapping("/admins/{id}")

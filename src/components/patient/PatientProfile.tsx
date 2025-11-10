@@ -26,7 +26,7 @@ export const PatientProfile = () => {
     }
   }, [user?.id]);
 
-  const fetchPatientData = async () => {
+  const fetchPatientData = async () => {o
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/patients/${user?.id}`, {

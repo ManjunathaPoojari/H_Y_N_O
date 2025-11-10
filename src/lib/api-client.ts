@@ -1,4 +1,3 @@
-
 // API Client for Spring Boot Backend Integration
 import { API_URL } from './config';
 
@@ -52,14 +51,14 @@ export { apiCall };
 // Authentication API
 export const authAPI = {
   login: async (email: string, password: string, role: string) => {
-    return apiCall<{ token: string; user: any }>('/auth/login', {
+    return apiCall<{ token: string; user: any }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password, role }),
     });
   },
 
   register: async (userData: any) => {
-    return apiCall<{ token: string; user: any }>('/auth/register', {
+    return apiCall<{ token: string; user: any }>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
@@ -541,16 +540,16 @@ export const adminAPI = {
     if (sortBy) params.append('sortBy', sortBy);
     if (sortDir) params.append('sortDir', sortDir);
     if (search) params.append('search', search);
-    return apiCall<any>(`/api/patients?${params.toString()}`);
+    return apiCall<any>(`/api/admin/patients?${params.toString()}`);
   },
-  getPatientById: (id: string) => apiCall<any>(`/api/patients/${id}`),
+  getPatientById: (id: string) => apiCall<any>(`/api/admin/patients/${id}`),
   updatePatient: (id: string, patient: any) =>
-    apiCall<any>(`/api/patients/${id}`, {
+    apiCall<any>(`/api/admin/patients/${id}`, {
       method: 'PUT',
       body: JSON.stringify(patient),
     }),
   deletePatient: (id: string) =>
-    apiCall<void>(`/api/patients/${id}`, {
+    apiCall<void>(`/api/admin/patients/${id}`, {
       method: 'DELETE',
     }),
 

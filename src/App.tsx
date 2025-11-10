@@ -177,7 +177,9 @@ function AppContent() {
           {currentPath === '/patient/reports' && <PatientReports />}
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
-          {currentPath === '/patient/yoga' && <YogaFitness onNavigate={navigate} />}
+
+          {currentPath.startsWith('/patient/yoga') && <YogaFitness onNavigate={navigate} currentTab={currentPath.split('/')[3] || 'trainers'} />}
+
           {currentPath === '/my-profile' && <PatientProfile />}
         </DashboardLayout>
       );

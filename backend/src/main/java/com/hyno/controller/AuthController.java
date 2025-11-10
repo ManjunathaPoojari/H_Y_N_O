@@ -38,19 +38,78 @@ public class AuthController {
     @Autowired
     private AdminService adminService;
 
+<<<<<<< Updated upstream
+=======
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private PasswordResetTokenRepository passwordResetTokenRepository;
+
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    // Rate limiting for login attempts
+    private final Map<String, Integer> loginAttempts = new ConcurrentHashMap<>();
+    private final Map<String, Long> lastLoginAttempt = new ConcurrentHashMap<>();
+    private static final int MAX_LOGIN_ATTEMPTS = 100; // Temporarily increased for testing
+    private static final long LOCKOUT_DURATION_MS = 1000; // 1 second for testing
+
+    // Email validation pattern
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+        "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$"
+    );
+
+    // Password strength requirements
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile(
+        "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$"
+    );
+
+>>>>>>> Stashed changes
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
         String email = loginRequest.get("email");
         String password = loginRequest.get("password");
+        String role = loginRequest.get("role");
 
-        logger.info("Login attempt for email: {}", email);
+        logger.info("Login attempt for email: {} with role: {}", email, role);
 
+<<<<<<< Updated upstream
+=======
+        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email and password are required"));
+        }
+
+        if (role == null || role.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Role is required"));
+        }
+
+        // Rate limiting check
+        long currentTime = System.currentTimeMillis();
+        Integer attempts = loginAttempts.get(email);
+        Long lastAttempt = lastLoginAttempt.get(email);
+
+        if (attempts != null && attempts >= MAX_LOGIN_ATTEMPTS) {
+            if (lastAttempt != null && (currentTime - lastAttempt) < LOCKOUT_DURATION_MS) {
+                long remainingTime = (LOCKOUT_DURATION_MS - (currentTime - lastAttempt)) / 1000 / 60;
+                return ResponseEntity.status(429).body(Map.of("message", "Too many failed login attempts. Please try again in " + remainingTime + " minutes."));
+            } else {
+                // Reset attempts after lockout period
+                loginAttempts.remove(email);
+                lastLoginAttempt.remove(email);
+            }
+        }
+
+>>>>>>> Stashed changes
         try {
             // For demo purposes, we'll use simple email/password validation
             // In production, use proper authentication with JWT tokens
 
             Map<String, Object> response = new HashMap<>();
 
+<<<<<<< Updated upstream
             // Check for admin first using proper Admin entity
             Optional<Admin> admin = adminService.findByEmail(email);
             if (admin.isPresent() && password.equals(admin.get().getPassword())) {
@@ -112,6 +171,98 @@ public class AuthController {
         } catch (Exception e) {
             logger.error("Error during login for email: {}", email, e);
             throw e; // Let GlobalExceptionHandler handle it
+=======
+            // Check user based on role
+            switch (role.toUpperCase()) {
+                case "ADMIN":
+                    Optional<Admin> admin = adminService.findByEmail(email);
+                    if (admin.isPresent() && passwordEncoder.matches(password, admin.get().getPassword())) {
+                        logger.info("Admin login successful for: {}", email);
+                        // Reset login attempts on successful login
+                        loginAttempts.remove(email);
+                        lastLoginAttempt.remove(email);
+                        userData.put("id", admin.get().getId());
+                        userData.put("name", admin.get().getName());
+                        userData.put("email", admin.get().getEmail());
+                        userData.put("role", "admin");
+                        token = jwtService.generateToken(admin.get().getId(), email, "admin");
+                        response.put("user", userData);
+                        response.put("token", token);
+                        return ResponseEntity.ok(response);
+                    }
+                    break;
+
+                case "PATIENT":
+                    Optional<Patient> patient = patientService.findByEmail(email);
+                    if (patient.isPresent()) {
+                        String storedPassword = patient.get().getPassword();
+                        // Support both plain text (legacy) and hashed passwords
+                        if (password.equals(storedPassword) || passwordEncoder.matches(password, storedPassword)) {
+                            logger.info("Patient login successful for: {}", email);
+                            // Reset login attempts on successful login
+                            loginAttempts.remove(email);
+                            lastLoginAttempt.remove(email);
+                            userData.put("id", patient.get().getId());
+                            userData.put("name", patient.get().getName());
+                            userData.put("email", patient.get().getEmail());
+                            userData.put("role", "patient");
+                            token = jwtService.generateToken(patient.get().getId(), email, "patient");
+                            response.put("user", userData);
+                            response.put("token", token);
+                            return ResponseEntity.ok(response);
+                        }
+                    }
+                    break;
+
+                case "DOCTOR":
+                    Optional<Doctor> doctor = Optional.ofNullable(doctorService.getDoctorByEmail(email));
+                    if (doctor.isPresent() && passwordEncoder.matches(password, doctor.get().getPassword())) {
+                        logger.info("Doctor login successful for: {}", email);
+                        // Reset login attempts on successful login
+                        loginAttempts.remove(email);
+                        lastLoginAttempt.remove(email);
+                        userData.put("id", doctor.get().getId());
+                        userData.put("name", doctor.get().getName());
+                        userData.put("email", doctor.get().getEmail());
+                        userData.put("role", "doctor");
+                        token = jwtService.generateToken(doctor.get().getId(), email, "doctor");
+                        response.put("user", userData);
+                        response.put("token", token);
+                        return ResponseEntity.ok(response);
+                    }
+                    break;
+
+                case "HOSPITAL":
+                    Optional<Hospital> hospital = Optional.ofNullable(hospitalService.getHospitalByEmail(email));
+                    if (hospital.isPresent() && passwordEncoder.matches(password, hospital.get().getPassword())) {
+                        logger.info("Hospital login successful for: {}", email);
+                        // Reset login attempts on successful login
+                        loginAttempts.remove(email);
+                        lastLoginAttempt.remove(email);
+                        userData.put("id", hospital.get().getId());
+                        userData.put("name", hospital.get().getName());
+                        userData.put("email", hospital.get().getEmail());
+                        userData.put("role", "hospital");
+                        token = jwtService.generateToken(hospital.get().getId(), email, "hospital");
+                        response.put("user", userData);
+                        response.put("token", token);
+                        return ResponseEntity.ok(response);
+                    }
+                    break;
+
+                default:
+                    return ResponseEntity.badRequest().body(Map.of("message", "Invalid role specified"));
+            }
+
+            // Increment failed login attempts
+            loginAttempts.put(email, (attempts != null ? attempts : 0) + 1);
+            lastLoginAttempt.put(email, currentTime);
+            logger.warn("Login failed for email: {} with role: {} - Invalid credentials", email, role);
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid email or password"));
+        } catch (Exception e) {
+            logger.error("Error during login for email: {} with role: {}", email, role, e);
+            return ResponseEntity.internalServerError().body(Map.of("message", "Login failed. Please try again."));
+>>>>>>> Stashed changes
         }
     }
 

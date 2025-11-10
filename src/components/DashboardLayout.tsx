@@ -55,7 +55,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: Pill, label: 'Online Pharmacy', path: '/patient/pharmacy' },
           { icon: Apple, label: 'Nutrition & Diet', path: '/patient/nutrition' },
           { icon: Dumbbell, label: 'Yoga & Fitness', path: '/patient/yoga' },
-          { icon: User, label: 'Profile', path: '/my-profile' },
+          
         ];
 
       case 'doctor':
