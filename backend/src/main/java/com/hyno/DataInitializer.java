@@ -8,6 +8,10 @@ import com.hyno.entity.Appointment;
 import com.hyno.entity.ChatRoom;
 import com.hyno.entity.ChatMessage;
 import com.hyno.entity.Medicine;
+import com.hyno.entity.NutritionProfile;
+import com.hyno.entity.Recipe;
+import com.hyno.entity.MealPlan;
+import com.hyno.entity.PremiumPlan;
 import com.hyno.repository.AdminRepository;
 import com.hyno.repository.PatientRepository;
 import com.hyno.repository.DoctorRepository;
@@ -16,6 +20,10 @@ import com.hyno.repository.AppointmentRepository;
 import com.hyno.repository.ChatRoomRepository;
 import com.hyno.repository.ChatMessageRepository;
 import com.hyno.repository.MedicineRepository;
+import com.hyno.repository.NutritionProfileRepository;
+import com.hyno.repository.RecipeRepository;
+import com.hyno.repository.MealPlanRepository;
+import com.hyno.repository.PremiumPlanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -53,9 +61,22 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private MedicineRepository medicineRepository;
 
+    @Autowired
+    private NutritionProfileRepository nutritionProfileRepository;
+
+    @Autowired
+    private RecipeRepository recipeRepository;
+
+    @Autowired
+    private MealPlanRepository mealPlanRepository;
+
+    @Autowired
+    private PremiumPlanRepository premiumPlanRepository;
+
     @Override
     public void run(String... args) throws Exception {
         // Create sample patients
+        
         if (patientRepository.findByEmail("patient@example.com").isEmpty()) {
             Patient patient = new Patient();
             patient.setId("1");
@@ -512,6 +533,171 @@ public class DataInitializer implements CommandLineRunner {
             medicine5.setPrescriptionRequired("NO");
             medicine5.setStatus("ACTIVE");
             medicineRepository.save(medicine5);
+        }
+
+        // Create sample nutrition profiles
+        if (nutritionProfileRepository.count() == 0) {
+            NutritionProfile profile1 = new NutritionProfile();
+            profile1.setPatientId(1L);
+            profile1.setWeightKg(75.0);
+            profile1.setHeightCm(175.0);
+            profile1.setAge(30);
+            profile1.setGender("Male");
+            profile1.setActivityLevel("moderately_active");
+            profile1.setDietaryRestrictions("None");
+            profile1.setHealthGoals("weight_loss");
+            profile1.setCalorieGoal(2200);
+            profile1.setProteinGoalG(150);
+            profile1.setCarbGoalG(200);
+            profile1.setFatGoalG(70);
+            nutritionProfileRepository.save(profile1);
+
+            NutritionProfile profile2 = new NutritionProfile();
+            profile2.setPatientId(2L);
+            profile2.setWeightKg(65.0);
+            profile2.setHeightCm(165.0);
+            profile2.setAge(28);
+            profile2.setGender("Female");
+            profile2.setActivityLevel("lightly_active");
+            profile2.setDietaryRestrictions("Vegetarian");
+            profile2.setHealthGoals("maintenance");
+            profile2.setCalorieGoal(1800);
+            profile2.setProteinGoalG(120);
+            profile2.setCarbGoalG(180);
+            profile2.setFatGoalG(60);
+            nutritionProfileRepository.save(profile2);
+        }
+
+        // Create sample recipes
+        if (recipeRepository.count() == 0) {
+            Recipe recipe1 = new Recipe();
+            recipe1.setName("Grilled Chicken Salad");
+            recipe1.setDescription("Healthy grilled chicken salad with mixed greens");
+            recipe1.setCategory("lunch");
+            recipe1.setCuisineType("American");
+            recipe1.setPrepTimeMinutes(15);
+            recipe1.setCookTimeMinutes(20);
+            recipe1.setServings(2);
+            recipe1.setDifficulty("easy");
+            recipe1.setIngredients(List.of("200g chicken breast", "100g mixed greens", "50g cherry tomatoes", "30g feta cheese", "2 tbsp olive oil"));
+            recipe1.setInstructions("Grill chicken breast until cooked. Mix greens, tomatoes, and cheese. Slice chicken and add to salad. Drizzle with olive oil.");
+            recipe1.setCaloriesPerServing(350);
+            recipe1.setProteinGPerServing(35.0);
+            recipe1.setCarbsGPerServing(10.0);
+            recipe1.setFatGPerServing(20.0);
+            recipe1.setFiberGPerServing(3.0);
+            recipe1.setSugarGPerServing(2.0);
+            recipe1.setSodiumMgPerServing(450.0);
+            recipe1.setIsVegetarian(false);
+            recipe1.setIsVegan(false);
+            recipe1.setIsGlutenFree(true);
+            recipe1.setIsDairyFree(false);
+            recipeRepository.save(recipe1);
+
+            Recipe recipe2 = new Recipe();
+            recipe2.setName("Quinoa Buddha Bowl");
+            recipe2.setDescription("Nutritious vegetarian bowl with quinoa and vegetables");
+            recipe2.setCategory("lunch");
+            recipe2.setCuisineType("Mediterranean");
+            recipe2.setPrepTimeMinutes(20);
+            recipe2.setCookTimeMinutes(15);
+            recipe2.setServings(2);
+            recipe2.setDifficulty("medium");
+            recipe2.setIngredients(List.of("100g quinoa", "100g chickpeas", "100g mixed vegetables", "50g avocado", "2 tbsp tahini"));
+            recipe2.setInstructions("Cook quinoa according to package. Steam vegetables. Mix all ingredients in a bowl. Drizzle with tahini dressing.");
+            recipe2.setCaloriesPerServing(420);
+            recipe2.setProteinGPerServing(15.0);
+            recipe2.setCarbsGPerServing(55.0);
+            recipe2.setFatGPerServing(18.0);
+            recipe2.setFiberGPerServing(8.0);
+            recipe2.setSugarGPerServing(5.0);
+            recipe2.setSodiumMgPerServing(320.0);
+            recipe2.setIsVegetarian(true);
+            recipe2.setIsVegan(true);
+            recipe2.setIsGlutenFree(true);
+            recipe2.setIsDairyFree(true);
+            recipeRepository.save(recipe2);
+
+            Recipe recipe3 = new Recipe();
+            recipe3.setName("Protein Oatmeal");
+            recipe3.setDescription("High-protein breakfast oatmeal");
+            recipe3.setCategory("breakfast");
+            recipe3.setCuisineType("American");
+            recipe3.setPrepTimeMinutes(5);
+            recipe3.setCookTimeMinutes(5);
+            recipe3.setServings(1);
+            recipe3.setDifficulty("easy");
+            recipe3.setIngredients(List.of("50g oats", "200ml almond milk", "25g protein powder", "50g banana", "10g chia seeds"));
+            recipe3.setInstructions("Cook oats with almond milk. Stir in protein powder. Top with sliced banana and chia seeds.");
+            recipe3.setCaloriesPerServing(380);
+            recipe3.setProteinGPerServing(25.0);
+            recipe3.setCarbsGPerServing(45.0);
+            recipe3.setFatGPerServing(12.0);
+            recipe3.setFiberGPerServing(6.0);
+            recipe3.setSugarGPerServing(12.0);
+            recipe3.setSodiumMgPerServing(180.0);
+            recipe3.setIsVegetarian(true);
+            recipe3.setIsVegan(false);
+            recipe3.setIsGlutenFree(false);
+            recipe3.setIsDairyFree(false);
+            recipeRepository.save(recipe3);
+        }
+
+        // Create sample meal plans
+        if (mealPlanRepository.count() == 0) {
+            MealPlan mealPlan1 = new MealPlan();
+            mealPlan1.setPatientId(1L);
+            mealPlan1.setPlanName("Weight Loss Plan");
+            mealPlan1.setDescription("7-day meal plan for weight loss");
+            mealPlan1.setDurationDays(7);
+            mealPlan1.setStartDate(LocalDateTime.now());
+            mealPlan1.setEndDate(LocalDateTime.now().plusDays(7));
+            mealPlan1.setTotalCalories(2100);
+            mealPlan1.setTotalProteinG(140.0);
+            mealPlan1.setTotalCarbsG(190.0);
+            mealPlan1.setTotalFatG(65.0);
+            mealPlan1.setIsActive(true);
+
+            List<MealPlan.Meal> meals1 = List.of(
+                new MealPlan.Meal(1, "breakfast", 3L, "Protein Oatmeal", 1.0),
+                new MealPlan.Meal(1, "lunch", 1L, "Grilled Chicken Salad", 1.0),
+                new MealPlan.Meal(1, "dinner", 2L, "Quinoa Buddha Bowl", 1.0)
+            );
+            mealPlan1.setMeals(meals1);
+            mealPlanRepository.save(mealPlan1);
+        }
+
+        // Create sample premium plans
+        if (premiumPlanRepository.count() == 0) {
+            PremiumPlan plan1 = new PremiumPlan();
+            plan1.setPlanName("Basic Nutrition");
+            plan1.setDescription("Access to basic nutrition features");
+            plan1.setPriceMonthly(9.99);
+            plan1.setPriceYearly(99.99);
+            plan1.setCurrency("USD");
+            plan1.setFeatures(List.of("Nutrition profile", "Basic recipes", "Meal planning"));
+            plan1.setMaxProfiles(1);
+            plan1.setMaxMealPlans(3);
+            plan1.setHasPersonalCoach(false);
+            plan1.setHasAdvancedAnalytics(false);
+            plan1.setHasCustomRecipes(false);
+            plan1.setIsActive(true);
+            premiumPlanRepository.save(plan1);
+
+            PremiumPlan plan2 = new PremiumPlan();
+            plan2.setPlanName("Premium Nutrition");
+            plan2.setDescription("Full access to all nutrition features");
+            plan2.setPriceMonthly(19.99);
+            plan2.setPriceYearly(199.99);
+            plan2.setCurrency("USD");
+            plan2.setFeatures(List.of("Everything in Basic", "Unlimited recipes", "Advanced analytics", "Personal nutritionist"));
+            plan2.setMaxProfiles(3);
+            plan2.setMaxMealPlans(10);
+            plan2.setHasPersonalCoach(true);
+            plan2.setHasAdvancedAnalytics(true);
+            plan2.setHasCustomRecipes(true);
+            plan2.setIsActive(true);
+            premiumPlanRepository.save(plan2);
         }
     }
 }
