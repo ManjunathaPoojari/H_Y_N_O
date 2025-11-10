@@ -45,4 +45,8 @@ public class Hospital {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    public String getStatus() {
+        return status;
+    }
 }

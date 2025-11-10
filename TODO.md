@@ -12,19 +12,22 @@
 - [ ] Clear visual feedback for connection status
 - [ ] Add retry mechanisms for failed connections
 
-## Phase 3: Backend Integration
-- [ ] Ensure proper signaling flow between doctor and patient
-- [ ] Add video call status tracking
-- [ ] Improve participant management
+## Phase 3: Backend Integration - Video Call Status Tracking
+- [ ] Add video call status fields to Appointment entity (videoCallStatus, videoCallStartTime, videoCallEndTime, videoCallDuration)
+- [ ] Add methods in AppointmentService to track video call lifecycle (startVideoCall, endVideoCall, updateVideoCallStatus)
+- [ ] Add endpoints in AdminController for video call status tracking
+- [ ] Update VideoCall component to call backend APIs when call starts/ends
 
 ## Phase 4: Testing & Validation
 - [ ] Test end-to-end video call flow
 - [ ] Add fallback mechanisms
 - [ ] Validate appointment timing logic
+- [ ] Test video call status tracking integration
+- [ ] Update appointment lists to show video call status
+- [ ] Add video call history/logs
 
-## Current Task: Phase 1 - Core Video Call Logic
-- [x] Refactor VideoCall component initialization
-- [x] Add proper error boundaries and fallbacks
-- [x] Simplify WebSocket signaling logic
-- [x] Improve peer connection setup reliability
-- [x] Add connection state feedback
+## Current Task: Phase 3 - Backend Integration - Video Call Status Tracking
+- [ ] Step 1: Update Appointment entity with video call fields
+- [ ] Step 2: Add video call methods to AppointmentService
+- [ ] Step 3: Add video call endpoints to AdminController
+- [ ] Step 4: Update VideoCall component to integrate with backend

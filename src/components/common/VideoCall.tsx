@@ -7,6 +7,7 @@ import { VideoCall as VideoCallType, VideoCallState } from '../../types';
 import { websocketClient } from '../../lib/websocket-client';
 import { toast } from 'sonner';
 import { ChatInterface } from './ChatInterface';
+import { api } from '../../lib/api';
 
 interface VideoCallProps {
   callId?: string;
@@ -50,6 +51,9 @@ const VideoCall: React.FC<VideoCallProps> = ({
   // Call management
   const callDurationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const pendingIceCandidates = useRef<RTCIceCandidateInit[]>([]);
+
+  // Video call status tracking
+  const appointmentIdRef = useRef<string | undefined>(appointmentId);
 
   // UI state
   const [isDoctor, setIsDoctor] = useState(false);

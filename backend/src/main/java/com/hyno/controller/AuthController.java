@@ -60,8 +60,8 @@ public class AuthController {
     // Rate limiting for login attempts
     private final Map<String, Integer> loginAttempts = new ConcurrentHashMap<>();
     private final Map<String, Long> lastLoginAttempt = new ConcurrentHashMap<>();
-    private static final int MAX_LOGIN_ATTEMPTS = 5;
-    private static final long LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+    private static final int MAX_LOGIN_ATTEMPTS = 10;
+    private static final long LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
     // Email validation pattern
     private static final Pattern EMAIL_PATTERN = Pattern.compile(

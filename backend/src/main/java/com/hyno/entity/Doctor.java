@@ -61,4 +61,8 @@ public class Doctor {
     public String getHospitalId() {
         return hospital != null ? hospital.getId() : null;
     }
+
+    public String getStatus() {
+        return status;
+    }
 }

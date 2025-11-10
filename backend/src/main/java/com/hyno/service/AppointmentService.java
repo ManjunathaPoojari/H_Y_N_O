@@ -347,4 +347,84 @@ public class AppointmentService {
             throw e;
         }
     }
+
+    // Video Call Status Tracking Methods
+    public Appointment startVideoCall(String appointmentId) {
+        logger.info("Starting video call for appointment: {}", appointmentId);
+        try {
+            Optional<Appointment> optionalAppointment = appointmentRepository.findById(appointmentId);
+            if (optionalAppointment.isPresent()) {
+                Appointment appointment = optionalAppointment.get();
+                appointment.setVideoCallStatus(Appointment.VideoCallStatus.CONNECTING);
+                appointment.setVideoCallStartTime(java.time.LocalDateTime.now());
+                Appointment updatedAppointment = appointmentRepository.save(appointment);
+                logger.info("Video call started for appointment: {}", appointmentId);
+                return updatedAppointment;
+            } else {
+                logger.warn("Appointment not found for starting video call: {}", appointmentId);
+                return null;
+            }
+        } catch (Exception e) {
+            logger.error("Error starting video call for appointment: {}", appointmentId, e);
+            throw e;
+        }
+    }
+
+    public Appointment updateVideoCallStatus(String appointmentId, Appointment.VideoCallStatus status) {
+        logger.info("Updating video call status for appointment: {} to {}", appointmentId, status);
+        try {
+            Optional<Appointment> optionalAppointment = appointmentRepository.findById(appointmentId);
+            if (optionalAppointment.isPresent()) {
+                Appointment appointment = optionalAppointment.get();
+                appointment.setVideoCallStatus(status);
+
+                if (status == Appointment.VideoCallStatus.IN_PROGRESS && appointment.getVideoCallStartTime() == null) {
+                    appointment.setVideoCallStartTime(java.time.LocalDateTime.now());
+                } else if (status == Appointment.VideoCallStatus.COMPLETED || status == Appointment.VideoCallStatus.FAILED || status == Appointment.VideoCallStatus.CANCELLED) {
+                    appointment.setVideoCallEndTime(java.time.LocalDateTime.now());
+                    if (appointment.getVideoCallStartTime() != null) {
+                        long duration = java.time.Duration.between(appointment.getVideoCallStartTime(), appointment.getVideoCallEndTime()).getSeconds();
+                        appointment.setVideoCallDuration((int) duration);
+                    }
+                }
+
+                Appointment updatedAppointment = appointmentRepository.save(appointment);
+                logger.info("Video call status updated for appointment: {}", appointmentId);
+                return updatedAppointment;
+            } else {
+                logger.warn("Appointment not found for updating video call status: {}", appointmentId);
+                return null;
+            }
+        } catch (Exception e) {
+            logger.error("Error updating video call status for appointment: {}", appointmentId, e);
+            throw e;
+        }
+    }
+
+    public Appointment endVideoCall(String appointmentId) {
+        logger.info("Ending video call for appointment: {}", appointmentId);
+        try {
+            Optional<Appointment> optionalAppointment = appointmentRepository.findById(appointmentId);
+            if (optionalAppointment.isPresent()) {
+                Appointment appointment = optionalAppointment.get();
+                appointment.setVideoCallStatus(Appointment.VideoCallStatus.COMPLETED);
+                appointment.setVideoCallEndTime(java.time.LocalDateTime.now());
+
+                if (appointment.getVideoCallStartTime() != null) {
+                    long duration = java.time.Duration.between(appointment.getVideoCallStartTime(), appointment.getVideoCallEndTime()).getSeconds();
+                    appointment.setVideoCallDuration((int) duration);
+                }
+
+                Appointment updatedAppointment = appointmentRepository.save(appointment);
+                logger.info("Video call ended for appointment: {}", appointmentId);
+                return updatedAppointment;
+            } else {
+                logger.warn("Appointment not found for ending video call: {}", appointmentId);
+                return null;
+            }
+        } catch (Exception e) {
+            logger.error("Error ending video call for appointment: {}", appointmentId, e);
+            throw e;
+        }
+    }
 }
