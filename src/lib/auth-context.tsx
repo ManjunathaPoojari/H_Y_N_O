@@ -27,9 +27,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
   const login = async (email: string, password: string, role: string): Promise<boolean> => {
 =======
+=======
+>>>>>>> Stashed changes
  
   const login = async (email: string, password: string, role: string): Promise<User | null> => {
 >>>>>>> Stashed changes

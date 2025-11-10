@@ -107,6 +107,7 @@ public class AuthController {
             // For demo purposes, we'll use simple email/password validation
             // In production, use proper authentication with JWT tokens
 
+<<<<<<< Updated upstream
             Map<String, Object> response = new HashMap<>();
 
 <<<<<<< Updated upstream
@@ -164,6 +165,88 @@ public class AuthController {
                 response.put("user", userData);
                 response.put("token", "demo-token-" + hospital.get().getId());
                 return ResponseEntity.ok(response);
+=======
+            // Check user based on role
+            switch (role.toUpperCase()) {
+                case "ADMIN":
+                    Optional<Admin> admin = adminService.findByEmail(email);
+                    if (admin.isPresent() && passwordEncoder.matches(password, admin.get().getPassword())) {
+                        logger.info("Admin login successful for: {}", email);
+                        // Reset login attempts on successful login
+                        loginAttempts.remove(email);
+                        lastLoginAttempt.remove(email);
+                        userData.put("id", admin.get().getId());
+                        userData.put("name", admin.get().getName());
+                        userData.put("email", admin.get().getEmail());
+                        userData.put("role", "admin");
+                        token = jwtService.generateToken(admin.get().getId(), email, "admin");
+                        response.put("user", userData);
+                        response.put("token", token);
+                        return ResponseEntity.ok(response);
+                    }
+                    break;
+
+                case "PATIENT":
+                    Optional<Patient> patient = patientService.findByEmail(email);
+                    if (patient.isPresent()) {
+                        String storedPassword = patient.get().getPassword();
+                        // Support both plain text (legacy) and hashed passwords
+                        if (password.equals(storedPassword) || passwordEncoder.matches(password, storedPassword)) {
+                            logger.info("Patient login successful for: {}", email);
+                            // Reset login attempts on successful login
+                            loginAttempts.remove(email);
+                            lastLoginAttempt.remove(email);
+                            userData.put("id", patient.get().getId());
+                            userData.put("name", patient.get().getName());
+                            userData.put("email", patient.get().getEmail());
+                            userData.put("role", "patient");
+                            token = jwtService.generateToken(patient.get().getId(), email, "patient");
+                            response.put("user", userData);
+                            response.put("token", token);
+                            return ResponseEntity.ok(response);
+                        }
+                    }
+                    break;
+
+                case "DOCTOR":
+                    Optional<Doctor> doctor = Optional.ofNullable(doctorService.getDoctorByEmail(email));
+                    if (doctor.isPresent() && passwordEncoder.matches(password, doctor.get().getPassword())) {
+                        logger.info("Doctor login successful for: {}", email);
+                        // Reset login attempts on successful login
+                        loginAttempts.remove(email);
+                        lastLoginAttempt.remove(email);
+                        userData.put("id", doctor.get().getId());
+                        userData.put("name", doctor.get().getName());
+                        userData.put("email", doctor.get().getEmail());
+                        userData.put("role", "doctor");
+                        token = jwtService.generateToken(doctor.get().getId(), email, "doctor");
+                        response.put("user", userData);
+                        response.put("token", token);
+                        return ResponseEntity.ok(response);
+                    }
+                    break;
+
+                case "HOSPITAL":
+                    Optional<Hospital> hospital = Optional.ofNullable(hospitalService.getHospitalByEmail(email));
+                    if (hospital.isPresent() && passwordEncoder.matches(password, hospital.get().getPassword())) {
+                        logger.info("Hospital login successful for: {}", email);
+                        // Reset login attempts on successful login
+                        loginAttempts.remove(email);
+                        lastLoginAttempt.remove(email);
+                        userData.put("id", hospital.get().getId());
+                        userData.put("name", hospital.get().getName());
+                        userData.put("email", hospital.get().getEmail());
+                        userData.put("role", "hospital");
+                        token = jwtService.generateToken(hospital.get().getId(), email, "hospital");
+                        response.put("user", userData);
+                        response.put("token", token);
+                        return ResponseEntity.ok(response);
+                    }
+                    break;
+
+                default:
+                    return ResponseEntity.badRequest().body(Map.of("message", "Invalid role specified"));
+>>>>>>> Stashed changes
             }
 
             logger.warn("Login failed for email: {} - Invalid credentials", email);
