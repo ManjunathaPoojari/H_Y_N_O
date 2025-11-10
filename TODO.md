@@ -22,8 +22,8 @@
 - [ ] Create services for each (NutritionProfileService, RecipeService, MealPlanService, PremiumPlanService).
 - [ ] Create NutritionController with endpoints for CRUD operations on profiles, recipes, meal plans, premium plans.
 - [x] Update DataInitializer to add sample data for nutrition entities.
-- [ ] Test the backend APIs to ensure they work correctly.
-<<<<<<< Updated upstream
+
 >>>>>>> Stashed changes
+- [ ] Test the backend APIs to ensure they work correctly.
 =======
 >>>>>>> Stashed changes

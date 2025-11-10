@@ -15,6 +15,7 @@ import { PatientProfile } from './components/patient/PatientProfile';
 import { PatientReports } from './components/patient/PatientReports';
 import { OnlinePharmacy } from './components/patient/OnlinePharmacy';
 import { NutritionWellness } from './components/patient/NutritionWellness';
+import { PremiumPlans } from './components/patient/PremiumPlans';
 import { UserProfile } from './components/patient/UserProfile';
 import { YogaFitness } from './components/patient/YogaFitness';
 import { PatientMeetings } from './components/patient/PatientMeetings';
@@ -177,6 +178,7 @@ function AppContent() {
           {currentPath === '/patient/reports' && <PatientReports />}
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
+          {currentPath === '/patient/nutrition/premium' && <PremiumPlans onNavigate={navigate} />}
           {currentPath === '/patient/nutrition/profile' && <UserProfile />}
           {currentPath === '/patient/yoga' && <YogaFitness onNavigate={navigate} />}
           {currentPath === '/my-profile' && <PatientProfile />}
