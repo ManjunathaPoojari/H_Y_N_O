@@ -14,7 +14,6 @@ import { PatientDashboard } from './components/patient/PatientDashboard';
 import { BookAppointment } from './components/patient/BookAppointment';
 import { MyAppointments } from './components/patient/MyAppointments';
 import { PatientProfile } from './components/patient/PatientProfile';
-import { PatientEmergency } from './components/patient/PatientEmergency';
 import { PatientReports } from './components/patient/PatientReports';
 import { OnlinePharmacy } from './components/patient/OnlinePharmacy';
 import { NutritionWellness } from './components/patient/NutritionWellness';
@@ -200,7 +199,6 @@ function AppContent() {
               />
             </ErrorBoundary>
           )}
-          {currentPath === '/patient/emergency' && <PatientEmergency />}
           {currentPath === '/patient/reports' && <PatientReports />}
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}

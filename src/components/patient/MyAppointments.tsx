@@ -18,10 +18,10 @@ export const MyAppointments = () => {
   const [rescheduleTime, setRescheduleTime] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState<string>('');
 
-  const pendingAppointments = appointments.filter(a => a.status === 'pending').sort((a, b) => new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`));
-  const upcomingAppointments = appointments.filter(a => a.status === 'booked').sort((a, b) => new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`));
-  const completedAppointments = appointments.filter(a => a.status === 'completed').sort((a, b) => new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`));
-  const cancelledAppointments = appointments.filter(a => a.status === 'cancelled').sort((a, b) => new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`));
+  const pendingAppointments = appointments.filter(a => a.status === 'pending');
+  const upcomingAppointments = appointments.filter(a => a.status === 'booked');
+  const completedAppointments = appointments.filter(a => a.status === 'completed');
+  const cancelledAppointments = appointments.filter(a => a.status === 'cancelled');
 
   const handleCancel = (id: string) => {
     cancelAppointment(id);

@@ -18,21 +18,18 @@ export const PatientProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasFetched, setHasFetched] = useState(false);
 
   // Fetch patient data from backend
   useEffect(() => {
-    if (user?.id && !patient && !isLoading && !hasFetched) {
-      console.log('Fetching patient data for user:', user.id);
-      setHasFetched(true);
+    if (user?.id) {
       fetchPatientData();
     }
-  }, [user?.id, hasFetched]);
+  }, [user?.id]);
 
   const fetchPatientData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/api/patients/${user?.id}`, {
+      const response = await fetch(`${API_URL}/patients/${user?.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -56,7 +53,7 @@ export const PatientProfile = () => {
     setIsSaving(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/api/patients/${patient.id}`, {
+      const response = await fetch(`${API_URL}/patients/${patient.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
