@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/admin")
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:5173"})
 public class AdminController {
 
@@ -60,7 +60,7 @@ public class AdminController {
 
         // Active appointments (upcoming)
         long activeAppointments = appointments.stream()
-            .filter(a -> "upcoming".equals(a.getStatus().toString().toLowerCase()))
+            .filter(a -> Appointment.AppointmentStatus.UPCOMING.equals(a.getStatus()))
             .count();
         stats.put("activeAppointments", activeAppointments);
 
@@ -210,6 +210,30 @@ public class AdminController {
     public ResponseEntity<Void> deleteAppointment(@PathVariable String id) {
         appointmentService.deleteAppointment(id);
         return ResponseEntity.ok().build();
+    }
+
+    // Video Call Status Tracking Endpoints
+    @PostMapping("/appointments/{id}/video-call/start")
+    public ResponseEntity<Appointment> startVideoCall(@PathVariable String id) {
+        Appointment updatedAppointment = appointmentService.startVideoCall(id);
+        return updatedAppointment != null ? ResponseEntity.ok(updatedAppointment) : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/appointments/{id}/video-call/status")
+    public ResponseEntity<Appointment> updateVideoCallStatus(@PathVariable String id, @RequestBody Map<String, String> statusUpdate) {
+        try {
+            Appointment.VideoCallStatus status = Appointment.VideoCallStatus.valueOf(statusUpdate.get("status"));
+            Appointment updatedAppointment = appointmentService.updateVideoCallStatus(id, status);
+            return updatedAppointment != null ? ResponseEntity.ok(updatedAppointment) : ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/appointments/{id}/video-call/end")
+    public ResponseEntity<Appointment> endVideoCall(@PathVariable String id) {
+        Appointment updatedAppointment = appointmentService.endVideoCall(id);
+        return updatedAppointment != null ? ResponseEntity.ok(updatedAppointment) : ResponseEntity.notFound().build();
     }
 
     // Admin Management

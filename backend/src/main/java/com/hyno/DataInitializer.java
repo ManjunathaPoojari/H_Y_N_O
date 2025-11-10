@@ -277,15 +277,26 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // Create sample admin in proper admins table
-        if (adminRepository.findByEmail("admin@example.com").isEmpty()) {
+        Optional<Admin> existingAdmin = adminRepository.findByEmail("admin@example.com");
+        if (existingAdmin.isEmpty()) {
             Admin admin = new Admin();
             admin.setId("admin-1");
             admin.setName("Admin User");
             admin.setEmail("admin@example.com");
             admin.setPhone("5555555555");
-            admin.setPassword("admin123");
+            admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setRole(Admin.AdminRole.SUPER_ADMIN);
             adminRepository.save(admin);
+        } else {
+            // Update existing admin password if it's not properly hashed
+            Admin admin = existingAdmin.get();
+            String currentPassword = admin.getPassword();
+            if (currentPassword != null && !currentPassword.startsWith("$2a$") && !currentPassword.startsWith("$2b$") && !currentPassword.startsWith("$2y$")) {
+                // Password is not BCrypt hashed, update it
+                admin.setPassword(passwordEncoder.encode("admin123"));
+                adminRepository.save(admin);
+                System.out.println("Updated admin password to BCrypt hash");
+            }
         }
 
         // Create sample appointments and chat rooms

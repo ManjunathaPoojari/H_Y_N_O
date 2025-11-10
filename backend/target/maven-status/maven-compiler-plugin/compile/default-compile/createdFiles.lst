@@ -3,6 +3,7 @@ com\hyno\repository\VideoCallRepository.class
 com\hyno\entity\Medicine.class
 com\hyno\service\FeedbackService.class
 com\hyno\entity\YogaSession$SessionStatus.class
+com\hyno\entity\Appointment$VideoCallStatus.class
 com\hyno\entity\Doctor.class
 com\hyno\controller\AppointmentCreateDTO.class
 com\hyno\entity\ChatRoom.class
