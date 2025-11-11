@@ -16,7 +16,7 @@ import { useNotifications } from '../lib/notification-context';
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  role: 'patient' | 'doctor' | 'hospital' | 'admin';
+  role: 'patient' | 'doctor' | 'hospital' | 'admin' | 'trainer';
   onNavigate: (path: string) => void;
   currentPath: string;
 }
@@ -85,12 +85,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: LayoutDashboard, label: 'Dashboard', path: '/admin-dashboard' },
           { icon: Building2, label: 'Hospitals', path: '/admin/hospitals' },
           { icon: UserCog, label: 'Doctors', path: '/admin/doctors' },
+          { icon: Dumbbell, label: 'Trainers', path: '/admin/trainers' },
           { icon: Users, label: 'Patients', path: '/admin/patients' },
           { icon: Calendar, label: 'Appointments', path: '/admin/appointments' },
           { icon: Pill, label: 'Pharmacy', path: '/admin/pharmacy' },
           { icon: AlertCircle, label: 'Emergency', path: '/admin/emergency' },
           { icon: FileText, label: 'Reports', path: '/admin/reports' },
           { icon: Settings, label: 'Settings', path: '/admin/settings' },
+        ];
+
+      case 'trainer':
+        return [
+          { icon: LayoutDashboard, label: 'Dashboard', path: '/trainer-dashboard' },
+          { icon: Calendar, label: 'Schedule', path: '/trainer/schedule' },
+          { icon: Users, label: 'Clients', path: '/trainer/clients' },
+          { icon: MessageSquare, label: 'Messages', path: '/trainer/messages' },
+          { icon: User, label: 'Profile', path: '/trainer/profile' },
         ];
 
       default:

@@ -4,6 +4,7 @@ import com.hyno.entity.Admin;
 import com.hyno.entity.Patient;
 import com.hyno.entity.Doctor;
 import com.hyno.entity.Hospital;
+import com.hyno.entity.Trainer;
 import com.hyno.entity.Appointment;
 import com.hyno.entity.Medicine;
 import com.hyno.entity.Order;
@@ -12,6 +13,7 @@ import com.hyno.service.AdminService;
 import com.hyno.service.PatientService;
 import com.hyno.service.DoctorService;
 import com.hyno.service.HospitalService;
+import com.hyno.service.TrainerService;
 import com.hyno.service.AppointmentService;
 import com.hyno.service.MedicineService;
 import com.hyno.service.OrderService;
@@ -52,6 +54,9 @@ public class AdminController {
 
     @Autowired
     private PrescriptionService prescriptionService;
+
+    @Autowired
+    private TrainerService trainerService;
 
     // Dashboard Statistics
     @GetMapping("/stats")
@@ -291,6 +296,48 @@ public class AdminController {
     @GetMapping("/pending/hospitals")
     public List<Hospital> getPendingHospitals() {
         return hospitalService.getHospitalsByStatus("pending");
+    }
+
+    @GetMapping("/pending/trainers")
+    public List<Trainer> getPendingTrainers() {
+        return trainerService.getTrainersByStatus("pending");
+    }
+
+    // Trainer Management
+    @GetMapping("/trainers")
+    public List<Trainer> getAllTrainers() {
+        return trainerService.getAllTrainers();
+    }
+
+    @GetMapping("/trainers/{id}")
+    public ResponseEntity<Trainer> getTrainerById(@PathVariable String id) {
+        return trainerService.getTrainerById(id)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/trainers/{id}")
+    public ResponseEntity<Trainer> updateTrainer(@PathVariable String id, @RequestBody Trainer trainerDetails) {
+        Trainer updatedTrainer = trainerService.updateTrainer(id, trainerDetails);
+        return updatedTrainer != null ? ResponseEntity.ok(updatedTrainer) : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/trainers/{id}/approve")
+    public ResponseEntity<Trainer> approveTrainer(@PathVariable String id) {
+        Trainer approvedTrainer = trainerService.approveTrainer(id);
+        return approvedTrainer != null ? ResponseEntity.ok(approvedTrainer) : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/trainers/{id}/reject")
+    public ResponseEntity<Trainer> rejectTrainer(@PathVariable String id) {
+        Trainer rejectedTrainer = trainerService.rejectTrainer(id);
+        return rejectedTrainer != null ? ResponseEntity.ok(rejectedTrainer) : ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/trainers/{id}")
+    public ResponseEntity<Void> deleteTrainer(@PathVariable String id) {
+        trainerService.deleteTrainer(id);
+        return ResponseEntity.ok().build();
     }
 
     // Pharmacy Management

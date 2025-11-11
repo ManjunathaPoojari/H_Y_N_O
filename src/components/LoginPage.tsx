@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 interface LoginPageProps {
   onNavigate: (path: string) => void;
-  role: 'patient' | 'doctor' | 'hospital' | 'admin';
+  role: 'patient' | 'doctor' | 'hospital' | 'admin' | 'trainer';
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
@@ -43,6 +43,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
             ? '/doctor-dashboard'
             : user.role === 'hospital'
             ? '/hospital-dashboard'
+            : user.role === 'trainer'
+            ? '/trainer-dashboard'
             : '/patient/dashboard';
         onNavigate(path);
       } else toast.error('Invalid credentials');

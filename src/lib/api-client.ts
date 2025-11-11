@@ -51,10 +51,10 @@ export { apiCall };
 
 // Authentication API
 export const authAPI = {
-  login: async (email: string, password: string, role: string) => {
+  login: async (email: string, password: string) => {
     return apiCall<{ token: string; user: any }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password, role }),
+      body: JSON.stringify({ email, password }),
     });
   },
 
@@ -626,6 +626,40 @@ export const adminAPI = {
   getPendingHospitals: () => apiCall<any[]>('/admin/pending/hospitals'),
 };
 
+// Trainer API
+export const trainerAPI = {
+  getAll: () => apiCall<any[]>('/trainers'),
+
+  getById: (id: string) => apiCall<any>(`/trainers/${id}`),
+
+  create: (trainer: any) =>
+    apiCall<any>('/trainers', {
+      method: 'POST',
+      body: JSON.stringify(trainer),
+    }),
+
+  update: (id: string, trainer: any) =>
+    apiCall<any>(`/trainers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(trainer),
+    }),
+
+  approve: (id: string) =>
+    apiCall<any>(`/trainers/${id}/approve`, {
+      method: 'PUT',
+    }),
+
+  reject: (id: string) =>
+    apiCall<any>(`/trainers/${id}/reject`, {
+      method: 'PUT',
+    }),
+
+  delete: (id: string) =>
+    apiCall<void>(`/trainers/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
 // Pharmacy API
 export const pharmacyAPI = {
   getMedicines: () => apiCall<any[]>('/medicines'),
@@ -668,6 +702,7 @@ export const api = {
   payments: paymentAPI,
   feedback: feedbackAPI,
   admin: adminAPI,
+  trainers: trainerAPI,
   pharmacy: pharmacyAPI,
 };
 
