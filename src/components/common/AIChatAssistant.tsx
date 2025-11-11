@@ -31,9 +31,9 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({ context, userP
     {
       id: '1',
       role: 'assistant',
-      content: context === 'nutrition' 
+      content: context === 'nutrition'
         ? '👋 Hi! I\'m your AI nutrition assistant. I can help you with meal planning, recipes, diet tips, and nutrition analysis. What would you like to know?'
-        : '👋 Hi! I\'m your AI yoga assistant. I can create personalized routines, suggest poses, and help improve your practice. How can I assist you today?',
+        : 'Namaste! 🧘‍♀️ Welcome to your yoga journey. I\'m here to guide you with personalized routines, pose suggestions, and wellness tips. How are you feeling today?',
       timestamp: new Date(),
       suggestions: context === 'nutrition'
         ? ['Create a meal plan', 'Healthy breakfast ideas', 'Count my calories', 'Diet tips']
@@ -107,7 +107,7 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({ context, userP
   };
 
   const getContextColor = () => {
-    return context === 'nutrition' 
+    return context === 'nutrition'
       ? 'from-green-500 to-emerald-500'
       : 'from-purple-500 to-pink-500';
   };
@@ -170,12 +170,14 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({ context, userP
                     <button
                       onClick={() => setIsMinimized(!isMinimized)}
                       className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                      aria-label={isMinimized ? "Maximize chat" : "Minimize chat"}
                     >
                       {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
                     </button>
                     <button
                       onClick={() => setIsOpen(false)}
                       className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                      aria-label="Close chat"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -245,6 +247,7 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({ context, userP
                           <Badge
                             onClick={() => handleSuggestionClick('Create a meal plan for me')}
                             className="cursor-pointer bg-green-100 text-green-700 hover:bg-green-200 whitespace-nowrap"
+                            aria-label="Create a meal plan"
                           >
                             <Lightbulb className="h-3 w-3 mr-1" />
                             Meal Plan
@@ -252,6 +255,7 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({ context, userP
                           <Badge
                             onClick={() => handleSuggestionClick('Healthy snack ideas')}
                             className="cursor-pointer bg-blue-100 text-blue-700 hover:bg-blue-200 whitespace-nowrap"
+                            aria-label="Get healthy snack ideas"
                           >
                             <Sparkles className="h-3 w-3 mr-1" />
                             Snacks
@@ -259,6 +263,7 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({ context, userP
                           <Badge
                             onClick={() => handleSuggestionClick('Weight loss tips')}
                             className="cursor-pointer bg-purple-100 text-purple-700 hover:bg-purple-200 whitespace-nowrap"
+                            aria-label="Get weight loss tips"
                           >
                             <TrendingUp className="h-3 w-3 mr-1" />
                             Weight Loss
@@ -269,6 +274,7 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({ context, userP
                           <Badge
                             onClick={() => handleSuggestionClick('Create a yoga routine')}
                             className="cursor-pointer bg-purple-100 text-purple-700 hover:bg-purple-200 whitespace-nowrap"
+                            aria-label="Create a yoga routine"
                           >
                             <Lightbulb className="h-3 w-3 mr-1" />
                             Routine
@@ -276,6 +282,7 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({ context, userP
                           <Badge
                             onClick={() => handleSuggestionClick('Poses for back pain')}
                             className="cursor-pointer bg-pink-100 text-pink-700 hover:bg-pink-200 whitespace-nowrap"
+                            aria-label="Get poses for back pain"
                           >
                             <Sparkles className="h-3 w-3 mr-1" />
                             Back Pain
@@ -283,6 +290,7 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({ context, userP
                           <Badge
                             onClick={() => handleSuggestionClick('Beginner yoga tips')}
                             className="cursor-pointer bg-blue-100 text-blue-700 hover:bg-blue-200 whitespace-nowrap"
+                            aria-label="Get beginner yoga tips"
                           >
                             <TrendingUp className="h-3 w-3 mr-1" />
                             Beginner
@@ -307,6 +315,7 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({ context, userP
                         onClick={() => handleSendMessage()}
                         disabled={!inputMessage.trim() || isTyping}
                         className={`bg-gradient-to-r ${getContextColor()} hover:opacity-90`}
+                        aria-label="Send message"
                       >
                         <Send className="h-4 w-4" />
                       </Button>

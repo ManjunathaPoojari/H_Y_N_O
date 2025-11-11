@@ -16,6 +16,8 @@ import { PatientReports } from './components/patient/PatientReports';
 import { OnlinePharmacy } from './components/patient/OnlinePharmacy';
 import { NutritionWellness } from './components/patient/NutritionWellness';
 import { YogaFitness } from './components/patient/YogaFitness';
+
+import { TrainerProfile } from './components/patient/TrainerProfile';
 import { PatientMeetings } from './components/patient/PatientMeetings';
 import { ChatInterface } from './components/common/ChatInterface';
 import { DoctorDashboard } from './components/doctor/DoctorDashboard';
@@ -107,6 +109,14 @@ function AppContent() {
       return <RegisterPage onNavigate={navigate} />;
     }
 
+    if (currentPath === '/yoga-landing') {
+      return <LandingPage onNavigate={navigate} />;
+    }
+
+    if (currentPath === '/patient/yoga') {
+      return <YogaFitness onNavigate={navigate} />;
+    }
+
     // Protected routes - require authentication
     if (!isAuthenticated) {
       return <LandingPage onNavigate={navigate} />;
@@ -178,6 +188,8 @@ function AppContent() {
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
           {currentPath === '/patient/yoga' && <YogaFitness onNavigate={navigate} />}
+          {currentPath === '/patient/yoga-fitness' && <YogaFitness onNavigate={navigate} />}
+          {currentPath.startsWith('/patient/trainer-profile/') && <TrainerProfile onNavigate={navigate} />}
           {currentPath === '/my-profile' && <PatientProfile />}
         </DashboardLayout>
       );

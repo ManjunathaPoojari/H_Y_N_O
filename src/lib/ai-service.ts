@@ -721,8 +721,8 @@ class AIService {
     };
   }
 
-  // Chat AI Assistant
-  async chatWithAI(message: string, context: 'nutrition' | 'yoga'): Promise<AIResponse> {
+  // Chat AI Assistant with database persistence
+  async chatWithAI(message: string, context: 'nutrition' | 'yoga', userId?: string, userName?: string): Promise<AIResponse> {
     await this.delay(800);
 
     const responses: any = {
@@ -730,13 +730,97 @@ class AIService {
       yoga: this.getYogaChatResponse(message),
     };
 
+    const aiResponse = responses[context] || 'I can help you with nutrition and yoga questions!';
+    const suggestions = this.getChatSuggestions(context);
+
+    // Save to database if user info provided
+    if (userId && userName) {
+      try {
+        await this.saveChatToDatabase(userId, userName, context, message, aiResponse, suggestions);
+      } catch (error) {
+        console.error('Failed to save chat to database:', error);
+        // Continue without failing the chat
+      }
+    }
+
     return {
       success: true,
       data: {
-        message: responses[context] || 'I can help you with nutrition and yoga questions!',
-        suggestions: this.getChatSuggestions(context),
+        message: aiResponse,
+        suggestions: suggestions,
       }
     };
+  }
+
+  // Save chat messages to database
+  private async saveChatToDatabase(userId: string, userName: string, context: string, userMessage: string, aiResponse: string, suggestions: string[]) {
+    try {
+      // Save user message
+      await fetch('/api/ai-chat/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          userName,
+          context,
+          content: userMessage,
+        }),
+      });
+
+      // Save AI response
+      await fetch('/api/ai-chat/response', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          userName,
+          context,
+          userMessage,
+          aiResponse,
+          feelingDetected: this.detectFeeling(userMessage),
+          suggestions: suggestions.join(', '),
+        }),
+      });
+    } catch (error) {
+      console.error('Database save error:', error);
+      throw error;
+    }
+  }
+
+  // Detect user feelings from message
+  private detectFeeling(message: string): string {
+    const lowerMessage = message.toLowerCase();
+
+    if (lowerMessage.includes('stressed') || lowerMessage.includes('stress') || lowerMessage.includes('anxious') || lowerMessage.includes('worried')) {
+      return 'stressed';
+    }
+    if (lowerMessage.includes('tired') || lowerMessage.includes('exhausted') || lowerMessage.includes('fatigued') || lowerMessage.includes('sleepy')) {
+      return 'tired';
+    }
+    if (lowerMessage.includes('happy') || lowerMessage.includes('good') || lowerMessage.includes('great') || lowerMessage.includes('excited')) {
+      return 'happy';
+    }
+    if (lowerMessage.includes('sad') || lowerMessage.includes('depressed') || lowerMessage.includes('down') || lowerMessage.includes('unmotivated')) {
+      return 'sad';
+    }
+    if (lowerMessage.includes('angry') || lowerMessage.includes('frustrated') || lowerMessage.includes('irritated')) {
+      return 'angry';
+    }
+    if (lowerMessage.includes('pain') || lowerMessage.includes('hurt') || lowerMessage.includes('sore')) {
+      return 'in_pain';
+    }
+    if (lowerMessage.includes('energized') || lowerMessage.includes('motivated') || lowerMessage.includes('ready')) {
+      return 'energized';
+    }
+    if (lowerMessage.includes('calm') || lowerMessage.includes('peaceful') || lowerMessage.includes('relaxed')) {
+      return 'calm';
+    }
+
+    return 'neutral';
   }
 
   private getNutritionChatResponse(message: string): string {
@@ -764,6 +848,45 @@ class AIService {
   private getYogaChatResponse(message: string): string {
     const lowerMessage = message.toLowerCase();
 
+    // Greeting and introduction
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+      return 'Namaste! 🧘‍♀️ Welcome to your yoga journey. I\'m here to guide you with personalized routines, pose suggestions, and wellness tips. How are you feeling today?';
+    }
+
+    // Feeling-based responses
+    if (lowerMessage.includes('stressed') || lowerMessage.includes('stress') || lowerMessage.includes('anxious') || lowerMessage.includes('worried')) {
+      return 'I understand stress can be overwhelming. Let\'s try some calming yoga poses: Child\'s Pose for grounding, Cat-Cow for spinal release, and Alternate Nostril Breathing. Would you like a 10-minute stress-relief routine?';
+    }
+
+    if (lowerMessage.includes('tired') || lowerMessage.includes('exhausted') || lowerMessage.includes('fatigued') || lowerMessage.includes('sleepy')) {
+      return 'Rest and rejuvenation are important! Try gentle restorative poses like Supported Child\'s Pose or Legs Up the Wall. These help restore energy and promote better sleep. Shall I suggest a relaxing evening routine?';
+    }
+
+    if (lowerMessage.includes('happy') || lowerMessage.includes('good') || lowerMessage.includes('great') || lowerMessage.includes('excited')) {
+      return 'Wonderful! Let\'s celebrate with some energizing yoga! Sun Salutations, Warrior poses, or a joyful flow would be perfect. How about a 15-minute energizing sequence to match your positive energy?';
+    }
+
+    if (lowerMessage.includes('sad') || lowerMessage.includes('depressed') || lowerMessage.includes('down') || lowerMessage.includes('unmotivated')) {
+      return 'I\'m here for you. Yoga can be very healing during difficult times. Gentle heart-opening poses like Cobra or Camel can help release emotions. Would you like a gentle, nurturing routine to support your emotional well-being?';
+    }
+
+    if (lowerMessage.includes('angry') || lowerMessage.includes('frustrated') || lowerMessage.includes('irritated')) {
+      return 'Strong emotions are valid. Let\'s channel that energy constructively through yoga. Try powerful standing poses like Warrior II or Tree Pose to build focus and calm. Interested in a grounding routine to help process these feelings?';
+    }
+
+    if (lowerMessage.includes('pain') || lowerMessage.includes('hurt') || lowerMessage.includes('sore')) {
+      return 'I\'m sorry you\'re experiencing discomfort. Always listen to your body and modify poses as needed. For general pain relief, try gentle stretches and restorative poses. Could you tell me more about where you feel the pain so I can suggest appropriate modifications?';
+    }
+
+    if (lowerMessage.includes('energized') || lowerMessage.includes('motivated') || lowerMessage.includes('ready')) {
+      return 'Perfect! Let\'s make the most of that energy! A dynamic Vinyasa flow or Power Yoga sequence would be ideal. How about a challenging 20-minute routine to build strength and stamina?';
+    }
+
+    if (lowerMessage.includes('calm') || lowerMessage.includes('peaceful') || lowerMessage.includes('relaxed')) {
+      return 'Beautiful! Let\'s deepen that sense of peace with some mindful yoga. Meditation in Easy Pose or gentle Yin Yoga would be wonderful. Would you like a peaceful routine to enhance your current state of calm?';
+    }
+
+    // Specific yoga requests
     if (lowerMessage.includes('beginner')) {
       return 'Welcome to yoga! Start with basic poses like Mountain Pose, Child\'s Pose, and Downward Dog. Practice 10-15 minutes daily and focus on breathing. Would you like a beginner routine?';
     }

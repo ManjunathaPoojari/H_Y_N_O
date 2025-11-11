@@ -10,9 +10,10 @@ import {
   Search, Filter, Play, BookOpen, Calendar as CalendarIcon,
   User, TrendingUp, Zap, Target, CheckCircle, ChevronRight,
   MessageSquare, Phone, Mail, Globe, Users, Sparkles, Trophy,
-  Activity, Brain, Flame, Wind, Wand2
+  Activity, Brain, Flame, Wind, Wand2, ArrowLeft
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useInView } from 'motion/react';
+import { useRef } from 'react';
 import { AIChatAssistant } from '../common/AIChatAssistant';
 import { aiService } from '../../lib/ai-service';
 import apiClient from '../../lib/api-client';
@@ -128,6 +129,134 @@ const mockTrainers: Trainer[] = [
     pricePerSession: 900,
     bio: 'Dynamic trainer combining yoga with high-intensity workouts for maximum results.',
     image: '💪'
+  },
+  {
+    id: '5',
+    name: 'Kavita Joshi',
+    specialty: ['Kundalini Yoga', 'Chakra Healing', 'Sound Therapy'],
+    experience: 12,
+    rating: 4.9,
+    reviews: 278,
+    location: 'Pune, India',
+    availability: 'available',
+    modes: ['virtual', 'in-person'],
+    qualifications: ['RYT 500', 'Kundalini Certified', 'Sound Healing Practitioner'],
+    languages: ['English', 'Hindi', 'Marathi', 'Sanskrit'],
+    pricePerSession: 1200,
+    bio: 'Spiritual guide and Kundalini yoga expert. Transform your energy and consciousness through ancient practices.',
+    image: '🕉️'
+  },
+  {
+    id: '6',
+    name: 'Vikram Kumar',
+    specialty: ['Iyengar Yoga', 'Therapeutic Yoga', 'Back Pain Relief'],
+    experience: 15,
+    rating: 4.8,
+    reviews: 324,
+    location: 'Chennai, India',
+    availability: 'available',
+    modes: ['virtual', 'in-person'],
+    qualifications: ['Iyengar Certified', 'Therapeutic Yoga Specialist', 'Anatomy Expert'],
+    languages: ['English', 'Hindi', 'Tamil', 'Telugu'],
+    pricePerSession: 1100,
+    bio: 'Precision-focused Iyengar yoga teacher specializing in therapeutic practices for chronic pain and injuries.',
+    image: '📐'
+  },
+  {
+    id: '7',
+    name: 'Ananya Gupta',
+    specialty: ['Aerial Yoga', 'AcroYoga', 'Partner Yoga'],
+    experience: 5,
+    rating: 4.7,
+    reviews: 89,
+    location: 'Kolkata, India',
+    availability: 'available',
+    modes: ['in-person'],
+    qualifications: ['RYT 200', 'Aerial Yoga Certified', 'AcroYoga Teacher'],
+    languages: ['English', 'Hindi', 'Bengali'],
+    pricePerSession: 950,
+    bio: 'Fun and playful yoga instructor bringing creativity and strength through aerial and partner practices.',
+    image: '🎪'
+  },
+  {
+    id: '8',
+    name: 'Dr. Rajesh Verma',
+    specialty: ['Medical Yoga', 'Yoga Therapy', 'Stress Management'],
+    experience: 18,
+    rating: 4.9,
+    reviews: 412,
+    location: 'Ahmedabad, India',
+    availability: 'busy',
+    modes: ['virtual', 'in-person'],
+    qualifications: ['MD Yoga Therapy', 'RYT 500', 'Clinical Psychologist'],
+    languages: ['English', 'Hindi', 'Gujarati'],
+    pricePerSession: 1500,
+    bio: 'Medical doctor and yoga therapist combining modern medicine with ancient wisdom for holistic healing.',
+    image: '⚕️'
+  },
+  {
+    id: '9',
+    name: 'Sneha Malhotra',
+    specialty: ['Kids Yoga', 'Family Yoga', 'Playful Movement'],
+    experience: 9,
+    rating: 4.8,
+    reviews: 167,
+    location: 'Jaipur, India',
+    availability: 'available',
+    modes: ['virtual', 'in-person'],
+    qualifications: ['RYT 200', 'Kids Yoga Certified', 'Montessori Inspired'],
+    languages: ['English', 'Hindi', 'Rajasthani'],
+    pricePerSession: 600,
+    bio: 'Bringing joy and mindfulness to children and families through creative, play-based yoga practices.',
+    image: '👶'
+  },
+  {
+    id: '10',
+    name: 'Amitabh Sharma',
+    specialty: ['Yoga Philosophy', 'Sanskrit', 'Traditional Practices'],
+    experience: 20,
+    rating: 4.9,
+    reviews: 356,
+    location: 'Varanasi, India',
+    availability: 'available',
+    modes: ['virtual', 'in-person'],
+    qualifications: ['Sanskrit Scholar', 'Philosophy Expert', 'Traditional Yoga Master'],
+    languages: ['English', 'Hindi', 'Sanskrit'],
+    pricePerSession: 1300,
+    bio: 'Scholar of yoga philosophy and traditional practices. Deepen your understanding of yoga\'s ancient wisdom.',
+    image: '📚'
+  },
+  {
+    id: '11',
+    name: 'Lisa Chen',
+    specialty: ['Hot Yoga', 'Detox Yoga', 'Weight Loss'],
+    experience: 11,
+    rating: 4.6,
+    reviews: 198,
+    location: 'Goa, India',
+    availability: 'available',
+    modes: ['in-person'],
+    qualifications: ['RYT 500', 'Hot Yoga Certified', 'Nutrition Specialist'],
+    languages: ['English', 'Hindi', 'Mandarin'],
+    pricePerSession: 850,
+    bio: 'High-energy hot yoga instructor helping clients achieve weight loss goals through intense, detoxifying practices.',
+    image: '🔥'
+  },
+  {
+    id: '12',
+    name: 'Deepak Nair',
+    specialty: ['Beach Yoga', 'Outdoor Yoga', 'Nature Connection'],
+    experience: 13,
+    rating: 4.8,
+    reviews: 234,
+    location: 'Kochi, India',
+    availability: 'available',
+    modes: ['in-person'],
+    qualifications: ['RYT 300', 'Outdoor Yoga Specialist', 'Environmental Educator'],
+    languages: ['English', 'Hindi', 'Malayalam'],
+    pricePerSession: 750,
+    bio: 'Connect with nature through outdoor yoga practices. Experience the healing power of earth, water, and sky.',
+    image: '🏖️'
   }
 ];
 
@@ -435,7 +564,7 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
                     mode="single"
                     selected={selectedDate}
                     onSelect={setSelectedDate}
-                    disabled={(date) => date < new Date()}
+                    disabled={(date: Date) => date < new Date()}
                     className="rounded-xl border shadow-sm"
                   />
                 </div>
@@ -660,15 +789,26 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
         )}
       </AnimatePresence>
 
+
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl mb-2 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent">
-            Yoga & Fitness
-          </h1>
-          <p className="text-slate-600">Your journey to wellness starts here - powered by AI</p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            onClick={() => onNavigate('/patient/yoga')}
+            className="p-2"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-4xl mb-2 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent">
+              Yoga & Fitness
+            </h1>
+            <p className="text-slate-600">Your journey to wellness starts here - powered by AI</p>
+          </div>
         </div>
-        <Button 
+        <Button
           onClick={generateAIRoutine}
           disabled={isGeneratingRoutine}
           className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
@@ -863,7 +1003,11 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
                     >
                       Book Session
                     </Button>
-                    <Button variant="outline" className="flex-1">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => onNavigate(`/patient/trainer-profile/${trainer.id}`)}
+                    >
                       View Profile
                     </Button>
                   </div>
@@ -963,6 +1107,7 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
                           toggleFavorite(video.id);
                         }}
                         className="p-2 rounded-full bg-white/90 shadow-lg hover:scale-110 transition-transform"
+                        aria-label={favorites.includes(video.id) ? 'Remove from favorites' : 'Add to favorites'}
                       >
                         <Heart
                           className={`h-4 w-4 ${favorites.includes(video.id) ? 'fill-red-500 text-red-500' : 'text-slate-600'}`}

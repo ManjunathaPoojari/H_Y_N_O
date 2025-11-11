@@ -16,6 +16,8 @@ import com.hyno.repository.AppointmentRepository;
 import com.hyno.repository.ChatRoomRepository;
 import com.hyno.repository.ChatMessageRepository;
 import com.hyno.repository.MedicineRepository;
+import com.hyno.repository.YogaTrainerRepository;
+import com.hyno.entity.YogaTrainer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -52,6 +54,9 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired
     private MedicineRepository medicineRepository;
+
+    @Autowired
+    private YogaTrainerRepository yogaTrainerRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -512,6 +517,90 @@ public class DataInitializer implements CommandLineRunner {
             medicine5.setPrescriptionRequired("NO");
             medicine5.setStatus("ACTIVE");
             medicineRepository.save(medicine5);
+        }
+
+        // Create sample yoga trainers
+        if (yogaTrainerRepository.count() == 0) {
+            // Create sample yoga trainers
+            YogaTrainer trainer1 = new YogaTrainer();
+            trainer1.setName("Sarah Johnson");
+            trainer1.setSpecialties(List.of("Hatha Yoga", "Vinyasa Flow", "Meditation"));
+            trainer1.setExperienceYears(8);
+            trainer1.setRating(4.9);
+            trainer1.setReviewCount(127);
+            trainer1.setLocation("New York, NY");
+            trainer1.setAvailability(YogaTrainer.AvailabilityStatus.AVAILABLE);
+            trainer1.setModes(List.of("virtual", "in-person"));
+            trainer1.setQualifications(List.of("RYT-500 Certified", "Meditation Teacher", "Anatomy Specialist"));
+            trainer1.setLanguages(List.of("English", "Spanish"));
+            trainer1.setPricePerSession(BigDecimal.valueOf(75.00));
+            trainer1.setBio("Passionate yoga instructor with 8 years of experience helping students find balance and strength through mindful movement. Specializes in therapeutic yoga for stress relief and chronic pain management.");
+            trainer1.setImage("https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=300&h=300&fit=crop&crop=face");
+            yogaTrainerRepository.save(trainer1);
+
+            YogaTrainer trainer2 = new YogaTrainer();
+            trainer2.setName("Michael Chen");
+            trainer2.setSpecialties(List.of("Power Yoga", "Ashtanga", "Strength Training"));
+            trainer2.setExperienceYears(6);
+            trainer2.setRating(4.7);
+            trainer2.setReviewCount(89);
+            trainer2.setLocation("Los Angeles, CA");
+            trainer2.setAvailability(YogaTrainer.AvailabilityStatus.AVAILABLE);
+            trainer2.setModes(List.of("virtual", "in-person"));
+            trainer2.setQualifications(List.of("RYT-200 Certified", "Personal Trainer", "Nutrition Coach"));
+            trainer2.setLanguages(List.of("English", "Mandarin"));
+            trainer2.setPricePerSession(BigDecimal.valueOf(65.00));
+            trainer2.setBio("Dynamic yoga teacher combining traditional practices with modern fitness techniques. Helps athletes and fitness enthusiasts build strength, flexibility, and mental resilience.");
+            trainer2.setImage("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face");
+            yogaTrainerRepository.save(trainer2);
+
+            YogaTrainer trainer3 = new YogaTrainer();
+            trainer3.setName("Emma Rodriguez");
+            trainer3.setSpecialties(List.of("Yin Yoga", "Restorative", "Prenatal Yoga"));
+            trainer3.setExperienceYears(10);
+            trainer3.setRating(4.8);
+            trainer3.setReviewCount(156);
+            trainer3.setLocation("Austin, TX");
+            trainer3.setAvailability(YogaTrainer.AvailabilityStatus.AVAILABLE);
+            trainer3.setModes(List.of("virtual", "in-person"));
+            trainer3.setQualifications(List.of("RYT-500 Certified", "Prenatal Specialist", "Trauma-Informed Yoga"));
+            trainer3.setLanguages(List.of("English", "Spanish", "French"));
+            trainer3.setPricePerSession(BigDecimal.valueOf(70.00));
+            trainer3.setBio("Compassionate yoga therapist specializing in gentle, restorative practices. Supports students through life's transitions including pregnancy, injury recovery, and emotional healing.");
+            trainer3.setImage("https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face");
+            yogaTrainerRepository.save(trainer3);
+
+            YogaTrainer trainer4 = new YogaTrainer();
+            trainer4.setName("David Kumar");
+            trainer4.setSpecialties(List.of("Kundalini Yoga", "Breathwork", "Sound Healing"));
+            trainer4.setExperienceYears(12);
+            trainer4.setRating(4.6);
+            trainer4.setReviewCount(203);
+            trainer4.setLocation("San Francisco, CA");
+            trainer4.setAvailability(YogaTrainer.AvailabilityStatus.AVAILABLE);
+            trainer4.setModes(List.of("virtual"));
+            trainer4.setQualifications(List.of("Kundalini Yoga Teacher", "Sound Healer", "Breathwork Specialist"));
+            trainer4.setLanguages(List.of("English", "Hindi", "Sanskrit"));
+            trainer4.setPricePerSession(BigDecimal.valueOf(80.00));
+            trainer4.setBio("Spiritual guide and energy healer using ancient yogic practices to awaken consciousness and promote holistic wellness. Incorporates mantra, meditation, and sacred sound for deep transformation.");
+            trainer4.setImage("https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face");
+            yogaTrainerRepository.save(trainer4);
+
+            YogaTrainer trainer5 = new YogaTrainer();
+            trainer5.setName("Lisa Thompson");
+            trainer5.setSpecialties(List.of("Yoga for Seniors", "Chair Yoga", "Gentle Flow"));
+            trainer5.setExperienceYears(15);
+            trainer5.setRating(4.9);
+            trainer5.setReviewCount(178);
+            trainer5.setLocation("Phoenix, AZ");
+            trainer5.setAvailability(YogaTrainer.AvailabilityStatus.AVAILABLE);
+            trainer5.setModes(List.of("virtual", "in-person"));
+            trainer5.setQualifications(List.of("RYT-500 Certified", "Senior Fitness Specialist", "Adaptive Yoga Teacher"));
+            trainer5.setLanguages(List.of("English"));
+            trainer5.setPricePerSession(BigDecimal.valueOf(60.00));
+            trainer5.setBio("Dedicated to making yoga accessible to everyone, regardless of age or ability. Specializes in adaptive practices that build strength, balance, and confidence at any stage of life.");
+            trainer5.setImage("https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face");
+            yogaTrainerRepository.save(trainer5);
         }
     }
 }
