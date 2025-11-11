@@ -43,6 +43,7 @@ import { AdminEmergency } from './components/admin/AdminEmergency';
 import { HospitalManagement } from './components/admin/HospitalManagement';
 import { DoctorManagement } from './components/admin/DoctorManagement';
 import { AdminPharmacy } from './components/admin/AdminPharmacy';
+import { TrainerDashboard } from './components/trainer/TrainerDashboard';
 import { ConfigStatus } from './components/ConfigStatus';
 import { AboutUs } from './components/AboutUs';
 import { TermsOfService } from './components/TermsOfService';
@@ -106,6 +107,10 @@ function AppContent() {
 
     if (currentPath === '/hospital-login') {
       return <LoginPage onNavigate={navigate} role="hospital" />;
+    }
+
+    if (currentPath === '/trainer-login') {
+      return <LoginPage onNavigate={navigate} role="trainer" />;
     }
 
     if (currentPath === '/register') {
@@ -250,6 +255,15 @@ function AppContent() {
           {currentPath === '/hospital/emergency' && <HospitalEmergency />}
           {currentPath === '/hospital/reports' && <HospitalReports />}
           {currentPath === '/hospital/profile' && <HospitalProfile />}
+        </DashboardLayout>
+      );
+    }
+
+    // Trainer routes
+    if (user?.role === 'trainer') {
+      return (
+        <DashboardLayout role="trainer" onNavigate={navigate} currentPath={currentPath}>
+          {currentPath === '/trainer-dashboard' && <TrainerDashboard onNavigate={navigate} />}
         </DashboardLayout>
       );
     }

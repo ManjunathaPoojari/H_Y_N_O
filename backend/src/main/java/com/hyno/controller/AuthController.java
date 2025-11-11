@@ -3,12 +3,14 @@ package com.hyno.controller;
 import com.hyno.entity.Patient;
 import com.hyno.entity.Doctor;
 import com.hyno.entity.Hospital;
+import com.hyno.entity.Trainer;
 import com.hyno.entity.Admin;
 import com.hyno.entity.PasswordResetToken;
 import com.hyno.entity.EmailVerificationToken;
 import com.hyno.service.PatientService;
 import com.hyno.service.DoctorService;
 import com.hyno.service.HospitalService;
+import com.hyno.service.TrainerService;
 import com.hyno.service.AdminService;
 import com.hyno.service.EmailService;
 import com.hyno.service.JwtService;
@@ -20,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -45,6 +48,9 @@ public class AuthController {
 
     @Autowired
     private AdminService adminService;
+
+    @Autowired
+    private TrainerService trainerService;
 
     @Autowired
     private JwtService jwtService;
@@ -177,6 +183,23 @@ public class AuthController {
                 return ResponseEntity.ok(response);
             }
 
+            // Check trainers
+            Optional<Trainer> trainer = trainerService.getTrainerByEmail(email);
+            if (trainer.isPresent() && passwordEncoder.matches(password, trainer.get().getPassword())) {
+                logger.info("Trainer login successful for: {}", email);
+                // Reset login attempts on successful login
+                loginAttempts.remove(email);
+                lastLoginAttempt.remove(email);
+                userData.put("id", trainer.get().getId().toString());
+                userData.put("name", trainer.get().getName());
+                userData.put("email", trainer.get().getEmail());
+                userData.put("role", "trainer");
+                token = jwtService.generateToken(trainer.get().getId().toString(), email, "trainer");
+                response.put("user", userData);
+                response.put("token", token);
+                return ResponseEntity.ok(response);
+            }
+
             // Increment failed login attempts
             loginAttempts.put(email, (attempts != null ? attempts : 0) + 1);
             lastLoginAttempt.put(email, currentTime);
@@ -227,7 +250,8 @@ public class AuthController {
             if (adminService.findByEmail(email).isPresent() ||
                 patientService.findByEmail(email).isPresent() ||
                 doctorService.getDoctorByEmail(email) != null ||
-                hospitalService.getHospitalByEmail(email) != null) {
+                hospitalService.getHospitalByEmail(email) != null ||
+                trainerService.getTrainerByEmail(email).isPresent()) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Email already exists"));
             }
 
@@ -243,7 +267,6 @@ public class AuthController {
                 logger.info("Patient registered successfully: {}", email);
             } else if (role.toUpperCase().equals("DOCTOR")) {
                 Doctor doctor = new Doctor();
-                doctor.setId(UUID.randomUUID().toString());
                 doctor.setName(name.trim());
                 doctor.setEmail(email.trim().toLowerCase());
                 doctor.setPhone(phone != null ? phone.trim() : "");
@@ -256,7 +279,6 @@ public class AuthController {
                 logger.info("Doctor registered successfully: {}", email);
             } else if (role.toUpperCase().equals("HOSPITAL")) {
                 Hospital hospital = new Hospital();
-                hospital.setId(UUID.randomUUID().toString());
                 hospital.setName(name.trim());
                 hospital.setEmail(email.trim().toLowerCase());
                 hospital.setPhone(phone != null ? phone.trim() : "");
@@ -266,6 +288,34 @@ public class AuthController {
                 hospital.setVerified(true); // No email verification required
                 Hospital savedHospital = hospitalService.createHospital(hospital);
                 logger.info("Hospital registered successfully: {}", email);
+            } else if (role.toUpperCase().equals("TRAINER")) {
+                Trainer trainer = new Trainer();
+                trainer.setName(name.trim());
+                trainer.setEmail(email.trim().toLowerCase());
+                trainer.setPhone(phone != null ? phone.trim() : "");
+                trainer.setPassword(storedPassword);
+
+                // Get trainer-specific fields from request
+                String trainerType = (String) registerRequest.get("trainerType");
+                Integer experienceYears = registerRequest.get("experienceYears") != null ?
+                    ((Number) registerRequest.get("experienceYears")).intValue() : 0;
+                String location = (String) registerRequest.get("location");
+                BigDecimal pricePerSession = registerRequest.get("pricePerSession") != null ?
+                    new BigDecimal(registerRequest.get("pricePerSession").toString()) : BigDecimal.ZERO;
+                String bio = (String) registerRequest.get("bio");
+
+                trainer.setTrainerType(trainerType != null ?
+                    Trainer.TrainerType.valueOf(trainerType.toUpperCase()) : Trainer.TrainerType.FITNESS);
+                trainer.setExperienceYears(experienceYears);
+                trainer.setLocation(location != null ? location.trim() : "");
+                trainer.setPricePerSession(pricePerSession);
+                trainer.setBio(bio != null ? bio.trim() : "");
+                trainer.setImage(""); // Default image, can be updated later
+
+                trainer.setStatus("pending"); // Needs approval
+                trainer.setVerified(true); // No email verification required
+                Trainer savedTrainer = trainerService.createTrainer(trainer);
+                logger.info("Trainer registered successfully: {}", email);
             } else {
                 logger.warn("Invalid role provided during registration: {}", role);
                 return ResponseEntity.badRequest().body(Map.of("message", "Invalid role"));
@@ -293,7 +343,8 @@ public class AuthController {
             boolean userExists = adminService.findByEmail(email).isPresent() ||
                                patientService.findByEmail(email).isPresent() ||
                                doctorService.getDoctorByEmail(email) != null ||
-                               hospitalService.getHospitalByEmail(email) != null;
+                               hospitalService.getHospitalByEmail(email) != null ||
+                               trainerService.getTrainerByEmail(email).isPresent();
 
             if (!userExists) {
                 // Don't reveal if email exists or not for security
@@ -379,6 +430,11 @@ public class AuthController {
                 Hospital hospital = hospitalService.getHospitalByEmail(email);
                 hospital.setPassword(hashedPassword);
                 hospitalService.updateHospital(hospital.getId(), hospital);
+                updated = true;
+            } else if (trainerService.getTrainerByEmail(email).isPresent()) {
+                Trainer trainer = trainerService.getTrainerByEmail(email).get();
+                trainer.setPassword(hashedPassword);
+                trainerService.updateTrainer(trainer.getId(), trainer);
                 updated = true;
             }
 

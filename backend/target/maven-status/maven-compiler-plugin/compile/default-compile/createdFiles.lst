@@ -1,6 +1,8 @@
 com\hyno\service\YogaSessionService.class
 com\hyno\repository\VideoCallRepository.class
 com\hyno\entity\Medicine.class
+com\hyno\entity\Trainer$AvailabilityStatus.class
+com\hyno\repository\TrainerRepository.class
 com\hyno\service\FeedbackService.class
 com\hyno\entity\YogaSession$SessionStatus.class
 com\hyno\entity\Appointment$VideoCallStatus.class
@@ -55,6 +57,7 @@ com\hyno\service\PatientService.class
 com\hyno\controller\VideoCallController.class
 com\hyno\service\DoctorScheduleService.class
 com\hyno\service\HospitalService.class
+com\hyno\service\TrainerService.class
 com\hyno\DataInitializer.class
 com\hyno\controller\AppointmentController.class
 com\hyno\entity\VideoCall$VideoCallStatus.class
@@ -83,6 +86,7 @@ com\hyno\entity\PasswordResetToken.class
 com\hyno\config\CorsConfig.class
 com\hyno\controller\DoctorController.class
 com\hyno\controller\WebSocketVideoCallController$LeaveCallNotification.class
+com\hyno\controller\TrainerController.class
 com\hyno\entity\YogaSession$SessionMode.class
 com\hyno\entity\Payment$PaymentMethod.class
 com\hyno\controller\DoctorPatientsController.class
@@ -113,6 +117,8 @@ com\hyno\controller\HospitalScheduleController.class
 com\hyno\repository\DoctorScheduleRepository.class
 com\hyno\entity\Prescription$PrescriptionMedicine.class
 com\hyno\entity\Order.class
+com\hyno\entity\Trainer.class
+com\hyno\entity\Trainer$TrainerType.class
 com\hyno\service\MedicineService.class
 com\hyno\repository\ChatRoomRepository.class
 com\hyno\repository\DoctorRepository.class

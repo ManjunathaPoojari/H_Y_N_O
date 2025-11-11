@@ -22,7 +22,7 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
     countryCode: '+1',
     password: '',
     confirmPassword: '',
-    role: 'PATIENT' as 'PATIENT' | 'DOCTOR' | 'HOSPITAL',
+    role: 'PATIENT' as 'PATIENT' | 'DOCTOR' | 'HOSPITAL' | 'TRAINER',
     // Patient
     age: '',
     gender: '',
@@ -43,6 +43,16 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
     pincode: '',
     registrationNumber: '',
     facilities: [] as string[],
+    // Trainer
+    trainerType: '',
+    specialties: [] as string[],
+    experienceYears: '',
+    location: '',
+    modes: [] as string[],
+    qualifications: [] as string[],
+    languages: [] as string[],
+    pricePerSession: '',
+    bio: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -120,6 +130,13 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
         newErrors.registrationNumber = 'Registration number is required';
     }
 
+    if (formData.role === 'TRAINER') {
+      if (!formData.trainerType) newErrors.trainerType = 'Trainer type is required';
+      if (!formData.experienceYears) newErrors.experienceYears = 'Experience years is required';
+      if (!formData.location) newErrors.location = 'Location is required';
+      if (!formData.pricePerSession) newErrors.pricePerSession = 'Price per session is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -131,21 +148,32 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
     setIsLoading(true);
     try {
       const fullPhone = `${formData.countryCode}${formData.phone.trim()}`;
-      const success = await register({
+      const registerData: any = {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         phone: fullPhone,
         password: formData.password,
         role: formData.role,
-      });
+      };
 
-      if (success) {
+      // Add role-specific data
+      if (formData.role === 'TRAINER') {
+        registerData.trainerType = formData.trainerType;
+        registerData.experienceYears = parseInt(formData.experienceYears);
+        registerData.location = formData.location.trim();
+        registerData.pricePerSession = parseFloat(formData.pricePerSession);
+        registerData.bio = formData.bio?.trim() || '';
+      }
+
+      const result = await register(registerData);
+
+      if (result.success) {
         toast.success(
           'Account created successfully! Please check your email to verify your account before logging in.'
         );
         onNavigate('/');
       } else {
-        toast.error('Registration failed. Please try again.');
+        toast.error(result.error || 'Registration failed. Please try again.');
       }
     } catch (error) {
       toast.error('Registration failed. Please try again.');
@@ -253,8 +281,8 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
             {/* Role Selection */}
             <div className="space-y-2">
               <Label>Join as</Label>
-              <div className="grid grid-cols-3 gap-3">
-                {(['PATIENT', 'DOCTOR', 'HOSPITAL'] as const).map((role) => (
+              <div className="grid grid-cols-2 gap-3">
+                {(['PATIENT', 'DOCTOR', 'HOSPITAL', 'TRAINER'] as const).map((role) => (
                   <button
                     key={role}
                     type="button"
@@ -273,14 +301,18 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
                           ? '👤'
                           : role === 'DOCTOR'
                           ? '👨‍⚕️'
-                          : '🏥'}
+                          : role === 'HOSPITAL'
+                          ? '🏥'
+                          : '🏋️‍♂️'}
                       </div>
                       <div className="text-sm font-medium">
                         {role === 'PATIENT'
                           ? 'Patient'
                           : role === 'DOCTOR'
                           ? 'Doctor'
-                          : 'Hospital'}
+                          : role === 'HOSPITAL'
+                          ? 'Hospital'
+                          : 'Trainer'}
                       </div>
                     </div>
                   </button>
@@ -592,6 +624,94 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
               </>
             )}
 
+            {/* Trainer Fields */}
+            {formData.role === 'TRAINER' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="trainerType">Trainer Type</Label>
+                  <select
+                    id="trainerType"
+                    name="trainerType"
+                    value={formData.trainerType}
+                    onChange={handleInputChange}
+                    className="w-full h-10 px-3 py-2 border border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 bg-white"
+                  >
+                    <option value="">Select</option>
+                    <option value="FITNESS">Fitness</option>
+                    <option value="YOGA">Yoga</option>
+                  </select>
+                  {errors.trainerType && (
+                    <p className="text-sm text-red-500">{errors.trainerType}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="experienceYears">Years of Experience</Label>
+                  <Input
+                    id="experienceYears"
+                    name="experienceYears"
+                    type="number"
+                    placeholder="5"
+                    value={formData.experienceYears}
+                    onChange={handleInputChange}
+                    className={errors.experienceYears ? 'border-red-500' : ''}
+                  />
+                  {errors.experienceYears && (
+                    <p className="text-sm text-red-500">
+                      {errors.experienceYears}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    name="location"
+                    type="text"
+                    placeholder="City, State"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    className={errors.location ? 'border-red-500' : ''}
+                  />
+                  {errors.location && (
+                    <p className="text-sm text-red-500">{errors.location}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="pricePerSession">Price per Session ($)</Label>
+                  <Input
+                    id="pricePerSession"
+                    name="pricePerSession"
+                    type="number"
+                    step="0.01"
+                    placeholder="50.00"
+                    value={formData.pricePerSession}
+                    onChange={handleInputChange}
+                    className={errors.pricePerSession ? 'border-red-500' : ''}
+                  />
+                  {errors.pricePerSession && (
+                    <p className="text-sm text-red-500">
+                      {errors.pricePerSession}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bio">Bio (Optional)</Label>
+                  <textarea
+                    id="bio"
+                    name="bio"
+                    placeholder="Tell us about yourself..."
+                    value={formData.bio}
+                    onChange={handleInputChange}
+                    className="w-full h-20 px-3 py-2 border border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 bg-white resize-none"
+                  />
+                </div>
+              </>
+            )}
+
             {/* Password */}
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -663,7 +783,7 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 hover:scale-105 text-white font-semibold transition-all duration-200"
+              className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 hover:scale-105 text-blac font-semibold transition-all duration-200"
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Patient, Doctor, Hospital, Appointment, Medicine, Prescription, NutritionPlan, Meal, YogaTrainer } from '../types';
+import { Patient, Doctor, Hospital, Appointment, Medicine, Prescription, NutritionPlan, Meal, YogaTrainer, Trainer } from '../types';
 
 import api from './api-client';
 import { toast } from 'sonner';
@@ -15,53 +15,61 @@ interface AppStoreContextType {
   prescriptions: Prescription[];
   nutritionPlans: NutritionPlan[];
   yogaTrainers: YogaTrainer[];
+  trainers: Trainer[];
 
   // Data loading functions
   refreshData: () => Promise<void>;
-  
+
   // Patient Actions
   addPatient: (patient: Patient) => void;
   updatePatient: (id: string, patient: Partial<Patient>) => void;
   deletePatient: (id: string) => void;
-  
+
   // Doctor Actions
   addDoctor: (doctor: Doctor) => void;
   updateDoctor: (id: string, doctor: Partial<Doctor>) => void;
   deleteDoctor: (id: string) => void;
   approveDoctor: (id: string) => void;
   suspendDoctor: (id: string) => void;
-  
+
   // Hospital Actions
   addHospital: (hospital: Hospital) => void;
   updateHospital: (id: string, hospital: Partial<Hospital>) => void;
   deleteHospital: (id: string) => void;
   approveHospital: (id: string) => void;
   rejectHospital: (id: string) => void;
-  
+
   // Appointment Actions
   bookAppointment: (appointment: Omit<Appointment, 'id'>) => void;
   updateAppointment: (id: string, appointment: Partial<Appointment>) => void;
   cancelAppointment: (id: string) => void;
   completeAppointment: (id: string, notes?: string) => void;
   rescheduleAppointment: (id: string, date: string, time: string) => void;
-  
+
   // Medicine Actions
   addMedicine: (medicine: Medicine) => void;
   updateMedicine: (id: string, medicine: Partial<Medicine>) => void;
   deleteMedicine: (id: string) => void;
-  
+
   // Prescription Actions
   addPrescription: (prescription: Prescription) => void;
   getPrescriptionsByPatient: (patientId: string) => Prescription[];
-  
+
   // Nutrition Actions
   addNutritionPlan: (plan: NutritionPlan) => void;
   updateNutritionPlan: (id: string, plan: Partial<NutritionPlan>) => void;
   getNutritionPlanByPatient: (patientId: string) => NutritionPlan | undefined;
-  
+
   // Yoga Actions
   addYogaTrainer: (trainer: YogaTrainer) => void;
   updateYogaTrainer: (id: string, trainer: Partial<YogaTrainer>) => void;
+
+  // Trainer Actions
+  addTrainer: (trainer: Trainer) => void;
+  updateTrainer: (id: string, trainer: Partial<Trainer>) => void;
+  deleteTrainer: (id: string) => void;
+  approveTrainer: (trainerId: string) => void;
+  rejectTrainer: (trainerId: string) => void;
 }
 
 const AppStoreContext = createContext<AppStoreContextType | undefined>(undefined);
@@ -94,6 +102,49 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       availability: ['Morning', 'Afternoon'],
       sessionFee: 1000,
       mode: ['virtual', 'inperson'],
+    },
+  ]);
+
+  const [trainers, setTrainers] = useState<Trainer[]>([
+    {
+      id: 'T001',
+      name: 'John Smith',
+      email: 'john.smith@example.com',
+      phone: '+1-555-0101',
+      trainerType: 'Fitness Trainer',
+      experienceYears: 8,
+      location: 'New York',
+      pricePerSession: 75,
+      bio: 'Certified personal trainer with 8 years of experience in strength training and weight loss programs.',
+      specialties: ['Strength Training', 'Weight Loss', 'HIIT'],
+      qualifications: ['NASM-CPT', 'ACSM'],
+      languages: ['English', 'Spanish'],
+      modes: ['in-person', 'virtual'],
+      status: 'approved',
+      rating: 4.7,
+      reviews: 45,
+      profileImage: '/api/placeholder/150/150',
+      createdAt: '2024-01-15T10:00:00Z',
+    },
+    {
+      id: 'T002',
+      name: 'Sarah Johnson',
+      email: 'sarah.johnson@example.com',
+      phone: '+1-555-0102',
+      trainerType: 'Yoga Instructor',
+      experienceYears: 6,
+      location: 'Los Angeles',
+      pricePerSession: 65,
+      bio: 'Passionate yoga instructor specializing in Vinyasa and restorative yoga for all levels.',
+      specialties: ['Vinyasa Yoga', 'Restorative Yoga', 'Meditation'],
+      qualifications: ['RYT-500', 'Prenatal Yoga Certified'],
+      languages: ['English', 'French'],
+      modes: ['in-person', 'virtual'],
+      status: 'approved',
+      rating: 4.9,
+      reviews: 32,
+      profileImage: '/api/placeholder/150/150',
+      createdAt: '2024-02-20T14:30:00Z',
     },
   ]);
 
@@ -703,6 +754,82 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     toast.success('Trainer updated');
   };
 
+  // Trainer Actions
+  const addTrainer = async (trainer: Trainer) => {
+    if (USE_BACKEND) {
+      try {
+        const newTrainer = await api.trainers.create(trainer);
+        setTrainers([...trainers, newTrainer]);
+        toast.success('Trainer added successfully');
+      } catch (error) {
+        toast.error('Failed to add trainer');
+      }
+    } else {
+      setTrainers([...trainers, trainer]);
+      toast.success('Trainer added successfully');
+    }
+  };
+
+  const updateTrainer = async (id: string, updatedData: Partial<Trainer>) => {
+    if (USE_BACKEND) {
+      try {
+        await api.trainers.update(id, updatedData);
+        setTrainers(trainers.map(t => t.id === id ? { ...t, ...updatedData } : t));
+        toast.success('Trainer updated successfully');
+      } catch (error) {
+        toast.error('Failed to update trainer');
+      }
+    } else {
+      setTrainers(trainers.map(t => t.id === id ? { ...t, ...updatedData } : t));
+      toast.success('Trainer updated successfully');
+    }
+  };
+
+  const deleteTrainer = async (id: string) => {
+    if (USE_BACKEND) {
+      try {
+        await api.trainers.delete(id);
+        setTrainers(trainers.filter(t => t.id !== id));
+        toast.success('Trainer removed successfully');
+      } catch (error) {
+        toast.error('Failed to remove trainer');
+      }
+    } else {
+      setTrainers(trainers.filter(t => t.id !== id));
+      toast.success('Trainer removed successfully');
+    }
+  };
+
+  const approveTrainer = async (trainerId: string) => {
+    if (USE_BACKEND) {
+      try {
+        await api.trainers.approve(trainerId);
+        setTrainers(trainers.map(t => t.id === trainerId ? { ...t, status: 'approved' } : t));
+        toast.success('Trainer approved successfully');
+      } catch (error) {
+        toast.error('Failed to approve trainer');
+      }
+    } else {
+      setTrainers(trainers.map(t => t.id === trainerId ? { ...t, status: 'approved' } : t));
+      toast.success('Trainer approved successfully');
+    }
+  };
+
+  const rejectTrainer = async (trainerId: string) => {
+    if (USE_BACKEND) {
+      try {
+        await api.trainers.reject(trainerId);
+        setTrainers(trainers.map(t => t.id === trainerId ? { ...t, status: 'rejected' } : t));
+        toast.success('Trainer rejected');
+      } catch (error) {
+        toast.error('Failed to reject trainer');
+      }
+    } else {
+      setTrainers(trainers.map(t => t.id === trainerId ? { ...t, status: 'rejected' } : t));
+      toast.success('Trainer rejected');
+    }
+  };
+
   const value: AppStoreContextType = {
     patients,
     doctors,
@@ -712,6 +839,7 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     prescriptions,
     nutritionPlans,
     yogaTrainers,
+    trainers,
     refreshData: loadDataFromBackend,
     addPatient,
     updatePatient,
@@ -741,6 +869,11 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     getNutritionPlanByPatient,
     addYogaTrainer,
     updateYogaTrainer,
+    addTrainer,
+    updateTrainer,
+    deleteTrainer,
+    approveTrainer,
+    rejectTrainer,
   };
 
   return (
