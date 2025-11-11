@@ -179,7 +179,7 @@ function AppContent() {
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
           {currentPath === '/patient/nutrition/premium' && <PremiumPlans onNavigate={navigate} />}
-          {currentPath === '/patient/nutrition/profile' && <UserProfile />}
+          {currentPath === '/patient/nutrition/profile' && <UserProfile onNavigate={navigate} />}
           {currentPath === '/patient/yoga' && <YogaFitness onNavigate={navigate} />}
           {currentPath === '/my-profile' && <PatientProfile />}
         </DashboardLayout>

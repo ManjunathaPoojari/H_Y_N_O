@@ -24,7 +24,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
         {[
           {
             icon: User,
-            title: 'Profile',
+            title: 'Personalize',
             description: 'Manage your nutrition profile and preferences',
             path: '/patient/nutrition/profile',
             color: 'text-blue-600'
