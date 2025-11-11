@@ -169,17 +169,58 @@ CREATE TABLE appointments (
 CREATE TABLE medicines (
     id VARCHAR(50) PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
+    generic_name VARCHAR(200),
     description TEXT,
-    price DECIMAL(10,2) NOT NULL,
-    stock INT DEFAULT 0,
-    category VARCHAR(50) NOT NULL,
     manufacturer VARCHAR(100),
-    requires_prescription BOOLEAN DEFAULT FALSE,
+    dosage_form VARCHAR(100),
+    strength VARCHAR(200),
+    indications TEXT,
+    contraindications TEXT,
+    side_effects TEXT,
+    precautions TEXT,
+    interactions TEXT,
+    category VARCHAR(50) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    stock_quantity INT DEFAULT 0,
+    prescription_required VARCHAR(10) DEFAULT 'NO',
+    status VARCHAR(20) DEFAULT 'ACTIVE',
     image_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_category (category),
     INDEX idx_name (name)
+) ENGINE=InnoDB;
+
+-- Orders
+CREATE TABLE orders (
+    id VARCHAR(50) PRIMARY KEY,
+    patient_id VARCHAR(50) NOT NULL,
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total_amount DECIMAL(10,2) NOT NULL,
+    payment_method VARCHAR(50) NOT NULL,
+    delivery_address JSON NOT NULL,
+    status ENUM('pending', 'confirmed', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+    INDEX idx_patient_status (patient_id, status),
+    INDEX idx_status (status),
+    INDEX idx_order_date (order_date)
+) ENGINE=InnoDB;
+
+-- Order Items
+CREATE TABLE order_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id VARCHAR(50) NOT NULL,
+    medicine_id VARCHAR(50) NOT NULL,
+    medicine_name VARCHAR(200) NOT NULL,
+    quantity INT NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (medicine_id) REFERENCES medicines(id) ON DELETE CASCADE,
+    INDEX idx_order (order_id),
+    INDEX idx_medicine (medicine_id)
 ) ENGINE=InnoDB;
 
 -- Prescriptions
@@ -212,35 +253,7 @@ CREATE TABLE prescription_medicines (
     FOREIGN KEY (medicine_id) REFERENCES medicines(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Orders (Pharmacy)
-CREATE TABLE orders (
-    id VARCHAR(50) PRIMARY KEY,
-    patient_id VARCHAR(50) NOT NULL,
-    prescription_id VARCHAR(50),
-    total_amount DECIMAL(10,2) NOT NULL,
-    delivery_fee DECIMAL(10,2) DEFAULT 0,
-    status ENUM('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
-    delivery_address TEXT NOT NULL,
-    payment_method VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
-    FOREIGN KEY (prescription_id) REFERENCES prescriptions(id) ON DELETE SET NULL,
-    INDEX idx_patient (patient_id),
-    INDEX idx_status (status)
-) ENGINE=InnoDB;
 
--- Order Items
-CREATE TABLE order_items (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id VARCHAR(50) NOT NULL,
-    medicine_id VARCHAR(50) NOT NULL,
-    medicine_name VARCHAR(200) NOT NULL,
-    quantity INT NOT NULL,
-    price DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-    FOREIGN KEY (medicine_id) REFERENCES medicines(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
 
 -- ============================================
 -- NUTRITION & WELLNESS

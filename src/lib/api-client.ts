@@ -80,30 +80,30 @@ export const patientAPI = {
     if (sortBy) params.append('sortBy', sortBy);
     if (sortDir) params.append('sortDir', sortDir);
     if (search) params.append('search', search);
-    return apiCall<any>(`/api/patients?${params.toString()}`);
+    return apiCall<any>(`/patients?${params.toString()}`);
   },
 
-  getById: (id: string) => apiCall<any>(`/api/patients/${id}`),
+  getById: (id: string) => apiCall<any>(`/patients/${id}`),
 
   create: (patient: any) =>
-    apiCall<any>('/api/patients', {
+    apiCall<any>('/patients', {
       method: 'POST',
       body: JSON.stringify(patient),
     }),
 
   update: (id: string, patient: any) =>
-    apiCall<any>(`/api/patients/${id}`, {
+    apiCall<any>(`/patients/${id}`, {
       method: 'PUT',
       body: JSON.stringify(patient),
     }),
 
   delete: (id: string) =>
-    apiCall<void>(`/api/patients/${id}`, {
+    apiCall<void>(`/patients/${id}`, {
       method: 'DELETE',
     }),
 
   search: (query: string) =>
-    apiCall<any[]>(`/api/patients/search?query=${encodeURIComponent(query)}`),
+    apiCall<any[]>(`/patients/search?query=${encodeURIComponent(query)}`),
 };
 
 // Doctor API
@@ -320,13 +320,47 @@ export const medicineAPI = {
     }),
 };
 
+// Order API
+export const orderAPI = {
+  getAll: () => apiCall<any[]>('/orders'),
+
+  getById: (id: string) => apiCall<any>(`/orders/${id}`),
+
+  getByPatient: (patientId: string) =>
+    apiCall<any[]>(`/orders/patient/${patientId}`),
+
+  create: (order: any) =>
+    apiCall<any>('/orders', {
+      method: 'POST',
+      body: JSON.stringify(order),
+    }),
+
+  update: (id: string, order: any) =>
+    apiCall<any>(`/orders/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(order),
+    }),
+
+  updateStatus: (id: string, status: string) =>
+    apiCall<any>(`/orders/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    }),
+
+  cancel: (id: string) =>
+    apiCall<any>(`/orders/${id}/cancel`, {
+      method: 'PUT',
+    }),
+
+  delete: (id: string) =>
+    apiCall<void>(`/orders/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
 // Prescription API
 export const prescriptionAPI = {
-  upload: async (file: File, patientId: string) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('patientId', patientId);
-
+  upload: async (formData: FormData) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${API_BASE_URL}/api/prescriptions/upload`, {
       method: 'POST',
@@ -353,25 +387,7 @@ export const prescriptionAPI = {
     }),
 };
 
-// Order API (Pharmacy)
-export const orderAPI = {
-  create: (order: any) =>
-    apiCall<any>('/api/orders', {
-      method: 'POST',
-      body: JSON.stringify(order),
-    }),
 
-  getByPatient: (patientId: string) =>
-    apiCall<any[]>(`/api/orders/patient/${patientId}`),
-
-  getById: (id: string) => apiCall<any>(`/api/orders/${id}`),
-
-  updateStatus: (id: string, status: string) =>
-    apiCall<any>(`/api/orders/${id}/status`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    }),
-};
 
 // Nutrition API
 export const nutritionAPI = {
@@ -626,6 +642,8 @@ export const adminAPI = {
   getPendingHospitals: () => apiCall<any[]>('/api/admin/pending/hospitals'),
 };
 
+
+
 // Pharmacy API
 export const pharmacyAPI = {
   getMedicines: () => apiCall<any[]>('/api/medicines'),
@@ -662,6 +680,7 @@ export const api = {
   medicines: medicineAPI,
   prescriptions: prescriptionAPI,
   orders: orderAPI,
+
   nutrition: nutritionAPI,
   yoga: yogaAPI,
   chat: chatAPI,

@@ -25,6 +25,7 @@ com\hyno\config\ScheduledTasksConfig.class
 com\hyno\controller\AdminController.class
 com\hyno\controller\WebSocketVideoCallController$WebRTCOffer.class
 com\hyno\entity\Patient.class
+com\hyno\repository\OrderRepository.class
 com\hyno\service\PaymentService.class
 com\hyno\entity\ChatMessage$MessageType.class
 com\hyno\entity\Appointment$AppointmentStatus.class
@@ -43,6 +44,7 @@ com\hyno\service\AppointmentService.class
 com\hyno\repository\HospitalRepository.class
 com\hyno\entity\Admin$AdminRole.class
 com\hyno\repository\ScheduleRepository.class
+com\hyno\controller\PrescriptionController.class
 com\hyno\service\YogaVideoService.class
 com\hyno\entity\Appointment.class
 com\hyno\entity\ScheduleSlot.class
@@ -60,11 +62,15 @@ com\hyno\config\SecurityConfig.class
 com\hyno\entity\ChatRoom$ChatRoomStatus.class
 com\hyno\entity\Schedule.class
 com\hyno\entity\ChatMessage$MessageStatus.class
+com\hyno\controller\OrderController.class
 com\hyno\service\DoctorService.class
+com\hyno\service\PrescriptionService.class
 com\hyno\controller\WebSocketVideoCallController$WebRTCAnswer.class
 com\hyno\controller\FeedbackController.class
+com\hyno\service\OrderService.class
 com\hyno\controller\MedicineController.class
 com\hyno\controller\YogaController.class
+com\hyno\entity\OrderItem.class
 com\hyno\entity\VideoCall.class
 com\hyno\entity\YogaTrainer.class
 com\hyno\entity\Feedback.class
@@ -90,6 +96,7 @@ com\hyno\entity\Admin.class
 com\hyno\controller\AuthController.class
 com\hyno\service\VideoCallService.class
 com\hyno\entity\YogaSession.class
+com\hyno\entity\Prescription.class
 com\hyno\config\GlobalExceptionHandler.class
 com\hyno\controller\WebSocketChatController$ChatMessageRequest.class
 com\hyno\controller\WebSocketChatController$WebSocketMessageResponse.class
@@ -98,12 +105,15 @@ com\hyno\entity\Payment$PaymentStatus.class
 com\hyno\controller\WebSocketVideoCallController$JoinCallNotification.class
 com\hyno\entity\ChatMessage$SenderRole.class
 com\hyno\service\EmailService.class
+com\hyno\entity\Order$OrderStatus.class
 com\hyno\repository\AppointmentRepository.class
 com\hyno\repository\YogaTrainerRepository.class
 com\hyno\controller\HospitalScheduleController.class
 com\hyno\repository\DoctorScheduleRepository.class
+com\hyno\entity\Order.class
 com\hyno\service\MedicineService.class
 com\hyno\repository\ChatRoomRepository.class
 com\hyno\repository\DoctorRepository.class
+com\hyno\repository\PrescriptionRepository.class
 com\hyno\repository\PasswordResetTokenRepository.class
 com\hyno\entity\DoctorSchedule$ScheduleStatus.class

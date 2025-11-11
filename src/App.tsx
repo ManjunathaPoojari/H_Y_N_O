@@ -13,7 +13,7 @@ import { BookAppointment } from './components/patient/BookAppointment';
 import { MyAppointments } from './components/patient/MyAppointments';
 import { PatientProfile } from './components/patient/PatientProfile';
 import { PatientReports } from './components/patient/PatientReports';
-import { OnlinePharmacy } from './components/patient/OnlinePharmacy';
+import { PharmacyRouter } from './components/patient/PharmacyRouter';
 import { NutritionWellness } from './components/patient/NutritionWellness';
 import { YogaFitness } from './components/patient/YogaFitness';
 import { PatientMeetings } from './components/patient/PatientMeetings';
@@ -41,6 +41,10 @@ import { AdminEmergency } from './components/admin/AdminEmergency';
 import { HospitalManagement } from './components/admin/HospitalManagement';
 import { DoctorManagement } from './components/admin/DoctorManagement';
 import { AdminPharmacy } from './components/admin/AdminPharmacy';
+import { AdminMedicineList } from './components/admin/AdminMedicineList';
+import { AdminMedicineForm } from './components/admin/AdminMedicineForm';
+import { AdminPrescriptionList } from './components/admin/AdminPrescriptionList';
+import { AdminPrescriptionDetails } from './components/admin/AdminPrescriptionDetails';
 import { ConfigStatus } from './components/ConfigStatus';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
@@ -175,7 +179,7 @@ function AppContent() {
             </ErrorBoundary>
           )}
           {currentPath === '/patient/reports' && <PatientReports />}
-          {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
+          {(currentPath.startsWith('/patient/pharmacy')) && <PharmacyRouter onNavigate={navigate} currentPath={currentPath} />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
           {currentPath === '/patient/yoga' && <YogaFitness onNavigate={navigate} />}
           {currentPath === '/my-profile' && <PatientProfile />}
@@ -239,6 +243,21 @@ function AppContent() {
           {currentPath === '/admin/patients' && <AdminPatients />}
           {currentPath === '/admin/appointments' && <AdminAppointments />}
           {currentPath === '/admin/pharmacy' && <AdminPharmacy />}
+          {currentPath === '/admin/pharmacy/medicines' && <AdminMedicineList onNavigate={navigate} />}
+          {currentPath === '/admin/pharmacy/medicines/add' && <AdminMedicineForm onNavigate={navigate} />}
+          {currentPath.startsWith('/admin/pharmacy/medicines/edit/') && (
+            <AdminMedicineForm
+              onNavigate={navigate}
+              medicineId={currentPath.split('/').pop()}
+            />
+          )}
+          {currentPath === '/admin/pharmacy/prescriptions' && <AdminPrescriptionList onNavigate={navigate} />}
+          {currentPath.startsWith('/admin/pharmacy/prescriptions/') && (
+            <AdminPrescriptionDetails
+              onNavigate={navigate}
+              prescriptionId={currentPath.split('/').pop() || ''}
+            />
+          )}
           {currentPath === '/admin/emergency' && <AdminEmergency />}
           {currentPath === '/admin/reports' && <AdminReports />}
           {currentPath === '/admin/settings' && <AdminSettings />}

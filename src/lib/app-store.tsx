@@ -161,13 +161,9 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
       } else if (userRole === 'patient' && userId) {
         // Patient loads their data
-        try {
-          patientsData = await api.patients.getAll();
-        } catch (error) {
-          console.warn('Failed to load patients from backend:', error);
-          patientsData = [];
-          failedLoads++;
-        }
+        // Skip loading patients for patient role to avoid 404 error
+        // Patients don't need to see the full patient list
+        patientsData = [];
 
         try {
           doctorsData = await api.doctors.getAll();
