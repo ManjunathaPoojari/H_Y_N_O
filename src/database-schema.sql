@@ -123,7 +123,8 @@ CREATE TABLE doctors (
     consultation_fee DECIMAL(10,2) NOT NULL,
     available BOOLEAN DEFAULT TRUE,
     status ENUM('pending', 'approved', 'suspended') DEFAULT 'pending',
-    avatar_url VARCHAR(255),
+    password VARCHAR(255),
+    is_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -309,7 +310,6 @@ CREATE TABLE yoga_trainers (
     rating DECIMAL(2,1) DEFAULT 0.0,
     session_fee DECIMAL(10,2) NOT NULL,
     bio TEXT,
-    avatar_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 

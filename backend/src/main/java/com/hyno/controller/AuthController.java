@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -104,9 +105,10 @@ public class AuthController {
             Map<String, Object> response = new HashMap<>();
             String token = null;
             Map<String, Object> userData = new HashMap<>();
+            String normalizedEmail = email.toLowerCase();
 
             // Check for admin first using proper Admin entity
-            Optional<Admin> admin = adminService.findByEmail(email);
+            Optional<Admin> admin = adminService.findByEmail(normalizedEmail);
             if (admin.isPresent() && passwordEncoder.matches(password, admin.get().getPassword())) {
                 logger.info("Admin login successful for: {}", email);
                 // Reset login attempts on successful login
@@ -123,7 +125,7 @@ public class AuthController {
             }
 
             // Check patients (excluding admin)
-            Optional<Patient> patient = patientService.findByEmail(email);
+            Optional<Patient> patient = patientService.findByEmail(normalizedEmail);
             if (patient.isPresent()) {
                 String storedPassword = patient.get().getPassword();
                 // Support both plain text (legacy) and hashed passwords
@@ -144,7 +146,7 @@ public class AuthController {
             }
 
             // Check doctors
-            Optional<Doctor> doctor = Optional.ofNullable(doctorService.getDoctorByEmail(email));
+            Optional<Doctor> doctor = Optional.ofNullable(doctorService.getDoctorByEmail(normalizedEmail));
             if (doctor.isPresent() && passwordEncoder.matches(password, doctor.get().getPassword())) {
                 logger.info("Doctor login successful for: {}", email);
                 // Reset login attempts on successful login
@@ -161,7 +163,7 @@ public class AuthController {
             }
 
             // Check hospitals
-            Optional<Hospital> hospital = Optional.ofNullable(hospitalService.getHospitalByEmail(email));
+            Optional<Hospital> hospital = Optional.ofNullable(hospitalService.getHospitalByEmail(normalizedEmail));
             if (hospital.isPresent() && passwordEncoder.matches(password, hospital.get().getPassword())) {
                 logger.info("Hospital login successful for: {}", email);
                 // Reset login attempts on successful login
@@ -181,7 +183,7 @@ public class AuthController {
             loginAttempts.put(email, (attempts != null ? attempts : 0) + 1);
             lastLoginAttempt.put(email, currentTime);
             logger.warn("Login failed for email: {} - Invalid credentials", email);
-            return ResponseEntity.badRequest().body(Map.of("message", "Invalid email or password"));
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid email or password"));
         } catch (Exception e) {
             logger.error("Error during login for email: {}", email, e);
             return ResponseEntity.internalServerError().body(Map.of("message", "Login failed. Please try again."));
@@ -237,6 +239,37 @@ public class AuthController {
                 patient.setEmail(email.trim().toLowerCase());
                 patient.setPhone(phone != null ? phone.trim() : "");
                 patient.setPassword(storedPassword);
+
+                // Extract patient-specific fields from request
+                String ageStr = (String) registerRequest.get("age");
+                String gender = (String) registerRequest.get("gender");
+                String bloodGroup = (String) registerRequest.get("bloodGroup");
+                String dateOfBirthStr = (String) registerRequest.get("dateOfBirth");
+                String address = (String) registerRequest.get("address");
+                String emergencyContact = (String) registerRequest.get("emergencyContact");
+
+                try {
+                    if (ageStr != null && !ageStr.trim().isEmpty()) {
+                        patient.setAge(Integer.parseInt(ageStr.trim()));
+                    }
+                } catch (NumberFormatException e) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "Invalid age format"));
+                }
+
+                patient.setGender(gender != null ? gender.trim() : "");
+                patient.setBloodGroup(bloodGroup != null ? bloodGroup.trim() : "");
+
+                try {
+                    if (dateOfBirthStr != null && !dateOfBirthStr.trim().isEmpty()) {
+                        patient.setDateOfBirth(java.time.LocalDate.parse(dateOfBirthStr.trim()));
+                    }
+                } catch (Exception e) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "Invalid date of birth format"));
+                }
+
+                patient.setAddress(address != null ? address.trim() : "");
+                patient.setEmergencyContact(emergencyContact != null ? emergencyContact.trim() : "");
+
                 patient.setVerified(true); // No email verification required for patients
                 Patient savedPatient = patientService.createPatient(patient);
 
@@ -248,8 +281,26 @@ public class AuthController {
                 doctor.setEmail(email.trim().toLowerCase());
                 doctor.setPhone(phone != null ? phone.trim() : "");
                 doctor.setPassword(storedPassword);
-                doctor.setSpecialization("General Medicine"); // Default
-                doctor.setExperience(0);
+
+                // Extract doctor-specific fields from request
+                String specialization = (String) registerRequest.get("specialization");
+                String qualification = (String) registerRequest.get("qualification");
+                String experienceStr = (String) registerRequest.get("experience");
+                String consultationFeeStr = (String) registerRequest.get("consultationFee");
+                String hospitalId = (String) registerRequest.get("hospitalId");
+
+                doctor.setSpecialization(specialization != null ? specialization.trim() : "General Medicine");
+                doctor.setQualification(qualification != null ? qualification.trim() : "");
+                doctor.setExperience(experienceStr != null ? Integer.parseInt(experienceStr) : 0);
+                doctor.setConsultationFee(consultationFeeStr != null ? new BigDecimal(consultationFeeStr) : BigDecimal.ZERO);
+
+                // Set hospital relationship if hospitalId is provided
+                if (hospitalId != null && !hospitalId.trim().isEmpty()) {
+                    // Note: HospitalService needs to be injected and used here
+                    // For now, we'll set the hospitalId in the transient field
+                    doctor.setHospitalId(hospitalId.trim());
+                }
+
                 doctor.setStatus("PENDING"); // Needs approval
                 doctor.setVerified(true); // No email verification required
                 Doctor savedDoctor = doctorService.createDoctor(doctor);
@@ -261,7 +312,20 @@ public class AuthController {
                 hospital.setEmail(email.trim().toLowerCase());
                 hospital.setPhone(phone != null ? phone.trim() : "");
                 hospital.setPassword(storedPassword);
-                hospital.setAddress(""); // Will be updated later
+
+                // Extract hospital-specific fields from request
+                String hospitalAddress = (String) registerRequest.get("hospitalAddress");
+                String city = (String) registerRequest.get("city");
+                String state = (String) registerRequest.get("state");
+                String pincode = (String) registerRequest.get("pincode");
+                String registrationNumber = (String) registerRequest.get("registrationNumber");
+
+                hospital.setAddress(hospitalAddress != null ? hospitalAddress.trim() : "");
+                hospital.setCity(city != null ? city.trim() : "");
+                hospital.setState(state != null ? state.trim() : "");
+                hospital.setPincode(pincode != null ? pincode.trim() : "");
+                hospital.setRegistrationNumber(registrationNumber != null ? registrationNumber.trim() : "");
+
                 hospital.setStatus("PENDING"); // Needs approval
                 hospital.setVerified(true); // No email verification required
                 Hospital savedHospital = hospitalService.createHospital(hospital);

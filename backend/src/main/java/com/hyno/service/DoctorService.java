@@ -130,19 +130,22 @@ public class DoctorService {
     }
 
     private String generateNextDoctorId() {
-        Optional<Doctor> lastDoctor = doctorRepository.findTopByOrderByIdDesc();
-        if (lastDoctor.isPresent()) {
-            String lastId = lastDoctor.get().getId();
-            if (lastId.startsWith("D")) {
+        List<Doctor> allDoctors = doctorRepository.findAll();
+        int maxNumber = 0;
+        for (Doctor d : allDoctors) {
+            String id = d.getId();
+            if (id != null && id.startsWith("D")) {
                 try {
-                    int number = Integer.parseInt(lastId.substring(1));
-                    return String.format("D%03d", number + 1);
+                    int number = Integer.parseInt(id.substring(1));
+                    if (number > maxNumber) {
+                        maxNumber = number;
+                    }
                 } catch (NumberFormatException e) {
-                    // If parsing fails, start from D001
+                    // ignore invalid IDs
                 }
             }
         }
-        return "D001";
+        return String.format("D%03d", maxNumber + 1);
     }
 
     public Doctor updateDoctor(String id, Doctor doctorDetails) {

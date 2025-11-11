@@ -99,19 +99,22 @@ public class PatientService {
     }
 
     private String generateNextPatientId() {
-        Optional<Patient> lastPatient = patientRepository.findTopByOrderByIdDesc();
-        if (lastPatient.isPresent()) {
-            String lastId = lastPatient.get().getId();
-            if (lastId.startsWith("P")) {
+        List<Patient> allPatients = patientRepository.findAll();
+        int maxNumber = 0;
+        for (Patient p : allPatients) {
+            String id = p.getId();
+            if (id != null && id.startsWith("P")) {
                 try {
-                    int number = Integer.parseInt(lastId.substring(1));
-                    return String.format("P%03d", number + 1);
+                    int number = Integer.parseInt(id.substring(1));
+                    if (number > maxNumber) {
+                        maxNumber = number;
+                    }
                 } catch (NumberFormatException e) {
-                    // If parsing fails, start from P001
+                    // ignore invalid IDs
                 }
             }
         }
-        return "P001";
+        return String.format("P%03d", maxNumber + 1);
     }
 
     public Patient save(Patient patient) {

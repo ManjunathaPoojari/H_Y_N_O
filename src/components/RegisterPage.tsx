@@ -35,6 +35,7 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
     specialization: '',
     qualification: '',
     experience: '',
+    consultationFee: '',
     hospitalId: '',
     // Hospital
     hospitalAddress: '',
@@ -108,6 +109,8 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
         newErrors.qualification = 'Qualification is required';
       if (!formData.experience)
         newErrors.experience = 'Experience is required';
+      if (!formData.consultationFee)
+        newErrors.consultationFee = 'Consultation fee is required';
     }
 
     if (formData.role === 'HOSPITAL') {
@@ -131,13 +134,39 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
     setIsLoading(true);
     try {
       const fullPhone = `${formData.countryCode}${formData.phone.trim()}`;
-      const success = await register({
+      const registerData: any = {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         phone: fullPhone,
         password: formData.password,
         role: formData.role,
-      });
+      };
+
+      // Add role-specific fields
+      if (formData.role === 'PATIENT') {
+        registerData.age = parseInt(formData.age);
+        registerData.gender = formData.gender;
+        registerData.bloodGroup = formData.bloodGroup;
+        registerData.dateOfBirth = formData.dateOfBirth;
+        registerData.address = formData.address;
+        registerData.emergencyContact = `${formData.emergencyCountryCode}${formData.emergencyContact.trim()}`;
+      } else if (formData.role === 'DOCTOR') {
+        registerData.specialization = formData.specialization.trim();
+        registerData.qualification = formData.qualification.trim();
+        registerData.experience = parseInt(formData.experience);
+        registerData.consultationFee = formData.consultationFee;
+        if (formData.hospitalId.trim()) {
+          registerData.hospitalId = formData.hospitalId.trim();
+        }
+      } else if (formData.role === 'HOSPITAL') {
+        registerData.hospitalAddress = formData.hospitalAddress.trim();
+        registerData.city = formData.city.trim();
+        registerData.state = formData.state.trim();
+        registerData.pincode = formData.pincode.trim();
+        registerData.registrationNumber = formData.registrationNumber.trim();
+      }
+
+      const success = await register(registerData);
 
       if (success) {
         toast.success(
@@ -480,6 +509,24 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
                   {errors.experience && (
                     <p className="text-sm text-red-500">
                       {errors.experience}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="consultationFee">Consultation Fee ($)</Label>
+                  <Input
+                    id="consultationFee"
+                    name="consultationFee"
+                    type="number"
+                    placeholder="100"
+                    value={formData.consultationFee}
+                    onChange={handleInputChange}
+                    className={errors.consultationFee ? 'border-red-500' : ''}
+                  />
+                  {errors.consultationFee && (
+                    <p className="text-sm text-red-500">
+                      {errors.consultationFee}
                     </p>
                   )}
                 </div>

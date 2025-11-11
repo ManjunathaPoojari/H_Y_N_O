@@ -128,19 +128,22 @@ public class HospitalService {
     }
 
     private String generateNextHospitalId() {
-        Optional<Hospital> lastHospital = hospitalRepository.findTopByOrderByIdDesc();
-        if (lastHospital.isPresent()) {
-            String lastId = lastHospital.get().getId();
-            if (lastId.startsWith("H")) {
+        List<Hospital> allHospitals = hospitalRepository.findAll();
+        int maxNumber = 0;
+        for (Hospital h : allHospitals) {
+            String id = h.getId();
+            if (id != null && id.startsWith("H")) {
                 try {
-                    int number = Integer.parseInt(lastId.substring(1));
-                    return String.format("H%03d", number + 1);
+                    int number = Integer.parseInt(id.substring(1));
+                    if (number > maxNumber) {
+                        maxNumber = number;
+                    }
                 } catch (NumberFormatException e) {
-                    // If parsing fails, start from H001
+                    // ignore invalid IDs
                 }
             }
         }
-        return "H001";
+        return String.format("H%03d", maxNumber + 1);
     }
 
     public Hospital updateHospital(String id, Hospital hospitalDetails) {

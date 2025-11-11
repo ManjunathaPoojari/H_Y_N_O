@@ -190,7 +190,6 @@ public class DataInitializer implements CommandLineRunner {
             doctor.setConsultationFee(BigDecimal.valueOf(500.0));
             doctor.setStatus("approved");
             doctor.setHospital(hospitalRepository.findById("hospital-1").orElse(null));
-            doctor.setAvatarUrl("https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face");
             doctorRepository.save(doctor);
         }
 
@@ -209,7 +208,6 @@ public class DataInitializer implements CommandLineRunner {
             doctor2.setConsultationFee(BigDecimal.valueOf(800.0));
             doctor2.setStatus("approved");
             doctor2.setHospital(hospitalRepository.findById("hospital-2").orElse(null));
-            doctor2.setAvatarUrl("https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face");
             doctorRepository.save(doctor2);
         }
 
@@ -228,7 +226,6 @@ public class DataInitializer implements CommandLineRunner {
             doctor3.setConsultationFee(BigDecimal.valueOf(600.0));
             doctor3.setStatus("approved");
             doctor3.setHospital(hospitalRepository.findById("hospital-3").orElse(null));
-            doctor3.setAvatarUrl("https://images.unsplash.com/photo-1594824804732-ca8db723f8fa?w=150&h=150&fit=crop&crop=face");
             doctorRepository.save(doctor3);
         }
 
@@ -284,7 +281,7 @@ public class DataInitializer implements CommandLineRunner {
             admin.setName("Admin User");
             admin.setEmail("admin@example.com");
             admin.setPhone("5555555555");
-            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setPassword(passwordEncoder.encode("password123"));
             admin.setRole(Admin.AdminRole.SUPER_ADMIN);
             adminRepository.save(admin);
         } else {
@@ -293,7 +290,7 @@ public class DataInitializer implements CommandLineRunner {
             String currentPassword = admin.getPassword();
             if (currentPassword != null && !currentPassword.startsWith("$2a$") && !currentPassword.startsWith("$2b$") && !currentPassword.startsWith("$2y$")) {
                 // Password is not BCrypt hashed, update it
-                admin.setPassword(passwordEncoder.encode("admin123"));
+                admin.setPassword(passwordEncoder.encode("password123"));
                 adminRepository.save(admin);
                 System.out.println("Updated admin password to BCrypt hash");
             }
@@ -428,7 +425,6 @@ public class DataInitializer implements CommandLineRunner {
         if (medicineRepository.count() == 0) {
             // Create sample medicines
             Medicine medicine1 = new Medicine();
-            medicine1.setId("medicine-1");
             medicine1.setName("Paracetamol");
             medicine1.setGenericName("Acetaminophen");
             medicine1.setDescription("Pain reliever and fever reducer");
@@ -448,7 +444,6 @@ public class DataInitializer implements CommandLineRunner {
             medicineRepository.save(medicine1);
 
             Medicine medicine2 = new Medicine();
-            medicine2.setId("medicine-2");
             medicine2.setName("Amoxicillin");
             medicine2.setGenericName("Amoxicillin");
             medicine2.setDescription("Antibiotic for bacterial infections");
@@ -468,7 +463,6 @@ public class DataInitializer implements CommandLineRunner {
             medicineRepository.save(medicine2);
 
             Medicine medicine3 = new Medicine();
-            medicine3.setId("medicine-3");
             medicine3.setName("Ibuprofen");
             medicine3.setGenericName("Ibuprofen");
             medicine3.setDescription("Non-steroidal anti-inflammatory drug");
@@ -488,7 +482,6 @@ public class DataInitializer implements CommandLineRunner {
             medicineRepository.save(medicine3);
 
             Medicine medicine4 = new Medicine();
-            medicine4.setId("medicine-4");
             medicine4.setName("Omeprazole");
             medicine4.setGenericName("Omeprazole");
             medicine4.setDescription("Proton pump inhibitor for acid reflux");
@@ -508,7 +501,6 @@ public class DataInitializer implements CommandLineRunner {
             medicineRepository.save(medicine4);
 
             Medicine medicine5 = new Medicine();
-            medicine5.setId("medicine-5");
             medicine5.setName("Vitamin D3");
             medicine5.setGenericName("Cholecalciferol");
             medicine5.setDescription("Vitamin supplement for bone health");

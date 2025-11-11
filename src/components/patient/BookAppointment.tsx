@@ -6,7 +6,7 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
-import { Calendar, Clock, Video, MessageSquare, MapPin, Building2, Star, Loader2 } from 'lucide-react';
+import { Calendar, Clock, Video, MessageSquare, MapPin, Building2, Star, Loader2, User } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
 import { useAuth } from '../../lib/auth-context';
 import { toast } from 'sonner';
@@ -36,6 +36,7 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
   const [availableSlots, setAvailableSlots] = useState<ScheduleSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [reason, setReason] = useState('');
+  const [selectByDoctor, setSelectByDoctor] = useState(false);
 
   const titles = {
     video: 'Book Video Consultation',
@@ -196,36 +197,78 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Booking Form */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Hospital Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Select Hospital/Clinic</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {hospitals.filter(h => h.status === 'approved').map((hospital) => (
-                  <div
-                    key={hospital.id}
-                    className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                      selectedHospital === hospital.id ? 'border-blue-600 bg-blue-50' : 'hover:border-gray-400'
+          {/* Selection Mode Toggle */}
+          {(type === 'video' || type === 'chat' || type === 'inperson') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Selection Mode
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    type="button"
+                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                      !selectByDoctor
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
                     }`}
-                    onClick={() => setSelectedHospital(hospital.id)}
+                    onClick={() => setSelectByDoctor(false)}
                   >
-                    <h4 className="mb-1">{hospital.name}</h4>
-                    <p className="text-sm text-gray-600">{hospital.address}, {hospital.city}</p>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {hospital.facilities.slice(0, 4).map((facility) => (
-                        <Badge key={facility} variant="secondary" className="text-xs">{facility}</Badge>
-                      ))}
+                    <Building2 className="h-4 w-4 inline mr-2" />
+                    Select by Hospital
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                      selectByDoctor
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    onClick={() => setSelectByDoctor(true)}
+                  >
+                    <User className="h-4 w-4 inline mr-2" />
+                    Select by Doctor
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Hospital Selection */}
+          {(!selectByDoctor || type === 'hospital') && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Select Hospital/Clinic</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {hospitals.filter(h => h.status === 'approved').map((hospital) => (
+                    <div
+                      key={hospital.id}
+                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                        selectedHospital === hospital.id ? 'border-blue-600 bg-blue-50' : 'hover:border-gray-400'
+                      }`}
+                      onClick={() => setSelectedHospital(hospital.id)}
+                    >
+                      <h4 className="mb-1">{hospital.name}</h4>
+                      <p className="text-sm text-gray-600">{hospital.address}, {hospital.city}</p>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {hospital.facilities.slice(0, 4).map((facility) => (
+                          <Badge key={facility} variant="secondary" className="text-xs">{facility}</Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Doctor Selection */}
-          {selectedHospital && type !== 'hospital' && (
+          {(selectByDoctor && (type === 'video' || type === 'chat' || type === 'inperson')) && (
             <Card>
               <CardHeader>
                 <CardTitle>Select Doctor</CardTitle>
@@ -238,7 +281,14 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                       className={`border rounded-lg p-4 cursor-pointer transition-all ${
                         selectedDoctor === doctor.id ? 'border-blue-600 bg-blue-50' : 'hover:border-gray-400'
                       }`}
-                      onClick={() => setSelectedDoctor(doctor.id)}
+                      onClick={() => {
+                        setSelectedDoctor(doctor.id);
+                        // Auto-select hospital based on doctor's hospital
+                        const doctorHospital = hospitals.find(h => h.id === doctor.hospitalId);
+                        if (doctorHospital) {
+                          setSelectedHospital(doctorHospital.id);
+                        }
+                      }}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -255,6 +305,9 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                               {doctor.rating}
                             </span>
                           </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {hospitals.find(h => h.id === doctor.hospitalId)?.name}
+                          </p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm">Consultation Fee</p>
@@ -267,6 +320,8 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
               </CardContent>
             </Card>
           )}
+
+
 
           {/* Available Time Slots */}
           {selectedHospital && (selectedDoctor || type === 'hospital') && (
