@@ -56,6 +56,12 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private MedicineRepository medicineRepository;
 
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private YogaTrainerRepository yogaTrainerRepository;
+
     @Override
     public void run(String... args) throws Exception {
         // Create sample patients

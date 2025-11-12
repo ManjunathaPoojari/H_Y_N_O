@@ -43,6 +43,7 @@ com\hyno\service\AdminService.class
 com\hyno\controller\ChatController.class
 com\hyno\controller\WebSocketChatController$MarkAsReadRequest.class
 com\hyno\repository\ScheduleSlotRepository.class
+com\hyno\entity\AIChatMessage.class
 com\hyno\entity\ChatMessage$SenderType.class
 com\hyno\service\AppointmentService.class
 com\hyno\repository\HospitalRepository.class
@@ -68,6 +69,7 @@ com\hyno\entity\Schedule.class
 com\hyno\entity\ChatMessage$MessageStatus.class
 com\hyno\service\DoctorService.class
 com\hyno\service\PrescriptionService.class
+com\hyno\entity\AIChatMessage$ChatContext.class
 com\hyno\controller\WebSocketVideoCallController$WebRTCAnswer.class
 com\hyno\controller\FeedbackController.class
 com\hyno\service\OrderService.class
@@ -78,6 +80,7 @@ com\hyno\entity\VideoCall.class
 com\hyno\service\JwtService.class
 com\hyno\entity\YogaTrainer.class
 com\hyno\entity\Feedback.class
+com\hyno\entity\AIChatMessage$SenderRole.class
 com\hyno\repository\PaymentRepository.class
 com\hyno\repository\FeedbackRepository.class
 com\hyno\HynoApplication.class
@@ -108,9 +111,11 @@ com\hyno\controller\WebSocketChatController$WebSocketMessageResponse.class
 com\hyno\controller\WebSocketVideoCallController.class
 com\hyno\entity\EmailVerificationToken.class
 com\hyno\entity\Payment$PaymentStatus.class
+com\hyno\service\AIChatService.class
 com\hyno\controller\WebSocketVideoCallController$JoinCallNotification.class
 com\hyno\entity\ChatMessage$SenderRole.class
 com\hyno\service\EmailService.class
+com\hyno\repository\AIChatMessageRepository.class
 com\hyno\repository\AppointmentRepository.class
 com\hyno\repository\YogaTrainerRepository.class
 com\hyno\controller\HospitalScheduleController.class
@@ -124,4 +129,5 @@ com\hyno\repository\ChatRoomRepository.class
 com\hyno\repository\DoctorRepository.class
 com\hyno\repository\PrescriptionRepository.class
 com\hyno\repository\PasswordResetTokenRepository.class
+com\hyno\controller\AIChatController.class
 com\hyno\entity\DoctorSchedule$ScheduleStatus.class
