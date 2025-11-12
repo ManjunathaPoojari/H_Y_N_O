@@ -4,12 +4,20 @@ import com.hyno.entity.Admin;
 import com.hyno.entity.Patient;
 import com.hyno.entity.Doctor;
 import com.hyno.entity.Hospital;
+import com.hyno.entity.Trainer;
 import com.hyno.entity.Appointment;
+import com.hyno.entity.Medicine;
+import com.hyno.entity.Order;
+import com.hyno.entity.Prescription;
 import com.hyno.service.AdminService;
 import com.hyno.service.PatientService;
 import com.hyno.service.DoctorService;
 import com.hyno.service.HospitalService;
+import com.hyno.service.TrainerService;
 import com.hyno.service.AppointmentService;
+import com.hyno.service.MedicineService;
+import com.hyno.service.OrderService;
+import com.hyno.service.PrescriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +46,18 @@ public class AdminController {
     @Autowired
     private AppointmentService appointmentService;
 
+    @Autowired
+    private MedicineService medicineService;
+
+    @Autowired
+    private OrderService orderService;
+
+    @Autowired
+    private PrescriptionService prescriptionService;
+
+    @Autowired
+    private TrainerService trainerService;
+
     // Dashboard Statistics
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getDashboardStats() {
@@ -60,7 +80,7 @@ public class AdminController {
 
         // Active appointments (upcoming)
         long activeAppointments = appointments.stream()
-            .filter(a -> "upcoming".equals(a.getStatus().toString().toLowerCase()))
+            .filter(a -> Appointment.AppointmentStatus.UPCOMING.equals(a.getStatus()))
             .count();
         stats.put("activeAppointments", activeAppointments);
 
@@ -212,6 +232,30 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
+    // Video Call Status Tracking Endpoints
+    @PostMapping("/appointments/{id}/video-call/start")
+    public ResponseEntity<Appointment> startVideoCall(@PathVariable String id) {
+        Appointment updatedAppointment = appointmentService.startVideoCall(id);
+        return updatedAppointment != null ? ResponseEntity.ok(updatedAppointment) : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/appointments/{id}/video-call/status")
+    public ResponseEntity<Appointment> updateVideoCallStatus(@PathVariable String id, @RequestBody Map<String, String> statusUpdate) {
+        try {
+            Appointment.VideoCallStatus status = Appointment.VideoCallStatus.valueOf(statusUpdate.get("status"));
+            Appointment updatedAppointment = appointmentService.updateVideoCallStatus(id, status);
+            return updatedAppointment != null ? ResponseEntity.ok(updatedAppointment) : ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/appointments/{id}/video-call/end")
+    public ResponseEntity<Appointment> endVideoCall(@PathVariable String id) {
+        Appointment updatedAppointment = appointmentService.endVideoCall(id);
+        return updatedAppointment != null ? ResponseEntity.ok(updatedAppointment) : ResponseEntity.notFound().build();
+    }
+
     // Admin Management
     @GetMapping("/admins")
     public List<Admin> getAllAdmins() {
@@ -252,5 +296,87 @@ public class AdminController {
     @GetMapping("/pending/hospitals")
     public List<Hospital> getPendingHospitals() {
         return hospitalService.getHospitalsByStatus("pending");
+    }
+
+    @GetMapping("/pending/trainers")
+    public List<Trainer> getPendingTrainers() {
+        return trainerService.getTrainersByStatus("pending");
+    }
+
+    // Trainer Management
+    @GetMapping("/trainers")
+    public List<Trainer> getAllTrainers() {
+        return trainerService.getAllTrainers();
+    }
+
+    @GetMapping("/trainers/{id}")
+    public ResponseEntity<Trainer> getTrainerById(@PathVariable String id) {
+        return trainerService.getTrainerById(id)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/trainers/{id}")
+    public ResponseEntity<Trainer> updateTrainer(@PathVariable String id, @RequestBody Trainer trainerDetails) {
+        Trainer updatedTrainer = trainerService.updateTrainer(id, trainerDetails);
+        return updatedTrainer != null ? ResponseEntity.ok(updatedTrainer) : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/trainers/{id}/approve")
+    public ResponseEntity<Trainer> approveTrainer(@PathVariable String id) {
+        Trainer approvedTrainer = trainerService.approveTrainer(id);
+        return approvedTrainer != null ? ResponseEntity.ok(approvedTrainer) : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/trainers/{id}/reject")
+    public ResponseEntity<Trainer> rejectTrainer(@PathVariable String id) {
+        Trainer rejectedTrainer = trainerService.rejectTrainer(id);
+        return rejectedTrainer != null ? ResponseEntity.ok(rejectedTrainer) : ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/trainers/{id}")
+    public ResponseEntity<Void> deleteTrainer(@PathVariable String id) {
+        trainerService.deleteTrainer(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // Pharmacy Management
+    @GetMapping("/medicines")
+    public List<Medicine> getMedicines() {
+        return medicineService.getAllMedicines();
+    }
+
+    @GetMapping("/orders")
+    public List<Order> getOrders() {
+        return orderService.getAllOrders();
+    }
+
+    @GetMapping("/prescriptions")
+    public List<Prescription> getPrescriptions() {
+        return prescriptionService.getAllPrescriptions();
+    }
+
+    @PostMapping("/medicines")
+    public ResponseEntity<Medicine> addMedicine(@RequestBody Medicine medicine) {
+        Medicine createdMedicine = medicineService.createMedicine(medicine);
+        return ResponseEntity.ok(createdMedicine);
+    }
+
+    @PutMapping("/medicines/{id}")
+    public ResponseEntity<Medicine> updateMedicine(@PathVariable String id, @RequestBody Medicine medicine) {
+        Medicine updatedMedicine = medicineService.updateMedicine(id, medicine);
+        return updatedMedicine != null ? ResponseEntity.ok(updatedMedicine) : ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/medicines/{id}")
+    public ResponseEntity<Void> deleteMedicine(@PathVariable String id) {
+        boolean deleted = medicineService.deleteMedicine(id);
+        return deleted ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/orders/{id}/status")
+    public ResponseEntity<Order> updateOrderStatus(@PathVariable String id, @RequestBody Map<String, String> statusUpdate) {
+        Order updatedOrder = orderService.updateOrderStatus(id, statusUpdate.get("status"));
+        return updatedOrder != null ? ResponseEntity.ok(updatedOrder) : ResponseEntity.notFound().build();
     }
 }

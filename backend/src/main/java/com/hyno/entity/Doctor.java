@@ -1,7 +1,8 @@
 package com.hyno.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
@@ -9,7 +10,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "doctors")
-@Data
+@Getter
+@Setter
 public class Doctor {
 
     @Id
@@ -40,6 +42,7 @@ public class Doctor {
     private String status = "pending";
     private String avatarUrl;
     private String password;
+    private boolean isVerified = false;
 
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -59,5 +62,9 @@ public class Doctor {
     @JsonProperty("hospitalId")
     public String getHospitalId() {
         return hospital != null ? hospital.getId() : null;
+    }
+
+    public String getStatus() {
+        return status;
     }
 }

@@ -25,7 +25,7 @@ public class WebSocketVideoCallController {
 
     private static Map<String, List<String>> appointmentParticipants = new ConcurrentHashMap<>();
 
-    @MessageMapping("/video-call/{appointmentId}/join")
+    @MessageMapping("/api/video-call/{appointmentId}/join")
     public void joinVideoCall(
             @DestinationVariable String appointmentId,
             @Payload JoinCallRequest request) {

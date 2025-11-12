@@ -75,6 +75,16 @@ public class Appointment {
     @Column(length = 2000)
     private String prescription;
 
+    // Video Call Status Tracking
+    @Enumerated(EnumType.STRING)
+    private VideoCallStatus videoCallStatus = VideoCallStatus.NOT_STARTED;
+
+    private LocalDateTime videoCallStartTime;
+
+    private LocalDateTime videoCallEndTime;
+
+    private Integer videoCallDuration; // in seconds
+
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -91,5 +101,9 @@ public class Appointment {
 
     public enum AppointmentStatus {
         PENDING, UPCOMING, COMPLETED, CANCELLED
+    }
+
+    public enum VideoCallStatus {
+        NOT_STARTED, CONNECTING, IN_PROGRESS, COMPLETED, FAILED, CANCELLED
     }
 }

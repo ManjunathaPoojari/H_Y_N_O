@@ -1,7 +1,8 @@
-package com.hyno.entity;
+ package com.hyno.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -9,7 +10,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "patients")
-@Data
+@Getter
+@Setter
 public class Patient {
 
     @Id
@@ -45,6 +47,7 @@ public class Patient {
     private String address;
     private String emergencyContact;
     private String password;
+    private boolean isVerified = false;
     private String notes;
 
     @Column(name = "hospital_id")

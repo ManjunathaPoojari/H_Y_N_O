@@ -63,7 +63,7 @@ export const DoctorSchedule = () => {
   const [appointmentDuration, setAppointmentDuration] = useState(30);
   const [appointmentType, setAppointmentType] = useState('general');
   const [isAvailable, setIsAvailable] = useState(true);
-  const [slotNotes, setSlotNotes] = useState('');
+
 
   // Helper function to generate time slots
   const generateTimeSlots = (startTime: string, endTime: string, duration: number): IndividualSlot[] => {
@@ -173,7 +173,7 @@ export const DoctorSchedule = () => {
         date: slotDate,
         startTime,
         endTime,
-        notes: slotNotes
+        maxAppointments
       };
 
       await doctorAPI.addScheduleSlot(user.id, slotData);
@@ -197,7 +197,6 @@ export const DoctorSchedule = () => {
     setMaxAppointments(slot.maxAppointments);
     setAppointmentType(slot.appointmentType);
     setIsAvailable(slot.isAvailable);
-    setSlotNotes(slot.notes);
     setShowAddSlot(true);
   };
 
@@ -220,7 +219,7 @@ export const DoctorSchedule = () => {
         date: slotDate,
         startTime,
         endTime,
-        notes: slotNotes
+        maxAppointments
       };
 
       await doctorAPI.updateScheduleSlot(user.id, editingSlot.id, slotData);
@@ -250,7 +249,6 @@ export const DoctorSchedule = () => {
     setMaxAppointments(1);
     setAppointmentType('general');
     setIsAvailable(true);
-    setSlotNotes('');
   };
 
   const getSlotsForSelectedDate = () => {
@@ -358,7 +356,7 @@ export const DoctorSchedule = () => {
                   <Input
                     type="number"
                     min="1"
-                    max="10"
+                    max="25"
                     value={maxAppointments}
                     onChange={(e) => setMaxAppointments(parseInt(e.target.value))}
                   />
@@ -373,15 +371,7 @@ export const DoctorSchedule = () => {
                 </div>
               </div>
 
-              <div>
-                <Label>Notes</Label>
-                <Textarea
-                  placeholder="Additional notes for this time slot..."
-                  value={slotNotes}
-                  onChange={(e) => setSlotNotes(e.target.value)}
-                  rows={3}
-                />
-              </div>
+
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowAddSlot(false)}>

@@ -7,6 +7,8 @@ import { NotificationProvider } from './lib/notification-context';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { RegisterPage } from './components/RegisterPage';
+import { ForgotPasswordPage } from './components/ForgotPasswordPage';
+import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { DashboardLayout } from './components/DashboardLayout';
 import { PatientDashboard } from './components/patient/PatientDashboard';
 import { BookAppointment } from './components/patient/BookAppointment';
@@ -41,7 +43,11 @@ import { AdminEmergency } from './components/admin/AdminEmergency';
 import { HospitalManagement } from './components/admin/HospitalManagement';
 import { DoctorManagement } from './components/admin/DoctorManagement';
 import { AdminPharmacy } from './components/admin/AdminPharmacy';
+import { TrainerDashboard } from './components/trainer/TrainerDashboard';
 import { ConfigStatus } from './components/ConfigStatus';
+import { AboutUs } from './components/AboutUs';
+import { TermsOfService } from './components/TermsOfService';
+import { PrivacyPolicy } from './components/PrivacyPolicy';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 import { Card, CardContent } from './components/ui/card';
@@ -103,8 +109,32 @@ function AppContent() {
       return <LoginPage onNavigate={navigate} role="hospital" />;
     }
 
+    if (currentPath === '/trainer-login') {
+      return <LoginPage onNavigate={navigate} role="trainer" />;
+    }
+
     if (currentPath === '/register') {
       return <RegisterPage onNavigate={navigate} />;
+    }
+
+    if (currentPath === '/forgot-password') {
+      return <ForgotPasswordPage onNavigate={navigate} />;
+    }
+
+    if (currentPath === '/reset-password') {
+      return <ResetPasswordPage onNavigate={navigate} />;
+    }
+
+    if (currentPath === '/about') {
+      return <AboutUs />;
+    }
+
+    if (currentPath === '/terms') {
+      return <TermsOfService />;
+    }
+
+    if (currentPath === '/privacy') {
+      return <PrivacyPolicy />;
     }
 
     // Protected routes - require authentication
@@ -225,6 +255,15 @@ function AppContent() {
           {currentPath === '/hospital/emergency' && <HospitalEmergency />}
           {currentPath === '/hospital/reports' && <HospitalReports />}
           {currentPath === '/hospital/profile' && <HospitalProfile />}
+        </DashboardLayout>
+      );
+    }
+
+    // Trainer routes
+    if (user?.role === 'trainer') {
+      return (
+        <DashboardLayout role="trainer" onNavigate={navigate} currentPath={currentPath}>
+          {currentPath === '/trainer-dashboard' && <TrainerDashboard onNavigate={navigate} />}
         </DashboardLayout>
       );
     }

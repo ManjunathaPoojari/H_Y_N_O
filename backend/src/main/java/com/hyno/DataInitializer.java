@@ -18,6 +18,7 @@ import com.hyno.repository.ChatMessageRepository;
 import com.hyno.repository.MedicineRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -53,6 +54,8 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private MedicineRepository medicineRepository;
 
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
     @Override
     public void run(String... args) throws Exception {
         // Create sample patients
@@ -62,7 +65,7 @@ public class DataInitializer implements CommandLineRunner {
             patient.setName("John Doe");
             patient.setEmail("patient@example.com");
             patient.setPhone("1234567890");
-            patient.setPassword("password123");
+            patient.setPassword(passwordEncoder.encode("password123"));
             patient.setAge(30);
             patient.setGender("Male");
             patient.setBloodGroup("O+");
@@ -82,7 +85,7 @@ public class DataInitializer implements CommandLineRunner {
             patient2.setName("Alice Johnson");
             patient2.setEmail("patient2@example.com");
             patient2.setPhone("2345678901");
-            patient2.setPassword("password123");
+            patient2.setPassword(passwordEncoder.encode("password123"));
             patientRepository.save(patient2);
         }
 
@@ -92,7 +95,7 @@ public class DataInitializer implements CommandLineRunner {
             patient3.setName("Robert Brown");
             patient3.setEmail("patient3@example.com");
             patient3.setPhone("3456789012");
-            patient3.setPassword("password123");
+            patient3.setPassword(passwordEncoder.encode("password123"));
             patientRepository.save(patient3);
         }
 
@@ -102,7 +105,7 @@ public class DataInitializer implements CommandLineRunner {
             patient4.setName("Emma Wilson");
             patient4.setEmail("patient4@example.com");
             patient4.setPhone("4567890123");
-            patient4.setPassword("password123");
+            patient4.setPassword(passwordEncoder.encode("password123"));
             patientRepository.save(patient4);
         }
 
@@ -112,7 +115,7 @@ public class DataInitializer implements CommandLineRunner {
             patient5.setName("Michael Davis");
             patient5.setEmail("patient5@example.com");
             patient5.setPhone("5678901234");
-            patient5.setPassword("password123");
+            patient5.setPassword(passwordEncoder.encode("password123"));
             patientRepository.save(patient5);
         }
 
@@ -123,7 +126,7 @@ public class DataInitializer implements CommandLineRunner {
             hospital.setName("City General Hospital");
             hospital.setEmail("hospital@example.com");
             hospital.setPhone("1122334455");
-            hospital.setPassword("password123");
+            hospital.setPassword(passwordEncoder.encode("password123"));
             hospital.setAddress("123 Main St, City, State");
             hospital.setCity("New York");
             hospital.setState("NY");
@@ -141,7 +144,7 @@ public class DataInitializer implements CommandLineRunner {
             hospital2.setName("Metro Health Center");
             hospital2.setEmail("hospital2@example.com");
             hospital2.setPhone("6677889900");
-            hospital2.setPassword("password123");
+            hospital2.setPassword(passwordEncoder.encode("password123"));
             hospital2.setAddress("456 Health Ave, Metro City, State");
             hospital2.setCity("Los Angeles");
             hospital2.setState("CA");
@@ -159,7 +162,7 @@ public class DataInitializer implements CommandLineRunner {
             hospital3.setName("Regional Medical Center");
             hospital3.setEmail("hospital3@example.com");
             hospital3.setPhone("3344556677");
-            hospital3.setPassword("password123");
+            hospital3.setPassword(passwordEncoder.encode("password123"));
             hospital3.setAddress("789 Care Blvd, Regional Area, State");
             hospital3.setCity("Chicago");
             hospital3.setState("IL");
@@ -178,7 +181,7 @@ public class DataInitializer implements CommandLineRunner {
             doctor.setName("Dr. Jane Smith");
             doctor.setEmail("doctor@example.com");
             doctor.setPhone("0987654321");
-            doctor.setPassword("password123");
+            doctor.setPassword(passwordEncoder.encode("password123"));
             doctor.setSpecialization("General Medicine");
             doctor.setQualification("MBBS, MD");
             doctor.setExperience(5);
@@ -187,7 +190,6 @@ public class DataInitializer implements CommandLineRunner {
             doctor.setConsultationFee(BigDecimal.valueOf(500.0));
             doctor.setStatus("approved");
             doctor.setHospital(hospitalRepository.findById("hospital-1").orElse(null));
-            doctor.setAvatarUrl("https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face");
             doctorRepository.save(doctor);
         }
 
@@ -197,7 +199,7 @@ public class DataInitializer implements CommandLineRunner {
             doctor2.setName("Dr. Michael Johnson");
             doctor2.setEmail("doctor2@example.com");
             doctor2.setPhone("1231231234");
-            doctor2.setPassword("password123");
+            doctor2.setPassword(passwordEncoder.encode("password123"));
             doctor2.setSpecialization("Cardiology");
             doctor2.setQualification("MBBS, MD, DM Cardiology");
             doctor2.setExperience(8);
@@ -206,7 +208,6 @@ public class DataInitializer implements CommandLineRunner {
             doctor2.setConsultationFee(BigDecimal.valueOf(800.0));
             doctor2.setStatus("approved");
             doctor2.setHospital(hospitalRepository.findById("hospital-2").orElse(null));
-            doctor2.setAvatarUrl("https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face");
             doctorRepository.save(doctor2);
         }
 
@@ -216,7 +217,7 @@ public class DataInitializer implements CommandLineRunner {
             doctor3.setName("Dr. Sarah Wilson");
             doctor3.setEmail("doctor3@example.com");
             doctor3.setPhone("4564564567");
-            doctor3.setPassword("password123");
+            doctor3.setPassword(passwordEncoder.encode("password123"));
             doctor3.setSpecialization("Pediatrics");
             doctor3.setQualification("MBBS, MD Pediatrics");
             doctor3.setExperience(6);
@@ -225,7 +226,6 @@ public class DataInitializer implements CommandLineRunner {
             doctor3.setConsultationFee(BigDecimal.valueOf(600.0));
             doctor3.setStatus("approved");
             doctor3.setHospital(hospitalRepository.findById("hospital-3").orElse(null));
-            doctor3.setAvatarUrl("https://images.unsplash.com/photo-1594824804732-ca8db723f8fa?w=150&h=150&fit=crop&crop=face");
             doctorRepository.save(doctor3);
         }
 
@@ -235,7 +235,7 @@ public class DataInitializer implements CommandLineRunner {
             doctor4.setName("Dr. David Chen");
             doctor4.setEmail("doctor4@example.com");
             doctor4.setPhone("7897897890");
-            doctor4.setPassword("password123");
+            doctor4.setPassword(passwordEncoder.encode("password123"));
             doctor4.setSpecialization("Orthopedics");
             doctor4.setQualification("MBBS, MS Orthopedics");
             doctor4.setExperience(10);
@@ -254,7 +254,7 @@ public class DataInitializer implements CommandLineRunner {
             doctor5.setName("Dr. Emily Davis");
             doctor5.setEmail("doctor5@example.com");
             doctor5.setPhone("3213213210");
-            doctor5.setPassword("password123");
+            doctor5.setPassword(passwordEncoder.encode("password123"));
             doctor5.setSpecialization("Dermatology");
             doctor5.setQualification("MBBS, MD Dermatology");
             doctor5.setExperience(7);
@@ -274,15 +274,26 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // Create sample admin in proper admins table
-        if (adminRepository.findByEmail("admin@example.com").isEmpty()) {
+        Optional<Admin> existingAdmin = adminRepository.findByEmail("admin@example.com");
+        if (existingAdmin.isEmpty()) {
             Admin admin = new Admin();
             admin.setId("admin-1");
             admin.setName("Admin User");
             admin.setEmail("admin@example.com");
             admin.setPhone("5555555555");
-            admin.setPassword("admin123");
+            admin.setPassword(passwordEncoder.encode("password123"));
             admin.setRole(Admin.AdminRole.SUPER_ADMIN);
             adminRepository.save(admin);
+        } else {
+            // Update existing admin password if it's not properly hashed
+            Admin admin = existingAdmin.get();
+            String currentPassword = admin.getPassword();
+            if (currentPassword != null && !currentPassword.startsWith("$2a$") && !currentPassword.startsWith("$2b$") && !currentPassword.startsWith("$2y$")) {
+                // Password is not BCrypt hashed, update it
+                admin.setPassword(passwordEncoder.encode("password123"));
+                adminRepository.save(admin);
+                System.out.println("Updated admin password to BCrypt hash");
+            }
         }
 
         // Create sample appointments and chat rooms
@@ -414,7 +425,6 @@ public class DataInitializer implements CommandLineRunner {
         if (medicineRepository.count() == 0) {
             // Create sample medicines
             Medicine medicine1 = new Medicine();
-            medicine1.setId("medicine-1");
             medicine1.setName("Paracetamol");
             medicine1.setGenericName("Acetaminophen");
             medicine1.setDescription("Pain reliever and fever reducer");
@@ -434,7 +444,6 @@ public class DataInitializer implements CommandLineRunner {
             medicineRepository.save(medicine1);
 
             Medicine medicine2 = new Medicine();
-            medicine2.setId("medicine-2");
             medicine2.setName("Amoxicillin");
             medicine2.setGenericName("Amoxicillin");
             medicine2.setDescription("Antibiotic for bacterial infections");
@@ -454,7 +463,6 @@ public class DataInitializer implements CommandLineRunner {
             medicineRepository.save(medicine2);
 
             Medicine medicine3 = new Medicine();
-            medicine3.setId("medicine-3");
             medicine3.setName("Ibuprofen");
             medicine3.setGenericName("Ibuprofen");
             medicine3.setDescription("Non-steroidal anti-inflammatory drug");
@@ -474,7 +482,6 @@ public class DataInitializer implements CommandLineRunner {
             medicineRepository.save(medicine3);
 
             Medicine medicine4 = new Medicine();
-            medicine4.setId("medicine-4");
             medicine4.setName("Omeprazole");
             medicine4.setGenericName("Omeprazole");
             medicine4.setDescription("Proton pump inhibitor for acid reflux");
@@ -494,7 +501,6 @@ public class DataInitializer implements CommandLineRunner {
             medicineRepository.save(medicine4);
 
             Medicine medicine5 = new Medicine();
-            medicine5.setId("medicine-5");
             medicine5.setName("Vitamin D3");
             medicine5.setGenericName("Cholecalciferol");
             medicine5.setDescription("Vitamin supplement for bone health");

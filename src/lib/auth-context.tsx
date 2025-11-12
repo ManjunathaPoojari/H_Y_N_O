@@ -1,15 +1,12 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { User } from '../types';
-import axios from 'axios';
-import { API_URL } from './config';
-
-const API_BASE = API_URL;
+import { authAPI } from './api-client';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, role: string) => Promise<boolean>;
+  login: (email: string, password: string, role: string) => Promise<User | null>;
   logout: () => void;
-  register: (userData: any) => Promise<boolean>;
+  register: (userData: any) => Promise<{ success: boolean; error?: string }>;
   isAuthenticated: boolean;
 }
 
@@ -27,39 +24,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const login = async (email: string, password: string, role: string): Promise<boolean> => {
+  const login = async (email: string, password: string, role: string): Promise<User | null> => {
     try {
-      const res = await axios.post(`${API_BASE}/auth/login`, { email, password });
-      if (res.status === 200) {
-        const userData = res.data.user;
-        // Convert role to lowercase to match frontend expectations
-        const normalizedUser = {
-          ...userData,
-          role: userData.role.toLowerCase() === 'admin' ? 'admin' : userData.role.toLowerCase()
-        };
-        const token = res.data.token;
-        setUser(normalizedUser);
-        localStorage.setItem('user', JSON.stringify(normalizedUser));
-        localStorage.setItem('token', token);
-        return true;
-      }
+      const res = await authAPI.login(email, password);
+      const userData = res.user;
+      // Convert role to lowercase to match frontend expectations
+      const normalizedUser = {
+        ...userData,
+        role: userData.role.toLowerCase()
+      };
+      const token = res.token;
+      setUser(normalizedUser);
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+      localStorage.setItem('token', token);
+      return normalizedUser;
     } catch (err) {
       console.error('Login failed:', err);
     }
-    return false;
+    return null;
   };
 
-  const register = async (userData: any): Promise<boolean> => {
+  const register = async (userData: any): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await axios.post(`${API_BASE}/auth/register`, userData);
-      if (res.status === 200) {
-        // After successful registration, automatically log them in
-        return await login(userData.email, userData.password, userData.role);
-      }
-    } catch (err) {
+      await authAPI.register(userData);
+      // Registration successful - user needs to verify email before logging in
+      return { success: true };
+    } catch (err: any) {
       console.error('Registration failed:', err);
+
+      // Extract error message from backend response
+      if (err.message) {
+        return { success: false, error: err.message };
+      }
+
+      // Fallback error message
+      return { success: false, error: 'Registration failed. Please try again.' };
     }
-    return false;
   };
 
   const logout = () => {

@@ -719,7 +719,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             <div>
               <h4 className="text-white mb-4">Company</h4>
               <ul className="space-y-2 text-sm text-slate-400">
-                <li><button onClick={() => onNavigate('/login')} className="hover:text-white transition-colors">About us</button></li>
+                <li><button onClick={() => onNavigate('/about')} className="hover:text-white transition-colors">About us</button></li>
                 <li><button onClick={() => onNavigate('/login')} className="hover:text-white transition-colors">Careers</button></li>
                 <li><button onClick={() => onNavigate('/login')} className="hover:text-white transition-colors">Contact</button></li>
               </ul>
