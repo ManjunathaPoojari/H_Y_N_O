@@ -124,6 +124,27 @@ export interface YogaTrainer {
   mode: ('virtual' | 'inperson')[];
 }
 
+export interface Trainer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  trainerType: string;
+  experienceYears: number;
+  location: string;
+  pricePerSession: number;
+  bio?: string;
+  specialties: string[];
+  qualifications: string[];
+  languages: string[];
+  modes: string[];
+  status: 'approved' | 'pending' | 'rejected';
+  rating: number;
+  reviews: number;
+  profileImage?: string;
+  createdAt?: string;
+}
+
 export interface ScheduleSlot {
   id: string;
   date: string;
@@ -161,7 +182,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'patient' | 'doctor' | 'hospital' | 'admin';
+  role: 'patient' | 'doctor' | 'hospital' | 'admin' | 'trainer';
   avatar?: string;
 }
 

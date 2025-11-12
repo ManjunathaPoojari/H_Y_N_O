@@ -1,14 +1,16 @@
 package com.hyno.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
 
 @Entity
 @Table(name = "hospitals")
-@Data
+@Getter
+@Setter
 public class Hospital {
 
     @Id
@@ -29,6 +31,7 @@ public class Hospital {
     private Integer totalDoctors = 0;
     private String status = "pending";
     private String password;
+    private boolean isVerified = false;
 
     @ElementCollection
     @CollectionTable(name = "hospital_facilities", joinColumns = @JoinColumn(name = "hospital_id"))
@@ -43,5 +46,9 @@ public class Hospital {
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public String getStatus() {
+        return status;
     }
 }

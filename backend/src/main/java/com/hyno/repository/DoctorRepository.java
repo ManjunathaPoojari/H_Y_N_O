@@ -12,4 +12,5 @@ public interface DoctorRepository extends JpaRepository<Doctor, String> {
     List<Doctor> findByHospital_Id(String hospitalId);
     List<Doctor> findBySpecialization(String specialization);
     Optional<Doctor> findByEmail(String email);
+    Optional<Doctor> findTopByOrderByIdDesc();
 }

@@ -20,6 +20,7 @@ public class Admin {
 
     private String phone;
     private String password;
+    private boolean isVerified = true; // Admins are pre-verified
 
     @Enumerated(EnumType.STRING)
     private AdminRole role = AdminRole.ADMIN;

@@ -40,13 +40,10 @@ public class EmailService {
         }
     }
 
-    public void sendPasswordResetEmail(String to, String name, String resetToken, String userType) {
+    public void sendPasswordResetEmail(String to, String resetLink) {
         try {
             Context context = new Context();
-            context.setVariable("name", name);
-            context.setVariable("resetToken", resetToken);
-            context.setVariable("userType", userType);
-            context.setVariable("resetUrl", "http://localhost:3000/reset-password?token=" + resetToken + "&type=" + userType);
+            context.setVariable("resetUrl", resetLink);
 
             String htmlContent = templateEngine.process("password-reset-email", context);
 
@@ -54,6 +51,21 @@ public class EmailService {
             logger.info("Password reset email sent successfully to: {}", to);
         } catch (Exception e) {
             logger.error("Failed to send password reset email to: {}", to, e);
+        }
+    }
+
+    public void sendVerificationEmail(String to, String name, String verificationLink) {
+        try {
+            Context context = new Context();
+            context.setVariable("name", name);
+            context.setVariable("verificationUrl", verificationLink);
+
+            String htmlContent = templateEngine.process("verification-email", context);
+
+            sendHtmlEmail(to, "Verify Your Email - HYNO Health Management System", htmlContent);
+            logger.info("Verification email sent successfully to: {}", to);
+        } catch (Exception e) {
+            logger.error("Failed to send verification email to: {}", to, e);
         }
     }
 

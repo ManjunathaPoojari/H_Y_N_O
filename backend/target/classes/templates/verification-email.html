@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification - HYNO Health Management System</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9f9f9; }
+        .verification-info { background-color: #fff; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0; }
+        .button { display: inline-block; background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 15px 0; border-radius: 5px; }
+        .footer { background-color: #333; color: white; padding: 10px; text-align: center; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to HYNO Health Management System</h1>
+        </div>
+
+        <div class="content">
+            <h2>Hello <span th:text="${name}">User</span>,</h2>
+
+            <p>Thank you for registering with HYNO Health Management System! To complete your registration and activate your account, please verify your email address.</p>
+
+            <p>Click the button below to verify your email:</p>
+
+            <a th:href="${verificationUrl}" class="button">Verify My Email</a>
+
+            <div class="verification-info">
+                <strong>What happens next?</strong>
+                <ul>
+                    <li>Your account will be activated immediately</li>
+                    <li>You can start using all features of the platform</li>
+                    <li>This link will expire in 24 hours</li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <strong>Important:</strong>
+                <ul>
+                    <li>This link will expire in 24 hours</li>
+                    <li>If you didn't create this account, please ignore this email</li>
+                    <li>Your email verification is required to access the system</li>
+                </ul>
+            </div>
+
+            <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+            <p><a th:href="${verificationUrl}" th:text="${verificationUrl}">Verification Link</a></p>
+
+            <p>If you need any assistance, please contact our support team.</p>
+
+            <p>Welcome to the HYNO family!</p>
+            <p>Best regards,<br>The HYNO Health Management Team</p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2024 HYNO Health Management System. All rights reserved.</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>
