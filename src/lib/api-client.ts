@@ -322,38 +322,38 @@ export const medicineAPI = {
 
 // Order API
 export const orderAPI = {
-  getAll: () => apiCall<any[]>('/orders'),
+  getAll: () => apiCall<any[]>('/api/orders'),
 
-  getById: (id: string) => apiCall<any>(`/orders/${id}`),
+  getById: (id: string) => apiCall<any>(`/api/orders/${id}`),
 
   getByPatient: (patientId: string) =>
-    apiCall<any[]>(`/orders/patient/${patientId}`),
+    apiCall<any[]>(`/api/orders/patient/${patientId}`),
 
   create: (order: any) =>
-    apiCall<any>('/orders', {
+    apiCall<any>('/api/orders', {
       method: 'POST',
       body: JSON.stringify(order),
     }),
 
   update: (id: string, order: any) =>
-    apiCall<any>(`/orders/${id}`, {
+    apiCall<any>(`/api/orders/${id}`, {
       method: 'PUT',
       body: JSON.stringify(order),
     }),
 
   updateStatus: (id: string, status: string) =>
-    apiCall<any>(`/orders/${id}/status`, {
+    apiCall<any>(`/api/orders/${id}/status`, {
       method: 'PUT',
       body: JSON.stringify({ status }),
     }),
 
   cancel: (id: string) =>
-    apiCall<any>(`/orders/${id}/cancel`, {
+    apiCall<any>(`/api/orders/${id}/cancel`, {
       method: 'PUT',
     }),
 
   delete: (id: string) =>
-    apiCall<void>(`/orders/${id}`, {
+    apiCall<void>(`/api/orders/${id}`, {
       method: 'DELETE',
     }),
 };

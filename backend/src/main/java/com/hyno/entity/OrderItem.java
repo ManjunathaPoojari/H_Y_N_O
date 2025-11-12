@@ -13,9 +13,6 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "order_id", nullable = false, length = 50)
-    private String orderId;
-
     @Column(name = "medicine_id", nullable = false, length = 50)
     private String medicineId;
 
@@ -32,7 +29,7 @@ public class OrderItem {
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", insertable = false, updatable = false)
+    @JoinColumn(name = "order_id")
     @JsonBackReference
     private Order order;
 
@@ -40,8 +37,7 @@ public class OrderItem {
     public OrderItem() {}
 
     // Constructor with parameters
-    public OrderItem(String orderId, String medicineId, String medicineName, Integer quantity, BigDecimal price) {
-        this.orderId = orderId;
+    public OrderItem(String medicineId, String medicineName, Integer quantity, BigDecimal price) {
         this.medicineId = medicineId;
         this.medicineName = medicineName;
         this.quantity = quantity;
@@ -59,11 +55,11 @@ public class OrderItem {
     }
 
     public String getOrderId() {
-        return orderId;
+        return order != null ? order.getId() : null;
     }
 
     public void setOrderId(String orderId) {
-        this.orderId = orderId;
+        // This method is kept for compatibility but orderId is managed by the relationship
     }
 
     public String getMedicineId() {

@@ -17,8 +17,13 @@ public class Order {
     @Column(name = "patient_id", nullable = false, length = 50)
     private String patientId;
 
+    @Column(name = "patient_name", nullable = false, length = 100)
+    private String patientName;
+
     @Column(name = "order_date")
     private LocalDateTime orderDate;
+
+
 
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
@@ -51,9 +56,10 @@ public class Order {
     public Order() {}
 
     // Constructor with parameters
-    public Order(String id, String patientId, BigDecimal totalAmount, String paymentMethod, String deliveryAddress) {
+    public Order(String id, String patientId, String patientName, BigDecimal totalAmount, String paymentMethod, String deliveryAddress) {
         this.id = id;
         this.patientId = patientId;
+        this.patientName = patientName;
         this.totalAmount = totalAmount;
         this.paymentMethod = paymentMethod;
         this.deliveryAddress = deliveryAddress;
@@ -79,6 +85,14 @@ public class Order {
         this.patientId = patientId;
     }
 
+    public String getPatientName() {
+        return patientName;
+    }
+
+    public void setPatientName(String patientName) {
+        this.patientName = patientName;
+    }
+
     public LocalDateTime getOrderDate() {
         return orderDate;
     }
@@ -86,6 +100,9 @@ public class Order {
     public void setOrderDate(LocalDateTime orderDate) {
         this.orderDate = orderDate;
     }
+
+
+
 
     public BigDecimal getTotalAmount() {
         return totalAmount;

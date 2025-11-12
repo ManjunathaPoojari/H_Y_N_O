@@ -26,6 +26,18 @@ public class OrderService {
             order.setId("ORD" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         }
 
+        // Ensure patient_name is set (required field)
+        if (order.getPatientName() == null || order.getPatientName().isEmpty()) {
+            // If patient_name is not provided, we could fetch it from patient service
+            // For now, set a default or throw an error
+            throw new IllegalArgumentException("Patient name is required for order creation");
+        }
+
+        // Ensure total_amount is set (required field)
+        if (order.getTotalAmount() == null) {
+            throw new IllegalArgumentException("Total amount is required for order creation");
+        }
+
         // Set timestamps
         order.setOrderDate(LocalDateTime.now());
         order.setCreatedAt(LocalDateTime.now());
@@ -38,6 +50,7 @@ public class OrderService {
         if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
             for (OrderItem item : order.getOrderItems()) {
                 item.setOrderId(savedOrder.getId());
+                item.setOrder(savedOrder); // Set the bidirectional relationship
                 // Note: OrderItem is saved via cascade in Order entity
             }
         }

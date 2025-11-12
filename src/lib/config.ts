@@ -4,12 +4,14 @@
 interface Config {
   USE_BACKEND: boolean;
   API_URL: string;
+  STRIPE_PUBLISHABLE_KEY: string;
 }
 
 // Default configuration (works without any .env file)
 const defaultConfig: Config = {
   USE_BACKEND: true,
-  API_URL: 'http://localhost:8082/api',
+  API_URL: 'http://localhost:8081/api',
+  STRIPE_PUBLISHABLE_KEY: 'pk_test_51Qexample...', // Replace with your actual test key
 };
 
 // Load config from window object (set by index.html or build process)
@@ -26,6 +28,7 @@ const loadConfig = (): Config => {
     return {
       USE_BACKEND: windowEnv.REACT_APP_USE_BACKEND === 'true',
       API_URL: windowEnv.REACT_APP_API_URL || defaultConfig.API_URL,
+      STRIPE_PUBLISHABLE_KEY: windowEnv.REACT_APP_STRIPE_PUBLISHABLE_KEY || defaultConfig.STRIPE_PUBLISHABLE_KEY,
     };
   }
 
