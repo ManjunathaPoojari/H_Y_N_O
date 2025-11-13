@@ -48,12 +48,12 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onNavigate }) => {
   const recommendedCalories = calculateBMR(profileData.weight, profileData.height, profileData.age);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 p-6 relative overflow-hidden">
-      {/* Background Image - Nutrition and Wellness Theme */}
+    <div className="min-h-screen p-6 relative overflow-hidden">
+      {/* Background Image - Realistic Nutrition and Wellness Theme */}
       <div
-        className="absolute inset-0 bg-cover bg-center opacity-10"
+        className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80')"
+          backgroundImage: "url('https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80')"
         }}
       ></div>
       <div className="relative z-10 max-w-4xl mx-auto">
@@ -71,55 +71,58 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onNavigate }) => {
 
         {/* Header with Patient Name */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">{user?.name || 'Patient'}</h1>
-          <p className="text-lg text-gray-500">{profileData.age} · Female</p>
+          <h1 className="text-5xl font-extrabold text-black-900 mb-4 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">{user?.name || 'Patient'}</h1>
+          <p className="text-2xl font-bold text-black-700">{profileData.age} years old · Female</p>
         </div>
 
-        {/* Editable Mini Tabs - Now 4 columns: Weight, Height, Age, BMI */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-green-100/60 backdrop-blur-sm rounded-lg p-4 text-center shadow-sm border border-green-200/50">
-            <p className="text-sm text-gray-600 mb-2">Weight</p>
-            {isEditing ? (
-              <input
-                type="number"
-                value={profileData.weight}
-                onChange={(e) => handleInputChange('weight', e.target.value)}
-                className="w-full text-center text-2xl font-semibold text-gray-900 bg-white/80 border rounded px-2 py-1"
-              />
-            ) : (
-              <p className="text-2xl font-semibold text-gray-900">{profileData.weight} kg</p>
-            )}
-          </div>
-          <div className="bg-green-100/60 backdrop-blur-sm rounded-lg p-4 text-center shadow-sm border border-green-200/50">
-            <p className="text-sm text-gray-600 mb-2">Height</p>
-            {isEditing ? (
-              <input
-                type="number"
-                value={profileData.height}
-                onChange={(e) => handleInputChange('height', e.target.value)}
-                className="w-full text-center text-2xl font-semibold text-gray-900 bg-white/80 border rounded px-2 py-1"
-              />
-            ) : (
-              <p className="text-2xl font-semibold text-gray-900">{profileData.height} cm</p>
-            )}
-          </div>
-          <div className="bg-green-100/60 backdrop-blur-sm rounded-lg p-4 text-center shadow-sm border border-green-200/50">
-            <p className="text-sm text-gray-600 mb-2">Age</p>
-            {isEditing ? (
-              <input
-                type="number"
-                value={profileData.age}
-                onChange={(e) => handleInputChange('age', e.target.value)}
-                className="w-full text-center text-2xl font-semibold text-gray-900 bg-white/80 border rounded px-2 py-1"
-              />
-            ) : (
-              <p className="text-2xl font-semibold text-gray-900">{profileData.age}</p>
-            )}
-          </div>
-          <div className="bg-green-100/60 backdrop-blur-sm rounded-lg p-4 text-center shadow-sm border border-green-200/50">
-            <p className="text-sm text-gray-600 mb-2">BMI</p>
-            <p className="text-2xl font-semibold text-gray-900">{bmi}</p>
-            <span className="inline-block mt-1 px-2 py-1 bg-green-200/80 text-green-800 text-xs rounded-full">Healthy</span>
+        {/* Personal Information */}
+        <div className="bg-white/60 backdrop-blur-sm rounded-lg p-6 mb-8 shadow-sm border border-gray-200/50">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Personal Information</h2>
+          <div className="flex justify-between items-center space-x-4">
+            <div className="text-center flex-1">
+              <p className="text-sm text-gray-600 mb-2">Age</p>
+              {isEditing ? (
+                <input
+                  type="number"
+                  value={profileData.age}
+                  onChange={(e) => handleInputChange('age', e.target.value)}
+                  className="w-full text-center text-xl font-semibold text-gray-900 bg-white/80 border rounded px-2 py-1"
+                />
+              ) : (
+                <p className="text-xl font-semibold text-gray-900">{profileData.age}</p>
+              )}
+            </div>
+            <div className="text-center flex-1">
+              <p className="text-sm text-gray-600 mb-2">Height</p>
+              {isEditing ? (
+                <input
+                  type="number"
+                  value={profileData.height}
+                  onChange={(e) => handleInputChange('height', e.target.value)}
+                  className="w-full text-center text-xl font-semibold text-gray-900 bg-white/80 border rounded px-2 py-1"
+                />
+              ) : (
+                <p className="text-xl font-semibold text-gray-900">{profileData.height} cm</p>
+              )}
+            </div>
+            <div className="text-center flex-1">
+              <p className="text-sm text-gray-600 mb-2">Weight</p>
+              {isEditing ? (
+                <input
+                  type="number"
+                  value={profileData.weight}
+                  onChange={(e) => handleInputChange('weight', e.target.value)}
+                  className="w-full text-center text-xl font-semibold text-gray-900 bg-white/80 border rounded px-2 py-1"
+                />
+              ) : (
+                <p className="text-xl font-semibold text-gray-900">{profileData.weight} kg</p>
+              )}
+            </div>
+            <div className="text-center flex-1">
+              <p className="text-sm text-gray-600 mb-2">BMI</p>
+              <p className="text-xl font-semibold text-gray-900">{bmi}</p>
+              <span className="inline-block mt-1 px-2 py-1 bg-green-200/80 text-green-800 text-xs rounded-full">Healthy</span>
+            </div>
           </div>
         </div>
 
@@ -150,7 +153,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onNavigate }) => {
         {submitted ? (
           <div className="space-y-8">
             {/* Recommended Diet Chart */}
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 shadow-sm">
+            <div className="bg-white/60 backdrop-blur-sm rounded-lg p-6 shadow-sm border border-gray-200/50">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Recommended Diet Chart</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[
@@ -316,7 +319,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onNavigate }) => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-lg text-gray-600 mb-4">Please submit your profile information to view your personalized nutrition plan.</p>
+            <p className="text-lg text-white-600 mb-4">Please submit your profile information to view your personalized nutrition plan.</p>
           </div>
         )}
       </div>
