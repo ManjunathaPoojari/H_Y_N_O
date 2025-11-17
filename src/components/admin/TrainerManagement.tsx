@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { Label } from '../ui/label';
 import {
   Table,
   TableBody,
@@ -20,7 +22,7 @@ import {
 } from '../ui/dialog';
 import {
   CheckCircle, XCircle, Eye, Search, User, Star,
-  MapPin, Phone, Mail, Award, Calendar, Dumbbell
+  MapPin, Phone, Mail, Award, Calendar, Dumbbell, Plus
 } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
 import { Trainer } from '../../types';
@@ -29,7 +31,25 @@ export const TrainerManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'approved' | 'pending' | 'rejected'>('all');
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null);
-  const { trainers, approveTrainer, rejectTrainer } = useAppStore();
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newTrainer, setNewTrainer] = useState<Partial<Trainer>>({
+    name: '',
+    email: '',
+    phone: '',
+    trainerType: '',
+    experienceYears: 0,
+    location: '',
+    pricePerSession: 0,
+    bio: '',
+    specialties: [],
+    qualifications: [],
+    languages: [],
+    modes: [],
+    status: 'pending',
+    rating: 0,
+    reviews: 0,
+  });
+  const { trainers, approveTrainer, rejectTrainer, addTrainer } = useAppStore();
 
   const filteredTrainers = trainers.filter(trainer => {
     const matchesSearch = trainer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -103,6 +123,183 @@ export const TrainerManagement = () => {
               />
             </div>
             <div className="flex gap-2">
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Trainer
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add New Trainer</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="name">Name</Label>
+                        <Input
+                          id="name"
+                          value={newTrainer.name}
+                          onChange={(e) => setNewTrainer({...newTrainer, name: e.target.value})}
+                          placeholder="Enter trainer name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={newTrainer.email}
+                          onChange={(e) => setNewTrainer({...newTrainer, email: e.target.value})}
+                          placeholder="Enter email address"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="phone">Phone</Label>
+                        <Input
+                          id="phone"
+                          value={newTrainer.phone}
+                          onChange={(e) => setNewTrainer({...newTrainer, phone: e.target.value})}
+                          placeholder="Enter phone number"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="trainerType">Trainer Type</Label>
+                        <select
+                          id="trainerType"
+                          value={newTrainer.trainerType}
+                          onChange={(e) => setNewTrainer({...newTrainer, trainerType: e.target.value})}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <option value="">Select Trainer Type</option>
+                          <option value="FITNESS">Fitness Trainer</option>
+                          <option value="YOGA">Yoga Instructor</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="experienceYears">Experience (Years)</Label>
+                        <Input
+                          id="experienceYears"
+                          type="number"
+                          value={newTrainer.experienceYears}
+                          onChange={(e) => setNewTrainer({...newTrainer, experienceYears: parseInt(e.target.value) || 0})}
+                          placeholder="Enter years of experience"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="location">Location</Label>
+                        <Input
+                          id="location"
+                          value={newTrainer.location}
+                          onChange={(e) => setNewTrainer({...newTrainer, location: e.target.value})}
+                          placeholder="Enter location"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="pricePerSession">Price per Session (₹)</Label>
+                        <Input
+                          id="pricePerSession"
+                          type="number"
+                          value={newTrainer.pricePerSession}
+                          onChange={(e) => setNewTrainer({...newTrainer, pricePerSession: parseInt(e.target.value) || 0})}
+                          placeholder="Enter price"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="specialties">Specialties (comma-separated)</Label>
+                        <Input
+                          id="specialties"
+                          value={newTrainer.specialties?.join(', ')}
+                          onChange={(e) => setNewTrainer({...newTrainer, specialties: e.target.value.split(',').map(s => s.trim())})}
+                          placeholder="e.g., Strength Training, Yoga, HIIT"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="bio">Bio</Label>
+                      <Textarea
+                        id="bio"
+                        value={newTrainer.bio}
+                        onChange={(e) => setNewTrainer({...newTrainer, bio: e.target.value})}
+                        placeholder="Enter trainer bio"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="qualifications">Qualifications (comma-separated)</Label>
+                        <Input
+                          id="qualifications"
+                          value={newTrainer.qualifications?.join(', ')}
+                          onChange={(e) => setNewTrainer({...newTrainer, qualifications: e.target.value.split(',').map(s => s.trim())})}
+                          placeholder="e.g., NASM-CPT, RYT-500"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="languages">Languages (comma-separated)</Label>
+                        <Input
+                          id="languages"
+                          value={newTrainer.languages?.join(', ')}
+                          onChange={(e) => setNewTrainer({...newTrainer, languages: e.target.value.split(',').map(s => s.trim())})}
+                          placeholder="e.g., English, Spanish"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="modes">Modes (comma-separated)</Label>
+                      <Input
+                        id="modes"
+                        value={newTrainer.modes?.join(', ')}
+                        onChange={(e) => setNewTrainer({...newTrainer, modes: e.target.value.split(',').map(s => s.trim())})}
+                        placeholder="e.g., in-person, virtual"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={() => {
+                        if (newTrainer.name && newTrainer.email && newTrainer.phone && newTrainer.trainerType) {
+                          const trainerToAdd: Trainer = {
+                            id: `T${String(trainers.length + 1).padStart(3, '0')}`,
+                            ...newTrainer,
+                            image: '/api/placeholder/150/150', // Default placeholder image
+                            createdAt: new Date().toISOString(),
+                          } as Trainer;
+                          addTrainer(trainerToAdd);
+                          setIsAddDialogOpen(false);
+                          setNewTrainer({
+                            name: '',
+                            email: '',
+                            phone: '',
+                            trainerType: '',
+                            experienceYears: 0,
+                            location: '',
+                            pricePerSession: 0,
+                            bio: '',
+                            specialties: [],
+                            qualifications: [],
+                            languages: [],
+                            modes: [],
+                            status: 'pending',
+                            rating: 0,
+                            reviews: 0,
+                          });
+                        }
+                      }}>
+                        Add Trainer
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
               {(['all', 'approved', 'pending', 'rejected'] as const).map(status => (
                 <Button
                   key={status}
@@ -142,7 +339,17 @@ export const TrainerManagement = () => {
                 <TableRow key={trainer.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="text-2xl">{trainer.profileImage || '🧘‍♀️'}</div>
+                      {trainer.profileImage && trainer.profileImage !== '/api/placeholder/150/150' ? (
+                        <img
+                          src={trainer.profileImage}
+                          alt={trainer.name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-xl">
+                          🧘‍♀️
+                        </div>
+                      )}
                       <div>
                         <div className="font-medium">{trainer.name}</div>
                         <div className="text-sm text-gray-600">{trainer.email}</div>
@@ -172,7 +379,7 @@ export const TrainerManagement = () => {
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Award className="h-3 w-3 text-gray-400" />
-                      <span className="text-sm">{trainer.experience} years</span>
+                      <span className="text-sm">{trainer.experienceYears} years</span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -211,7 +418,17 @@ export const TrainerManagement = () => {
                             <div className="space-y-6">
                               {/* Profile Header */}
                               <div className="flex items-start gap-4">
-                                <div className="text-6xl">{selectedTrainer.profileImage || '🧘‍♀️'}</div>
+                                {selectedTrainer.profileImage && selectedTrainer.profileImage !== '/api/placeholder/150/150' ? (
+                                  <img
+                                    src={selectedTrainer.profileImage}
+                                    alt={selectedTrainer.name}
+                                    className="w-16 h-16 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-3xl">
+                                    🧘‍♀️
+                                  </div>
+                                )}
                                 <div className="flex-1">
                                   <h3 className="text-xl mb-1">{selectedTrainer.name}</h3>
                                   <div className="flex items-center gap-2 mb-2">
@@ -222,7 +439,7 @@ export const TrainerManagement = () => {
                                   <div className="flex items-center gap-4 text-sm text-gray-600">
                                     <div className="flex items-center gap-1">
                                       <Award className="h-3 w-3" />
-                                      {selectedTrainer.experience} years
+                                      {selectedTrainer.experienceYears} years
                                     </div>
                                     <div className="flex items-center gap-1">
                                       <MapPin className="h-3 w-3" />

@@ -7,6 +7,7 @@ interface AuthContextType {
   login: (email: string, password: string, role: string) => Promise<User | null>;
   logout: () => void;
   register: (userData: any) => Promise<{ success: boolean; error?: string }>;
+  googleLogin: () => Promise<User | null>;
   isAuthenticated: boolean;
 }
 
@@ -62,6 +63,50 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const googleLogin = async (): Promise<User | null> => {
+    try {
+      // Redirect to Google OAuth2 login
+      window.location.href = 'http://localhost:8081/oauth2/authorization/google';
+      return null; // This will redirect, so we don't return anything
+    } catch (err) {
+      console.error('Google login failed:', err);
+      return null;
+    }
+  };
+
+  // Handle OAuth2 redirect
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const userId = urlParams.get('user');
+    const role = urlParams.get('role');
+
+    if (token && userId && role) {
+      // Clear URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Set user data from OAuth2 redirect
+      const oauthUser = {
+        id: userId,
+        email: '', // Will be fetched from backend if needed
+        name: '', // Will be fetched from backend if needed
+        role: role as 'patient' | 'doctor' | 'hospital' | 'admin' | 'trainer'
+      };
+
+      setUser(oauthUser);
+      localStorage.setItem('user', JSON.stringify(oauthUser));
+      localStorage.setItem('token', token);
+
+      // Redirect to appropriate dashboard
+      const path = role === 'admin' ? '/admin-dashboard' :
+                   role === 'doctor' ? '/doctor-dashboard' :
+                   role === 'hospital' ? '/hospital-dashboard' :
+                   role === 'trainer' ? '/trainer-dashboard' : '/patient/dashboard';
+
+      window.location.href = path;
+    }
+  }, []);
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
@@ -69,7 +114,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, logout, register, googleLogin, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

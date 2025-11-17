@@ -49,6 +49,7 @@ public class Patient {
     private String password;
     private boolean isVerified = false;
     private String notes;
+    private String googleId;
 
     @Column(name = "hospital_id")
     private String hospitalId;

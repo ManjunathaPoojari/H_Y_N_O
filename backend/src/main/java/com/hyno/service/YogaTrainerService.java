@@ -30,7 +30,7 @@ public class YogaTrainerService {
         }
     }
 
-    public Optional<YogaTrainer> getTrainerById(Long id) {
+    public Optional<YogaTrainer> getTrainerById(String id) {
         logger.info("Fetching yoga trainer by ID: {}", id);
         try {
             Optional<YogaTrainer> trainer = yogaTrainerRepository.findById(id);
@@ -142,7 +142,7 @@ public class YogaTrainerService {
         }
     }
 
-    public YogaTrainer updateTrainer(Long id, YogaTrainer trainerDetails) {
+    public YogaTrainer updateTrainer(String id, YogaTrainer trainerDetails) {
         logger.info("Updating yoga trainer: {}", id);
         try {
             Optional<YogaTrainer> optionalTrainer = yogaTrainerRepository.findById(id);
@@ -174,7 +174,7 @@ public class YogaTrainerService {
         }
     }
 
-    public void deleteTrainer(Long id) {
+    public void deleteTrainer(String id) {
         logger.info("Deleting yoga trainer: {}", id);
         try {
             yogaTrainerRepository.deleteById(id);

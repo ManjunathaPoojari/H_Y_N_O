@@ -65,7 +65,7 @@ public class YogaSessionService {
         }
     }
 
-    public List<YogaSession> getSessionsByTrainer(Long trainerId) {
+    public List<YogaSession> getSessionsByTrainer(String trainerId) {
         logger.info("Fetching yoga sessions for trainer: {}", trainerId);
         try {
             List<YogaSession> sessions = yogaSessionRepository.findByTrainer_Id(trainerId);
@@ -101,7 +101,7 @@ public class YogaSessionService {
         }
     }
 
-    public List<YogaSession> getUpcomingSessionsByTrainer(Long trainerId) {
+    public List<YogaSession> getUpcomingSessionsByTrainer(String trainerId) {
         logger.info("Fetching upcoming yoga sessions for trainer: {}", trainerId);
         try {
             List<YogaSession> sessions = yogaSessionRepository.findUpcomingByTrainerId(trainerId, LocalDate.now());

@@ -18,7 +18,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -161,7 +161,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
             {/* Google Sign-in */}
             <Button
               type="button"
-              onClick={() => toast.info('Google sign-in coming soon!')}
+              onClick={async () => {
+                try {
+                  await googleLogin();
+                } catch (err) {
+                  toast.error('Google sign-in failed. Please try again.');
+                }
+              }}
               className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 hover:scale-105 text-black font-semibold transition-all duration-200 -mt-2"
             >
               <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" className="w-5 h-5" />

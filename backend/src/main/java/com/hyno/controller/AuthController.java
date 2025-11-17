@@ -587,4 +587,14 @@ public class AuthController {
             return ResponseEntity.internalServerError().body(Map.of("message", "Failed to verify email"));
         }
     }
+
+    @GetMapping("/oauth2/success")
+    public ResponseEntity<?> oauth2Success() {
+        return ResponseEntity.ok(Map.of("message", "OAuth2 login successful"));
+    }
+
+    @GetMapping("/oauth2/failure")
+    public ResponseEntity<?> oauth2Failure() {
+        return ResponseEntity.badRequest().body(Map.of("message", "OAuth2 login failed"));
+    }
 }

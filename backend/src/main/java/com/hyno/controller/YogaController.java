@@ -42,7 +42,7 @@ public class YogaController {
     }
 
     @GetMapping("/trainers/{id}")
-    public ResponseEntity<YogaTrainer> getTrainerById(@PathVariable Long id) {
+    public ResponseEntity<YogaTrainer> getTrainerById(@PathVariable String id) {
         logger.info("Fetching yoga trainer by ID: {}", id);
         Optional<YogaTrainer> trainer = yogaTrainerService.getTrainerById(id);
         return trainer.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -97,14 +97,14 @@ public class YogaController {
     }
 
     @PutMapping("/trainers/{id}")
-    public ResponseEntity<YogaTrainer> updateTrainer(@PathVariable Long id, @RequestBody YogaTrainer trainerDetails) {
+    public ResponseEntity<YogaTrainer> updateTrainer(@PathVariable String id, @RequestBody YogaTrainer trainerDetails) {
         logger.info("Updating yoga trainer: {}", id);
         YogaTrainer updatedTrainer = yogaTrainerService.updateTrainer(id, trainerDetails);
         return updatedTrainer != null ? ResponseEntity.ok(updatedTrainer) : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/trainers/{id}")
-    public ResponseEntity<Void> deleteTrainer(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTrainer(@PathVariable String id) {
         logger.info("Deleting yoga trainer: {}", id);
         yogaTrainerService.deleteTrainer(id);
         return ResponseEntity.ok().build();
@@ -214,7 +214,7 @@ public class YogaController {
     }
 
     @GetMapping("/sessions/trainer/{trainerId}")
-    public List<YogaSession> getSessionsByTrainer(@PathVariable Long trainerId) {
+    public List<YogaSession> getSessionsByTrainer(@PathVariable String trainerId) {
         logger.info("Fetching yoga sessions for trainer: {}", trainerId);
         return yogaSessionService.getSessionsByTrainer(trainerId);
     }
@@ -232,7 +232,7 @@ public class YogaController {
     }
 
     @GetMapping("/sessions/upcoming/trainer/{trainerId}")
-    public List<YogaSession> getUpcomingSessionsByTrainer(@PathVariable Long trainerId) {
+    public List<YogaSession> getUpcomingSessionsByTrainer(@PathVariable String trainerId) {
         logger.info("Fetching upcoming yoga sessions for trainer: {}", trainerId);
         return yogaSessionService.getUpcomingSessionsByTrainer(trainerId);
     }
@@ -253,7 +253,7 @@ public class YogaController {
             // Set trainer
             if (request.get("trainerId") != null) {
                 com.hyno.entity.YogaTrainer trainer = new com.hyno.entity.YogaTrainer();
-                trainer.setId(Long.valueOf(request.get("trainerId").toString()));
+                trainer.setId(request.get("trainerId").toString());
                 session.setTrainer(trainer);
             }
 

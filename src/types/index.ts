@@ -138,7 +138,7 @@ export interface Trainer {
   qualifications: string[];
   languages: string[];
   modes: string[];
-  status: 'approved' | 'pending' | 'rejected';
+  status: 'approved' | 'pending' | 'rejected' | 'suspended';
   rating: number;
   reviews: number;
   profileImage?: string;

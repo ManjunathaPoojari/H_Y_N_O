@@ -43,6 +43,8 @@ import { AdminEmergency } from './components/admin/AdminEmergency';
 import { HospitalManagement } from './components/admin/HospitalManagement';
 import { DoctorManagement } from './components/admin/DoctorManagement';
 import { AdminPharmacy } from './components/admin/AdminPharmacy';
+import { TrainerManagement } from './components/admin/TrainerManagement';
+import { AdminProfile } from './components/admin/AdminProfile';
 import { TrainerDashboard } from './components/trainer/TrainerDashboard';
 import { ConfigStatus } from './components/ConfigStatus';
 import { AboutUs } from './components/AboutUs';
@@ -142,6 +144,43 @@ function AppContent() {
       return <LandingPage onNavigate={navigate} />;
     }
 
+    // Profile route for all authenticated users
+    if (currentPath === '/my-profile') {
+      if (user?.role === 'patient') {
+        return (
+          <DashboardLayout role="patient" onNavigate={navigate} currentPath={currentPath}>
+            <PatientProfile />
+          </DashboardLayout>
+        );
+      }
+      if (user?.role === 'doctor') {
+        return (
+          <DashboardLayout role="doctor" onNavigate={navigate} currentPath={currentPath}>
+            <DoctorProfile />
+          </DashboardLayout>
+        );
+      }
+      if (user?.role === 'hospital') {
+        return (
+          <DashboardLayout role="hospital" onNavigate={navigate} currentPath={currentPath}>
+            <HospitalProfile />
+          </DashboardLayout>
+        );
+      }
+      if (user?.role === 'admin') {
+        return (
+          <DashboardLayout role="admin" onNavigate={navigate} currentPath={currentPath}>
+            <AdminProfile />
+          </DashboardLayout>
+        );
+      }
+      // For trainer, redirect to their respective dashboards or create profile components
+      if (user?.role === 'trainer') {
+        navigate('/trainer-dashboard');
+        return null;
+      }
+    }
+
     // Patient routes
     if (user?.role === 'patient') {
       return (
@@ -208,7 +247,6 @@ function AppContent() {
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
           {currentPath === '/patient/yoga' && <YogaFitness onNavigate={navigate} />}
-          {currentPath === '/my-profile' && <PatientProfile />}
         </DashboardLayout>
       );
     }
@@ -280,6 +318,7 @@ function AppContent() {
           {currentPath === '/admin/pharmacy' && <AdminPharmacy />}
           {currentPath === '/admin/emergency' && <AdminEmergency />}
           {currentPath === '/admin/reports' && <AdminReports />}
+          {currentPath === '/admin/trainers' && <TrainerManagement />}
           {currentPath === '/admin/settings' && <AdminSettings />}
         </DashboardLayout>
       );

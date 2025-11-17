@@ -70,6 +70,7 @@ interface AppStoreContextType {
   deleteTrainer: (id: string) => void;
   approveTrainer: (trainerId: string) => void;
   rejectTrainer: (trainerId: string) => void;
+  suspendTrainer: (id: string) => void;
 }
 
 const AppStoreContext = createContext<AppStoreContextType | undefined>(undefined);
@@ -830,6 +831,21 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
+  const suspendTrainer = async (id: string) => {
+    if (USE_BACKEND) {
+      try {
+        await api.trainers.suspend(id);
+        setTrainers(trainers.map(t => t.id === id ? { ...t, status: 'suspended' } : t));
+        toast.success('Trainer suspended');
+      } catch (error) {
+        toast.error('Failed to suspend trainer');
+      }
+    } else {
+      setTrainers(trainers.map(t => t.id === id ? { ...t, status: 'suspended' } : t));
+      toast.success('Trainer suspended');
+    }
+  };
+
   const value: AppStoreContextType = {
     patients,
     doctors,
@@ -874,6 +890,7 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     deleteTrainer,
     approveTrainer,
     rejectTrainer,
+    suspendTrainer,
   };
 
   return (

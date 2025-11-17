@@ -1,10 +1,10 @@
-import { ReactNode, useState } from 'react';
+  import { ReactNode, useState } from 'react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import {
-  Activity, Bell, Search, LogOut,
+  Activity, Bell, Search, LogOut, Menu, Settings,
   LayoutDashboard, Users, Calendar, MessageSquare, Video,
-  FileText, Settings, Building2, UserCog, AlertCircle,
+  FileText, Building2, UserCog, AlertCircle,
   Pill, User, Hospital, Stethoscope, Apple, Dumbbell
 } from 'lucide-react';
 import { Input } from './ui/input';
@@ -91,7 +91,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: Pill, label: 'Pharmacy', path: '/admin/pharmacy' },
           { icon: AlertCircle, label: 'Emergency', path: '/admin/emergency' },
           { icon: FileText, label: 'Reports', path: '/admin/reports' },
-          { icon: Settings, label: 'Settings', path: '/admin/settings' },
         ];
 
       case 'trainer':
@@ -137,27 +136,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </div>
         </nav>
 
-        {/* Logout Button at Bottom */}
-        <div className="absolute bottom-0 w-64 p-4 border-t bg-white">
-          <div className="flex items-center gap-3 mb-4">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback>{user?.name.charAt(0) || 'U'}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-medium">{user?.name}</p>
-              <p className="text-xs text-gray-500 capitalize">{role}</p>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
-        </div>
+
       </aside>
 
       {/* Main Content */}
@@ -166,6 +145,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <header className="bg-white border-b sticky top-0 z-40">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-4">
+              {role === 'admin' && (
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold text-gray-900">Welcome, {user?.name}</span>
+                  <span className="text-sm text-gray-500 capitalize">({role})</span>
+                </div>
+              )}
               {role === 'patient' && (
                 <Button variant="outline" size="sm" className="hidden md:flex">
                   <AlertCircle className="h-4 w-4 mr-2 text-red-500" />
@@ -256,15 +241,37 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>{user?.name.charAt(0) || 'U'}</AvatarFallback>
-                </Avatar>
-                <div className="hidden md:block">
-                  <p className="text-sm">{user?.name}</p>
-                  <p className="text-xs text-gray-500 capitalize">{role}</p>
-                </div>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="User Menu">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <div className="p-2 border-b">
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('/my-profile')}>
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback className="text-xs">{user?.name.charAt(0) || 'U'}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">{user?.name}</p>
+                        <p className="text-xs text-gray-500 capitalize">{role}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <DropdownMenuItem onClick={() => onNavigate('/admin/settings')}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>

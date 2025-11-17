@@ -86,5 +86,6 @@ C:\Users\admin\Documents\GitHub\H_Y_N_O\backend\src\main\java\com\hyno\repositor
 C:\Users\admin\Documents\GitHub\H_Y_N_O\backend\src\main\java\com\hyno\controller\DoctorPatientsController.java
 C:\Users\admin\Documents\GitHub\H_Y_N_O\backend\src\main\java\com\hyno\service\PatientService.java
 C:\Users\admin\Documents\GitHub\H_Y_N_O\backend\src\main\java\com\hyno\service\VideoCallService.java
+C:\Users\admin\Documents\GitHub\H_Y_N_O\backend\src\main\java\com\hyno\config\OAuth2SuccessHandler.java
 C:\Users\admin\Documents\GitHub\H_Y_N_O\backend\src\main\java\com\hyno\repository\PatientRepository.java
 C:\Users\admin\Documents\GitHub\H_Y_N_O\backend\src\main\java\com\hyno\service\DoctorService.java

@@ -97,6 +97,7 @@ com\hyno\controller\HospitalController.class
 com\hyno\entity\Feedback$FeedbackType.class
 com\hyno\entity\Schedule$AppointmentType.class
 com\hyno\repository\YogaVideoRepository.class
+com\hyno\config\OAuth2SuccessHandler.class
 com\hyno\entity\Admin.class
 com\hyno\controller\AuthController.class
 com\hyno\service\VideoCallService.class

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface YogaTrainerRepository extends JpaRepository<YogaTrainer, Long> {
+public interface YogaTrainerRepository extends JpaRepository<YogaTrainer, String> {
 
     List<YogaTrainer> findByAvailability(YogaTrainer.AvailabilityStatus availability);
 
