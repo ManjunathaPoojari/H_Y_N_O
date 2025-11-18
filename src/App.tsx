@@ -32,6 +32,7 @@ import { HospitalProfile } from './components/hospital/HospitalProfile';
 import { HospitalDoctors } from './components/hospital/HospitalDoctors';
 import { HospitalAppointments } from './components/hospital/HospitalAppointments';
 import { HospitalPatients } from './components/hospital/HospitalPatients';
+import { HospitalPatientDetails } from './components/hospital/HospitalPatientDetails';
 import { HospitalReports } from './components/hospital/HospitalReports';
 import { HospitalEmergency } from './components/hospital/HospitalEmergency';
 import { AdminDashboard } from './components/admin/AdminDashboard';
@@ -252,6 +253,12 @@ function AppContent() {
           {currentPath === '/hospital/doctors' && <HospitalDoctors />}
           {currentPath === '/hospital/appointments' && <HospitalAppointments />}
           {currentPath === '/hospital/patients' && <HospitalPatients />}
+          {currentPath.startsWith('/hospital/patient/') && (
+            <HospitalPatientDetails
+              patientId={currentPath.split('/hospital/patient/')[1]}
+              onNavigate={navigate}
+            />
+          )}
           {currentPath === '/hospital/emergency' && <HospitalEmergency />}
           {currentPath === '/hospital/reports' && <HospitalReports />}
           {currentPath === '/hospital/profile' && <HospitalProfile />}

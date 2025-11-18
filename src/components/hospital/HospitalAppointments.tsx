@@ -29,9 +29,10 @@ export const HospitalAppointments = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | undefined) => {
+    if (!status) return 'bg-gray-100 text-gray-800 border-gray-200';
     switch (status) {
-      case 'upcoming': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'booked': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'completed': return 'bg-green-100 text-green-800 border-green-200';
       case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
       case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -41,8 +42,8 @@ export const HospitalAppointments = () => {
 
   const handleApproveAppointment = async (appointmentId: string) => {
     try {
-      await appointmentAPI.update(appointmentId, { status: 'upcoming' });
-      updateAppointment(appointmentId, { status: 'upcoming' });
+      await appointmentAPI.update(appointmentId, { status: 'booked' });
+      updateAppointment(appointmentId, { status: 'booked' });
       toast.success('Appointment approved successfully!');
     } catch (error) {
       toast.error('Failed to approve appointment. Please try again.');
@@ -81,7 +82,7 @@ export const HospitalAppointments = () => {
     return doctor ? doctor.name : 'Unknown Doctor';
   };
 
-  const upcomingAppointments = hospitalAppointments.filter(a => a.status === 'upcoming');
+  const upcomingAppointments = hospitalAppointments.filter(a => a.status === 'booked');
   const pendingAppointments = hospitalAppointments.filter(a => a.status === 'pending');
   const completedAppointments = hospitalAppointments.filter(a => a.status === 'completed');
   const cancelledAppointments = hospitalAppointments.filter(a => a.status === 'cancelled');
@@ -155,7 +156,7 @@ export const HospitalAppointments = () => {
                       <div className="flex items-center gap-2 mb-2">
                         <h4 className="font-medium">{appointment.patientName}</h4>
                         <Badge className={getStatusColor(appointment.status)}>
-                          {appointment.status}
+                          {appointment.status || 'Unknown'}
                         </Badge>
                         <div className="flex items-center gap-1 text-sm text-gray-600">
                           {getAppointmentTypeIcon(appointment.type)}
@@ -166,7 +167,7 @@ export const HospitalAppointments = () => {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-3">
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4" />
-                          <span>Dr. {getDoctorName(appointment.doctorId)}</span>
+                          <span>Dr. {getDoctorName(appointment.doctorId || '')}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
@@ -214,7 +215,7 @@ export const HospitalAppointments = () => {
                         </>
                       )}
 
-                      {appointment.status === 'upcoming' && (
+                      {appointment.status === 'booked' && (
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button

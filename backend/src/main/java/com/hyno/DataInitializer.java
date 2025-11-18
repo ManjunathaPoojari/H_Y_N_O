@@ -16,6 +16,9 @@ import com.hyno.repository.AppointmentRepository;
 import com.hyno.repository.ChatRoomRepository;
 import com.hyno.repository.ChatMessageRepository;
 import com.hyno.repository.MedicineRepository;
+import com.hyno.repository.HospitalDoctorRepository;
+import com.hyno.entity.HospitalDoctor;
+import com.hyno.entity.HospitalDoctorId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -53,6 +56,9 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired
     private MedicineRepository medicineRepository;
+
+    @Autowired
+    private HospitalDoctorRepository hospitalDoctorRepository;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -120,7 +126,7 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // Create sample hospitals
-        if (hospitalRepository.findByEmail("hospital@example.com") == null) {
+        if (hospitalRepository.findById("hospital-1").isEmpty()) {
             Hospital hospital = new Hospital();
             hospital.setId("hospital-1");
             hospital.setName("City General Hospital");
@@ -138,7 +144,35 @@ public class DataInitializer implements CommandLineRunner {
             hospitalRepository.save(hospital);
         }
 
-        if (hospitalRepository.findByEmail("hospital2@example.com") == null) {
+        // Create test hospital matching API response
+        if (hospitalRepository.findByEmail("test@example.com") == null) {
+            Hospital testHospital = new Hospital();
+            testHospital.setId("hospital-test");
+            testHospital.setName("Test Hospital");
+            testHospital.setEmail("test@example.com");
+            testHospital.setPhone("1234567890");
+            testHospital.setPassword(passwordEncoder.encode("password123"));
+            testHospital.setAddress("Test Address");
+            testHospital.setStatus("approved");
+            testHospital.setVerified(false);
+            hospitalRepository.save(testHospital);
+        }
+
+        // Create Keerthi hospital for login testing
+        if (hospitalRepository.findByEmail("keerthi@example.com") == null) {
+            Hospital keerthiHospital = new Hospital();
+            keerthiHospital.setId("hospital-keerthi");
+            keerthiHospital.setName("Keerthi Hospital");
+            keerthiHospital.setEmail("keerthi@example.com");
+            keerthiHospital.setPhone("9876543210");
+            keerthiHospital.setPassword(passwordEncoder.encode("Keerthi@028"));
+            keerthiHospital.setAddress("Keerthi Hospital Address");
+            keerthiHospital.setStatus("approved");
+            keerthiHospital.setVerified(false);
+            hospitalRepository.save(keerthiHospital);
+        }
+
+        if (hospitalRepository.findById("hospital-2").isEmpty()) {
             Hospital hospital2 = new Hospital();
             hospital2.setId("hospital-2");
             hospital2.setName("Metro Health Center");
@@ -156,7 +190,7 @@ public class DataInitializer implements CommandLineRunner {
             hospitalRepository.save(hospital2);
         }
 
-        if (hospitalRepository.findByEmail("hospital3@example.com") == null) {
+        if (hospitalRepository.findById("hospital-3").isEmpty()) {
             Hospital hospital3 = new Hospital();
             hospital3.setId("hospital-3");
             hospital3.setName("Regional Medical Center");
@@ -189,7 +223,7 @@ public class DataInitializer implements CommandLineRunner {
             doctor.setAvailable(true);
             doctor.setConsultationFee(BigDecimal.valueOf(500.0));
             doctor.setStatus("approved");
-            doctor.setHospital(hospitalRepository.findById("hospital-1").orElse(null));
+            doctor.setHospitalId("hospital-1");
             doctorRepository.save(doctor);
         }
 
@@ -207,7 +241,7 @@ public class DataInitializer implements CommandLineRunner {
             doctor2.setAvailable(true);
             doctor2.setConsultationFee(BigDecimal.valueOf(800.0));
             doctor2.setStatus("approved");
-            doctor2.setHospital(hospitalRepository.findById("hospital-2").orElse(null));
+            doctor2.setHospitalId("hospital-2");
             doctorRepository.save(doctor2);
         }
 
@@ -225,7 +259,7 @@ public class DataInitializer implements CommandLineRunner {
             doctor3.setAvailable(true);
             doctor3.setConsultationFee(BigDecimal.valueOf(600.0));
             doctor3.setStatus("approved");
-            doctor3.setHospital(hospitalRepository.findById("hospital-3").orElse(null));
+            doctor3.setHospitalId("hospital-3");
             doctorRepository.save(doctor3);
         }
 
@@ -243,7 +277,7 @@ public class DataInitializer implements CommandLineRunner {
             doctor4.setAvailable(true);
             doctor4.setConsultationFee(BigDecimal.valueOf(700.0));
             doctor4.setStatus("approved");
-            doctor4.setHospital(hospitalRepository.findById("hospital-1").orElse(null));
+            doctor4.setHospitalId("hospital-1");
             doctor4.setAvatarUrl("https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=150&h=150&fit=crop&crop=face");
             doctorRepository.save(doctor4);
         }
@@ -262,10 +296,13 @@ public class DataInitializer implements CommandLineRunner {
             doctor5.setAvailable(true);
             doctor5.setConsultationFee(BigDecimal.valueOf(650.0));
             doctor5.setStatus("approved");
-            doctor5.setHospital(hospitalRepository.findById("hospital-2").orElse(null));
+            doctor5.setHospitalId("hospital-2");
             doctor5.setAvatarUrl("https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150&h=150&fit=crop&crop=face");
             doctorRepository.save(doctor5);
         }
+
+        // Create HospitalDoctor associations
+        createHospitalDoctorAssociations();
 
         // Remove any admin from patients table (legacy cleanup)
         Optional<Patient> existingAdminPatient = patientRepository.findByEmail("admin@example.com");
@@ -274,27 +311,20 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // Create sample admin in proper admins table
+        // First, delete any existing admin to ensure clean state
         Optional<Admin> existingAdmin = adminRepository.findByEmail("admin@example.com");
-        if (existingAdmin.isEmpty()) {
-            Admin admin = new Admin();
-            admin.setId("admin-1");
-            admin.setName("Admin User");
-            admin.setEmail("admin@example.com");
-            admin.setPhone("5555555555");
-            admin.setPassword(passwordEncoder.encode("password123"));
-            admin.setRole(Admin.AdminRole.SUPER_ADMIN);
-            adminRepository.save(admin);
-        } else {
-            // Update existing admin password if it's not properly hashed
-            Admin admin = existingAdmin.get();
-            String currentPassword = admin.getPassword();
-            if (currentPassword != null && !currentPassword.startsWith("$2a$") && !currentPassword.startsWith("$2b$") && !currentPassword.startsWith("$2y$")) {
-                // Password is not BCrypt hashed, update it
-                admin.setPassword(passwordEncoder.encode("password123"));
-                adminRepository.save(admin);
-                System.out.println("Updated admin password to BCrypt hash");
-            }
+        if (existingAdmin.isPresent()) {
+            adminRepository.delete(existingAdmin.get());
         }
+
+        Admin admin = new Admin();
+        admin.setId("admin-1");
+        admin.setName("Admin User");
+        admin.setEmail("admin@example.com");
+        admin.setPhone("5555555555");
+        admin.setRole(Admin.AdminRole.SUPER_ADMIN);
+        admin.setPassword("password123"); // Plain text for admin login
+        adminRepository.save(admin);
 
         // Create sample appointments and chat rooms
         if (appointmentRepository.findByPatient_Id("1").isEmpty()) {
@@ -518,6 +548,93 @@ public class DataInitializer implements CommandLineRunner {
             medicine5.setPrescriptionRequired("NO");
             medicine5.setStatus("ACTIVE");
             medicineRepository.save(medicine5);
+        }
+    }
+
+    private void createHospitalDoctorAssociations() {
+        // Association for doctor1 with hospital-1
+        if (hospitalDoctorRepository.findById(new HospitalDoctorId("hospital-1", "1")).isEmpty()) {
+            Optional<Hospital> hOpt1 = hospitalRepository.findById("hospital-1");
+            Optional<Doctor> dOpt1 = doctorRepository.findById("1");
+            if (hOpt1.isPresent() && dOpt1.isPresent()) {
+                HospitalDoctor hd1 = new HospitalDoctor();
+                HospitalDoctorId id1 = new HospitalDoctorId("hospital-1", "1");
+                hd1.setId(id1);
+                hd1.setHospital(hOpt1.get());
+                hd1.setDoctor(dOpt1.get());
+                hd1.setStatus("approved");
+                hd1.setJoinedAt(LocalDateTime.now());
+                hd1.setCreatedAt(LocalDateTime.now());
+                hospitalDoctorRepository.save(hd1);
+            }
+        }
+
+        // Association for doctor2 with hospital-2
+        if (hospitalDoctorRepository.findById(new HospitalDoctorId("hospital-2", "doctor-2")).isEmpty()) {
+            Optional<Hospital> hOpt2 = hospitalRepository.findById("hospital-2");
+            Optional<Doctor> dOpt2 = doctorRepository.findById("doctor-2");
+            if (hOpt2.isPresent() && dOpt2.isPresent()) {
+                HospitalDoctor hd2 = new HospitalDoctor();
+                HospitalDoctorId id2 = new HospitalDoctorId("hospital-2", "doctor-2");
+                hd2.setId(id2);
+                hd2.setHospital(hOpt2.get());
+                hd2.setDoctor(dOpt2.get());
+                hd2.setStatus("approved");
+                hd2.setJoinedAt(LocalDateTime.now());
+                hd2.setCreatedAt(LocalDateTime.now());
+                hospitalDoctorRepository.save(hd2);
+            }
+        }
+
+        // Association for doctor3 with hospital-3
+        if (hospitalDoctorRepository.findById(new HospitalDoctorId("hospital-3", "doctor-3")).isEmpty()) {
+            Optional<Hospital> hOpt3 = hospitalRepository.findById("hospital-3");
+            Optional<Doctor> dOpt3 = doctorRepository.findById("doctor-3");
+            if (hOpt3.isPresent() && dOpt3.isPresent()) {
+                HospitalDoctor hd3 = new HospitalDoctor();
+                HospitalDoctorId id3 = new HospitalDoctorId("hospital-3", "doctor-3");
+                hd3.setId(id3);
+                hd3.setHospital(hOpt3.get());
+                hd3.setDoctor(dOpt3.get());
+                hd3.setStatus("approved");
+                hd3.setJoinedAt(LocalDateTime.now());
+                hd3.setCreatedAt(LocalDateTime.now());
+                hospitalDoctorRepository.save(hd3);
+            }
+        }
+
+        // Association for doctor4 with hospital-1
+        if (hospitalDoctorRepository.findById(new HospitalDoctorId("hospital-1", "doctor-4")).isEmpty()) {
+            Optional<Hospital> hOpt4 = hospitalRepository.findById("hospital-1");
+            Optional<Doctor> dOpt4 = doctorRepository.findById("doctor-4");
+            if (hOpt4.isPresent() && dOpt4.isPresent()) {
+                HospitalDoctor hd4 = new HospitalDoctor();
+                HospitalDoctorId id4 = new HospitalDoctorId("hospital-1", "doctor-4");
+                hd4.setId(id4);
+                hd4.setHospital(hOpt4.get());
+                hd4.setDoctor(dOpt4.get());
+                hd4.setStatus("approved");
+                hd4.setJoinedAt(LocalDateTime.now());
+                hd4.setCreatedAt(LocalDateTime.now());
+                hospitalDoctorRepository.save(hd4);
+            }
+        }
+
+        // Association for doctor5 with hospital-2
+        if (hospitalDoctorRepository.findById(new HospitalDoctorId("hospital-2", "doctor-5")).isEmpty()) {
+            Optional<Hospital> hOpt5 = hospitalRepository.findById("hospital-2");
+            Optional<Doctor> dOpt5 = doctorRepository.findById("doctor-5");
+            if (hOpt5.isPresent() && dOpt5.isPresent()) {
+                HospitalDoctor hd5 = new HospitalDoctor();
+                HospitalDoctorId id5 = new HospitalDoctorId("hospital-2", "doctor-5");
+                hd5.setId(id5);
+                hd5.setHospital(hOpt5.get());
+                hd5.setDoctor(dOpt5.get());
+                hd5.setStatus("approved");
+                hd5.setJoinedAt(LocalDateTime.now());
+                hd5.setCreatedAt(LocalDateTime.now());
+                hospitalDoctorRepository.save(hd5);
+            }
         }
     }
 }

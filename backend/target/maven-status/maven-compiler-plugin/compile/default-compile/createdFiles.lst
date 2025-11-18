@@ -9,9 +9,11 @@ com\hyno\entity\Appointment$VideoCallStatus.class
 com\hyno\entity\Doctor.class
 com\hyno\controller\AppointmentCreateDTO.class
 com\hyno\entity\ChatRoom.class
+com\hyno\entity\HospitalDoctor.class
 com\hyno\service\YogaTrainerService.class
 com\hyno\entity\YogaVideo.class
 com\hyno\repository\PatientRepository.class
+com\hyno\service\HospitalDoctorService.class
 com\hyno\repository\AdminRepository.class
 com\hyno\service\ScheduleService.class
 com\hyno\controller\WebSocketChatController$ReadNotification.class
@@ -70,6 +72,7 @@ com\hyno\service\DoctorService.class
 com\hyno\service\PrescriptionService.class
 com\hyno\controller\WebSocketVideoCallController$WebRTCAnswer.class
 com\hyno\controller\FeedbackController.class
+com\hyno\entity\HospitalDoctorId.class
 com\hyno\service\OrderService.class
 com\hyno\entity\Order$OrderItem.class
 com\hyno\controller\MedicineController.class
@@ -102,6 +105,7 @@ com\hyno\controller\AuthController.class
 com\hyno\service\VideoCallService.class
 com\hyno\entity\YogaSession.class
 com\hyno\entity\Prescription.class
+com\hyno\repository\HospitalDoctorRepository.class
 com\hyno\config\GlobalExceptionHandler.class
 com\hyno\controller\WebSocketChatController$ChatMessageRequest.class
 com\hyno\controller\WebSocketChatController$WebSocketMessageResponse.class

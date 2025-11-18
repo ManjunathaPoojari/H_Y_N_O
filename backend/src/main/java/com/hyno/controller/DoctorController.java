@@ -2,6 +2,7 @@ package com.hyno.controller;
 
 import com.hyno.entity.Doctor;
 import com.hyno.service.DoctorService;
+import com.hyno.service.HospitalDoctorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,9 +26,17 @@ public class DoctorController {
     @Autowired
     private DoctorService doctorService;
 
+    @Autowired
+    private HospitalDoctorService hospitalDoctorService;
+
     @GetMapping
-    public List<Doctor> getAllDoctors() {
-        return doctorService.getAllDoctors();
+    public ResponseEntity<List<Doctor>> getAllDoctors() {
+        try {
+            List<Doctor> doctors = doctorService.getAllDoctors();
+            return ResponseEntity.ok(doctors);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @GetMapping("/{id}")

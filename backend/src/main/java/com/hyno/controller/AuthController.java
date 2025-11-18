@@ -114,19 +114,27 @@ public class AuthController {
 
             // Check for admin first using proper Admin entity
             Optional<Admin> admin = adminService.findByEmail(normalizedEmail);
-            if (admin.isPresent() && passwordEncoder.matches(password, admin.get().getPassword())) {
-                logger.info("Admin login successful for: {}", email);
-                // Reset login attempts on successful login
-                loginAttempts.remove(email);
-                lastLoginAttempt.remove(email);
-                userData.put("id", admin.get().getId());
-                userData.put("name", admin.get().getName());
-                userData.put("email", admin.get().getEmail());
-                userData.put("role", "admin");
-                token = jwtService.generateToken(admin.get().getId(), email, "admin");
-                response.put("user", userData);
-                response.put("token", token);
-                return ResponseEntity.ok(response);
+            if (admin.isPresent()) {
+                String storedPassword = admin.get().getPassword();
+                logger.info("Admin login attempt for email: {}", email);
+                logger.info("Stored password: {}", storedPassword);
+                logger.info("Input password equals stored: {}", password.equals(storedPassword));
+                logger.info("Input password matches hash: {}", passwordEncoder.matches(password, storedPassword));
+                // Support both plain text (legacy) and hashed passwords
+                if (password.equals(storedPassword) || passwordEncoder.matches(password, storedPassword)) {
+                    logger.info("Admin login successful for: {}", email);
+                    // Reset login attempts on successful login
+                    loginAttempts.remove(email);
+                    lastLoginAttempt.remove(email);
+                    userData.put("id", admin.get().getId());
+                    userData.put("name", admin.get().getName());
+                    userData.put("email", admin.get().getEmail());
+                    userData.put("role", "admin");
+                    token = jwtService.generateToken(admin.get().getId(), email, "admin");
+                    response.put("user", userData);
+                    response.put("token", token);
+                    return ResponseEntity.ok(response);
+                }
             }
 
             // Check patients (excluding admin)
@@ -169,19 +177,27 @@ public class AuthController {
 
             // Check hospitals
             Optional<Hospital> hospital = Optional.ofNullable(hospitalService.getHospitalByEmail(normalizedEmail));
-            if (hospital.isPresent() && passwordEncoder.matches(password, hospital.get().getPassword())) {
-                logger.info("Hospital login successful for: {}", email);
-                // Reset login attempts on successful login
-                loginAttempts.remove(email);
-                lastLoginAttempt.remove(email);
-                userData.put("id", hospital.get().getId());
-                userData.put("name", hospital.get().getName());
-                userData.put("email", hospital.get().getEmail());
-                userData.put("role", "hospital");
-                token = jwtService.generateToken(hospital.get().getId(), email, "hospital");
-                response.put("user", userData);
-                response.put("token", token);
-                return ResponseEntity.ok(response);
+            if (hospital.isPresent()) {
+                String storedPassword = hospital.get().getPassword();
+                logger.info("Hospital login attempt for email: {}", email);
+                logger.info("Stored password: {}", storedPassword);
+                logger.info("Input password equals stored: {}", password.equals(storedPassword));
+                logger.info("Input password matches hash: {}", passwordEncoder.matches(password, storedPassword));
+                // Support both plain text (legacy) and hashed passwords
+                if (password.equals(storedPassword) || passwordEncoder.matches(password, storedPassword)) {
+                    logger.info("Hospital login successful for: {}", email);
+                    // Reset login attempts on successful login
+                    loginAttempts.remove(email);
+                    lastLoginAttempt.remove(email);
+                    userData.put("id", hospital.get().getId());
+                    userData.put("name", hospital.get().getName());
+                    userData.put("email", hospital.get().getEmail());
+                    userData.put("role", "hospital");
+                    token = jwtService.generateToken(hospital.get().getId(), email, "hospital");
+                    response.put("user", userData);
+                    response.put("token", token);
+                    return ResponseEntity.ok(response);
+                }
             }
 
             // Check trainers
@@ -318,8 +334,6 @@ public class AuthController {
 
                 // Set hospital relationship if hospitalId is provided
                 if (hospitalId != null && !hospitalId.trim().isEmpty()) {
-                    // Note: HospitalService needs to be injected and used here
-                    // For now, we'll set the hospitalId in the transient field
                     doctor.setHospitalId(hospitalId.trim());
                 }
 

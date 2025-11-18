@@ -115,7 +115,22 @@ export const doctorAPI = {
   create: (doctor: any) =>
     apiCall<any>('/doctors', {
       method: 'POST',
-      body: JSON.stringify(doctor),
+      body: JSON.stringify({
+        name: doctor.name,
+        email: doctor.email,
+        phone: doctor.phone,
+        specialization: doctor.specialization,
+        qualification: doctor.qualification,
+        experience: doctor.experience,
+        rating: doctor.rating,
+        available: doctor.available,
+        consultationFee: doctor.consultationFee,
+        status: doctor.status,
+        avatarUrl: doctor.avatarUrl,
+        password: doctor.password,
+        hospitalId: doctor.hospitalId,
+        hospital: doctor.hospitalId ? { id: doctor.hospitalId } : null,
+      }),
     }),
 
   update: (id: string, doctor: any) =>

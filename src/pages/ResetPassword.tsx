@@ -4,7 +4,7 @@ import { FaLock } from "react-icons/fa";
 import { motion } from "framer-motion";
 import axios from "axios";
 
-const API_BASE = "http://localhost:8081/api/auth"; // main backend
+const API_BASE = "http://localhost:8081/auth"; // main backend
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState("");

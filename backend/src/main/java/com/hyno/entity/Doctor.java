@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "doctors")
@@ -23,9 +25,6 @@ public class Doctor {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Transient
-    private String hospitalId;
-
     private String phone;
     private String specialization;
     private String qualification;
@@ -33,15 +32,16 @@ public class Doctor {
     private BigDecimal rating = BigDecimal.ZERO;
     private Boolean available = true;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "hospital_id")
+    private String hospitalId;
+
+    @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
-    private Hospital hospital;
+    private List<HospitalDoctor> hospitalDoctors = new ArrayList<>();
 
     private BigDecimal consultationFee;
-    private String status = "pending";
     private String avatarUrl;
     private String password;
+    private String status = "PENDING";
     private boolean isVerified = false;
 
     @Column(updatable = false)
@@ -54,17 +54,11 @@ public class Doctor {
         this.updatedAt = LocalDateTime.now();
     }
 
-    @JsonIgnore
-    public Hospital getHospital() {
-        return hospital;
-    }
-
-    @JsonProperty("hospitalId")
-    public String getHospitalId() {
-        return hospital != null ? hospital.getId() : null;
-    }
-
     public String getStatus() {
         return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

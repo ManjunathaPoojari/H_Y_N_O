@@ -1,16 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Building2, Users, Calendar, UserPlus, Stethoscope, TrendingUp } from 'lucide-react';
+import { Building2, Users, Calendar, UserPlus, Stethoscope, TrendingUp, AlertCircle } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
+import { useAuth } from '../../lib/auth-context';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
-import { doctorAPI } from '../../lib/api-client';
+import { doctorAPI, hospitalAPI } from '../../lib/api-client';
 import { HospitalDoctors } from './HospitalDoctors';
 import { HospitalAppointments } from './HospitalAppointments';
 import { HospitalPatients } from './HospitalPatients';
@@ -20,8 +21,11 @@ interface HospitalDashboardProps {
 }
 
 export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate }) => {
-  const { doctors, appointments, updateAppointment } = useAppStore();
+  const { doctors, appointments, updateAppointment, addDoctor } = useAppStore();
+  const { user } = useAuth();
   const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
+  const [hospitalData, setHospitalData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [doctorForm, setDoctorForm] = useState({
     name: '',
     email: '',
@@ -29,28 +33,69 @@ export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate
     qualification: '',
     experience: '',
     consultationFee: '',
-    phone: '',
-    address: '',
-    bio: ''
+    phone: ''
   });
 
-  const hospitalDoctors = doctors.filter(d => d.hospitalId === 'H001' || d.hospital?.id === 'H001');
-  const hospitalAppointments = appointments.filter(a => a.hospitalId === 'H001');
+  useEffect(() => {
+    const fetchHospitalData = async () => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const data = await hospitalAPI.getById(user.id);
+        setHospitalData(data);
+      } catch (err: any) {
+        console.error('Error fetching hospital data:', err);
+        // Fallback to hardcoded data if API fails
+        setHospitalData({ name: 'Hospital Dashboard', id: user.id });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHospitalData();
+  }, [user?.id]);
+
+  const hospitalDoctors = doctors.filter(d => (d.hospitalId === user?.id || d.hospital?.id === user?.id) && (d.status === 'approved' || d.status === 'pending'));
+  const pendingDoctors = doctors.filter(d => (d.hospitalId === user?.id || d.hospital?.id === user?.id) && d.status === 'pending');
+  const hospitalAppointments = appointments.filter(a => a.hospitalId === user?.id);
   const pendingAppointments = hospitalAppointments.filter(a => a.status === 'pending');
 
   const stats = {
     totalDoctors: hospitalDoctors.length,
     totalAppointments: hospitalAppointments.length,
     pendingApprovals: pendingAppointments.length,
+    pendingDoctors: pendingDoctors.length,
     todayAppointments: 8,
   };
 
   const handleAddDoctor = async () => {
+    if (!user?.id) {
+      toast.error('User not authenticated. Please login again.');
+      return;
+    }
+
+    // Validate required fields
+    if (!doctorForm.name || !doctorForm.email || !doctorForm.specialization) {
+      toast.error('Please fill in all required fields (Name, Email, Specialization).');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(doctorForm.email)) {
+      toast.error('Please enter a valid email address.');
+      return;
+    }
+
     try {
       const doctorData = {
-        id: `DOC${Date.now()}`, // Generate unique ID
+        // Remove id as backend generates it
         ...doctorForm,
-        hospitalId: 'H001', // Associate with current hospital
+        hospitalId: user.id, // Associate with current hospital
         experience: parseInt(doctorForm.experience) || 0,
         consultationFee: parseFloat(doctorForm.consultationFee) || 0,
         status: 'pending', // New doctors need approval
@@ -59,8 +104,30 @@ export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate
         password: 'defaultPassword123' // Default password, should be changed later
       };
 
-      await doctorAPI.create(doctorData);
-      toast.success('Doctor added successfully! They can now login with their email and password.');
+      const newDoctor = await doctorAPI.create(doctorData);
+
+      // Check if the response indicates an error (e.g., duplicate email)
+      if (newDoctor && typeof newDoctor === 'object' && 'message' in newDoctor && newDoctor.message && (
+        newDoctor.message.toLowerCase().includes('duplicate') ||
+        newDoctor.message.toLowerCase().includes('already exists') ||
+        newDoctor.message.toLowerCase().includes('constraint violation')
+      )) {
+        throw new Error(newDoctor.message);
+      }
+
+      if (newDoctor && typeof newDoctor === 'object' && !('message' in newDoctor)) {
+        try {
+          addDoctor(newDoctor);
+        } catch (storeError) {
+          console.error('Error updating store:', storeError);
+          // Don't show error for store update, as doctor was created successfully
+        }
+
+        toast.success('Doctor added successfully and sent for admin approval! They will appear in your dashboard once approved.');
+      } else {
+        throw new Error(newDoctor?.message || 'No doctor data returned from server');
+      }
+
       setIsAddDoctorOpen(false);
       setDoctorForm({
         name: '',
@@ -69,20 +136,41 @@ export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate
         qualification: '',
         experience: '',
         consultationFee: '',
-        phone: '',
-        address: '',
-        bio: ''
+        phone: ''
       });
-    } catch (error) {
-      toast.error('Failed to add doctor. Please try again.');
+    } catch (error: any) {
       console.error('Error adding doctor:', error);
+      if (error.message && (error.message.includes('Duplicate entry') || error.message.includes('already exists'))) {
+        toast.error('A doctor with this email already exists. Please use a different email address.');
+      } else {
+        toast.error(error.message || 'Failed to add doctor. Please try again.');
+      }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl mb-2">Hospital Dashboard</h1>
+          <p className="text-gray-600">Loading your hospital information...</p>
+        </div>
+        <Card>
+          <CardContent className="p-8">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2">Loading...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl mb-2">Apollo Hospital</h1>
+        <h1 className="text-3xl mb-2">{hospitalData?.name || 'Keerthi Hospital'}</h1>
         <p className="text-gray-600">Hospital Management Dashboard</p>
       </div>
 
@@ -101,23 +189,23 @@ export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm">Pending Doctors</CardTitle>
+            <UserPlus className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl">{stats.pendingDoctors}</div>
+            <p className="text-xs text-gray-600 mt-1">Awaiting admin approval</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm">Total Appointments</CardTitle>
             <Calendar className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl">{stats.totalAppointments}</div>
             <p className="text-xs text-gray-600 mt-1">All time bookings</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">Pending Approvals</CardTitle>
-            <Calendar className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{stats.pendingApprovals}</div>
-            <p className="text-xs text-gray-600 mt-1">Awaiting approval</p>
           </CardContent>
         </Card>
 
@@ -223,25 +311,6 @@ export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate
                       value={doctorForm.phone}
                       onChange={(e) => setDoctorForm({...doctorForm, phone: e.target.value})}
                       placeholder="+91 9876543210"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      value={doctorForm.address}
-                      onChange={(e) => setDoctorForm({...doctorForm, address: e.target.value})}
-                      placeholder="Clinic address"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="bio">Bio</Label>
-                    <Textarea
-                      id="bio"
-                      value={doctorForm.bio}
-                      onChange={(e) => setDoctorForm({...doctorForm, bio: e.target.value})}
-                      placeholder="Brief description about the doctor..."
-                      rows={3}
                     />
                   </div>
                 </div>
@@ -360,25 +429,6 @@ export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate
                     placeholder="+91 9876543210"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    value={doctorForm.address}
-                    onChange={(e) => setDoctorForm({...doctorForm, address: e.target.value})}
-                    placeholder="Clinic address"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    value={doctorForm.bio}
-                    onChange={(e) => setDoctorForm({...doctorForm, bio: e.target.value})}
-                    placeholder="Brief description about the doctor..."
-                    rows={3}
-                  />
-                </div>
               </div>
               <div className="flex justify-end gap-2 mt-4">
                 <Button variant="outline" onClick={() => setIsAddDoctorOpen(false)}>
@@ -422,6 +472,44 @@ export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate
         </CardContent>
       </Card>
 
+      {/* Pending Doctors */}
+      {pendingDoctors.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Pending Doctor Approvals</CardTitle>
+            <Badge variant="secondary">{pendingDoctors.length}</Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {pendingDoctors.map((doctor) => (
+                <div key={doctor.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4>{doctor.name}</h4>
+                        <Badge variant="outline" className="text-orange-600 border-orange-600">
+                          Pending Approval
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600">{doctor.specialization}</p>
+                      <p className="text-xs text-gray-500 mt-1">{doctor.qualification}</p>
+                      <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
+                        <span>{doctor.experience} years exp.</span>
+                        <span>Fee: ₹{doctor.consultationFee}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Button size="sm" variant="outline">Edit</Button>
+                      <Button size="sm" variant="outline">Remove</Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Pending Appointments */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -451,7 +539,7 @@ export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate
                       size="sm"
                       className="flex-1"
                       onClick={() => {
-                        updateAppointment(appointment.id, { status: 'upcoming' });
+                        updateAppointment(appointment.id, { status: 'booked' });
                       }}
                     >
                       Approve

@@ -1,7 +1,10 @@
+
 package com.hyno.service;
 
 import com.hyno.entity.Doctor;
 import com.hyno.entity.Hospital;
+import com.hyno.entity.HospitalDoctor;
+import com.hyno.entity.HospitalDoctorId;
 import com.hyno.repository.DoctorRepository;
 import com.hyno.repository.HospitalRepository;
 import org.slf4j.Logger;
@@ -21,6 +24,9 @@ public class DoctorService {
 
     @Autowired
     private HospitalRepository hospitalRepository;
+
+    @Autowired
+    private HospitalDoctorService hospitalDoctorService;
 
     public List<Doctor> getAllDoctors() {
         logger.info("Fetching all doctors");
@@ -82,7 +88,7 @@ public class DoctorService {
     public List<Doctor> getDoctorsByHospital(String hospitalId) {
         logger.info("Fetching doctors by hospital: {}", hospitalId);
         try {
-            List<Doctor> doctors = doctorRepository.findByHospital_Id(hospitalId);
+            List<Doctor> doctors = doctorRepository.findByHospitalId(hospitalId);
             logger.info("Retrieved {} doctors for hospital: {}", doctors.size(), hospitalId);
             return doctors;
         } catch (Exception e) {
@@ -110,17 +116,27 @@ public class DoctorService {
             String nextId = generateNextDoctorId();
             doctor.setId(nextId);
 
+            // Save doctor first to ensure it exists in database
+            Doctor savedDoctor = doctorRepository.save(doctor);
+
             // Set hospital relationship if hospitalId is provided
-            if (doctor.getHospital() == null && doctor.getHospitalId() != null) {
+            if (doctor.getHospitalId() != null) {
                 Optional<Hospital> hospital = hospitalRepository.findById(doctor.getHospitalId());
                 if (hospital.isPresent()) {
-                    doctor.setHospital(hospital.get());
+                    // Create HospitalDoctor association
+                    HospitalDoctor hospitalDoctor = new HospitalDoctor();
+                    HospitalDoctorId id = new HospitalDoctorId(doctor.getHospitalId(), nextId);
+                    hospitalDoctor.setId(id);
+                    hospitalDoctor.setHospital(hospital.get());
+                    hospitalDoctor.setDoctor(savedDoctor);
+                    hospitalDoctor.setStatus("pending");
+                    hospitalDoctor.setJoinedAt(java.time.LocalDateTime.now());
+                    hospitalDoctorService.save(hospitalDoctor);
                 } else {
                     logger.warn("Hospital not found with ID: {}", doctor.getHospitalId());
                 }
             }
 
-            Doctor savedDoctor = doctorRepository.save(doctor);
             logger.info("Doctor created successfully with ID: {}", savedDoctor.getId());
             return savedDoctor;
         } catch (Exception e) {
@@ -162,7 +178,7 @@ public class DoctorService {
                 doctor.setExperience(doctorDetails.getExperience());
                 doctor.setRating(doctorDetails.getRating());
                 doctor.setAvailable(doctorDetails.getAvailable());
-                doctor.setHospital(doctorDetails.getHospital());
+                doctor.setHospitalId(doctorDetails.getHospitalId());
                 doctor.setConsultationFee(doctorDetails.getConsultationFee());
                 doctor.setStatus(doctorDetails.getStatus());
                 doctor.setAvatarUrl(doctorDetails.getAvatarUrl());

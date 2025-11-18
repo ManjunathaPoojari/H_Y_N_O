@@ -3,6 +3,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { UserPlus, Edit, Trash2, Stethoscope, Phone, Mail, MapPin, Star } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
+import { useAuth } from '../../lib/auth-context';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
@@ -13,10 +14,31 @@ import { Textarea } from '../ui/textarea';
 import { doctorAPI } from '../../lib/api-client';
 import { Doctor } from '../../types';
 
+interface DoctorFormData {
+  name: string;
+  email: string;
+  specialization: string;
+  qualification: string;
+  experience: string;
+  consultationFee: string;
+  phone: string;
+  address: string;
+  bio: string;
+}
+
+interface DoctorFormProps {
+  form: DoctorFormData;
+  setForm: (form: DoctorFormData) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  submitLabel: string;
+}
+
 export const HospitalDoctors = () => {
-  const { doctors, updateDoctor, removeDoctor } = useAppStore();
+  const { doctors, updateDoctor } = useAppStore();
+  const { user } = useAuth();
   const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
-  const [editingDoctor, setEditingDoctor] = useState(null);
+  const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
   const [doctorForm, setDoctorForm] = useState({
     name: '',
     email: '',
@@ -29,15 +51,16 @@ export const HospitalDoctors = () => {
     bio: ''
   });
 
-  // Filter doctors for current hospital (hardcoded as H001 for demo)
-  const hospitalDoctors = doctors.filter(d => d.hospitalId === 'H001' || d.hospital?.id === 'H001');
+  // Filter doctors for current hospital
+  const allHospitalDoctors = doctors.filter(d => d.hospitalId === user?.id || d.hospital?.id === user?.id);
+  const hospitalDoctors = allHospitalDoctors.filter(d => d.status === 'approved');
 
   const handleAddDoctor = async () => {
     try {
       const doctorData = {
         id: `DOC${Date.now()}`, // Generate unique ID
         ...doctorForm,
-        hospitalId: 'H001', // Associate with current hospital
+        hospitalId: user?.id, // Associate with current hospital
         experience: parseInt(doctorForm.experience) || 0,
         consultationFee: parseFloat(doctorForm.consultationFee) || 0,
         status: 'pending', // New doctors need approval
@@ -57,6 +80,7 @@ export const HospitalDoctors = () => {
   };
 
   const handleEditDoctor = async () => {
+    if (!editingDoctor) return;
     try {
       const updatedDoctor = {
         ...editingDoctor,
@@ -76,12 +100,11 @@ export const HospitalDoctors = () => {
     }
   };
 
-  const handleDeleteDoctor = async (doctorId) => {
+  const handleDeleteDoctor = async (doctorId: string) => {
     if (!confirm('Are you sure you want to remove this doctor?')) return;
 
     try {
       await doctorAPI.delete(doctorId);
-      removeDoctor(doctorId);
       toast.success('Doctor removed successfully!');
     } catch (error) {
       toast.error('Failed to remove doctor. Please try again.');
@@ -103,7 +126,7 @@ export const HospitalDoctors = () => {
     });
   };
 
-  const openEditDialog = (doctor) => {
+  const openEditDialog = (doctor: Doctor) => {
     setEditingDoctor(doctor);
     setDoctorForm({
       name: doctor.name || '',
@@ -155,8 +178,8 @@ export const HospitalDoctors = () => {
             <Stethoscope className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">{hospitalDoctors.length}</div>
-            <p className="text-xs text-gray-600 mt-1">Active practitioners</p>
+            <div className="text-2xl">{allHospitalDoctors.length}</div>
+            <p className="text-xs text-gray-600 mt-1">Associated with hospital</p>
           </CardContent>
         </Card>
 
@@ -177,7 +200,7 @@ export const HospitalDoctors = () => {
             <Stethoscope className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">{hospitalDoctors.filter(d => d.status === 'pending').length}</div>
+            <div className="text-2xl">{allHospitalDoctors.filter(d => d.status === 'pending').length}</div>
             <p className="text-xs text-gray-600 mt-1">Awaiting approval</p>
           </CardContent>
         </Card>
@@ -206,8 +229,8 @@ export const HospitalDoctors = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {hospitalDoctors.length > 0 ? (
-              hospitalDoctors.map((doctor) => (
+            {allHospitalDoctors.length > 0 ? (
+              allHospitalDoctors.map((doctor) => (
                 <div key={doctor.id} className="border rounded-lg p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -219,6 +242,11 @@ export const HospitalDoctors = () => {
                         {doctor.status === 'pending' && (
                           <Badge variant="outline" className="text-orange-600 border-orange-600">
                             Pending Approval
+                          </Badge>
+                        )}
+                        {doctor.status === 'suspended' && (
+                          <Badge variant="outline" className="text-red-600 border-red-600">
+                            Suspended
                           </Badge>
                         )}
                       </div>
@@ -312,7 +340,7 @@ export const HospitalDoctors = () => {
 };
 
 // Reusable Doctor Form Component
-const DoctorForm = ({ form, setForm, onSubmit, onCancel, submitLabel }) => {
+const DoctorForm: React.FC<DoctorFormProps> = ({ form, setForm, onSubmit, onCancel, submitLabel }) => {
   return (
     <div className="grid grid-cols-2 gap-4">
       <div>

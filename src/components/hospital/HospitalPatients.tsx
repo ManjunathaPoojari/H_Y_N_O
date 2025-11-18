@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -69,6 +70,11 @@ export const HospitalPatients = () => {
   };
 
   const handleAddPatient = async () => {
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      return;
+    }
+
     try {
       const patientData = {
         id: `PAT${Date.now()}`,
@@ -76,6 +82,7 @@ export const HospitalPatients = () => {
         age: parseInt(patientForm.age) || 0,
         allergies: patientForm.allergies ? patientForm.allergies.split(',').map(a => a.trim()) : [],
         medicalHistory: patientForm.medicalHistory ? patientForm.medicalHistory.split(',').map(h => h.trim()) : [],
+        hospitalId: user.id, // Associate patient with current hospital
         createdAt: new Date().toISOString()
       };
 
@@ -83,6 +90,9 @@ export const HospitalPatients = () => {
       toast.success('Patient added successfully!');
       setIsAddPatientOpen(false);
       resetForm();
+      // Refresh the patient list
+      const patients = await hospitalAPI.getPatients(user.id);
+      setHospitalPatients(patients);
     } catch (error) {
       toast.error('Failed to add patient. Please try again.');
       console.error('Error adding patient:', error);
@@ -92,7 +102,7 @@ export const HospitalPatients = () => {
   const getPatientStats = (patientId: string) => {
     const patientAppointments = appointments.filter(a => a.patientId === patientId);
     const completedAppointments = patientAppointments.filter(a => a.status === 'completed');
-    const upcomingAppointments = patientAppointments.filter(a => a.status === 'upcoming');
+    const upcomingAppointments = patientAppointments.filter(a => a.status === 'booked');
 
     return {
       totalAppointments: patientAppointments.length,
@@ -296,29 +306,14 @@ export const HospitalPatients = () => {
                       </div>
 
                       <div className="flex flex-col gap-2 ml-4">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setSelectedPatient(patient)}
-                            >
-                              <FileText className="h-3 w-3 mr-1" />
-                              View Details
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl">
-                            <DialogHeader>
-                              <DialogTitle>Patient Details - {patient.name}</DialogTitle>
-                            </DialogHeader>
-                            <PatientDetails
-                              patient={patient}
-                              stats={stats}
-                              doctors={patientDoctors}
-                              appointments={appointments.filter(a => a.patientId === patient.id)}
-                            />
-                          </DialogContent>
-                        </Dialog>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.location.href = `/hospital/patient/${patient.id}`}
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          View Details
+                        </Button>
                       </div>
                     </div>
                   </div>

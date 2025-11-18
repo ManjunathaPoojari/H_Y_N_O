@@ -75,11 +75,343 @@ interface AppStoreContextType {
 const AppStoreContext = createContext<AppStoreContextType | undefined>(undefined);
 
 export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [hospitals, setHospitals] = useState<Hospital[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([
+    {
+      id: "1",
+      name: "John Doe",
+      email: "patient@example.com",
+      phone: "1234567890",
+      age: 30,
+      gender: "Male",
+      bloodGroup: "O+",
+      dateOfBirth: "1994-01-15",
+      allergies: ["Penicillin", "Peanuts"],
+      medicalHistory: ["Hypertension", "Diabetes"],
+      currentMedications: ["Metformin 500mg", "Lisinopril 10mg"],
+      address: "123 Main St, City, State",
+      emergencyContact: "Jane Doe - 0987654321",
+      notes: "Patient has been compliant with medication regimen",
+      createdAt: new Date().toISOString(),
+      hospitalId: "hospital-1",
+    },
+    {
+      id: "patient-2",
+      name: "Alice Johnson",
+      email: "patient2@example.com",
+      phone: "2345678901",
+      age: 28,
+      gender: "Female",
+      bloodGroup: "A+",
+      dateOfBirth: "1996-03-22",
+      allergies: [],
+      medicalHistory: [],
+      currentMedications: [],
+      address: "",
+      emergencyContact: "",
+      notes: "",
+      createdAt: new Date().toISOString(),
+      hospitalId: "",
+    },
+    {
+      id: "patient-3",
+      name: "Robert Brown",
+      email: "patient3@example.com",
+      phone: "3456789012",
+      age: 45,
+      gender: "Male",
+      bloodGroup: "B+",
+      dateOfBirth: "1979-05-10",
+      allergies: [],
+      medicalHistory: [],
+      currentMedications: [],
+      address: "",
+      emergencyContact: "",
+      notes: "",
+      createdAt: new Date().toISOString(),
+      hospitalId: "",
+    },
+    {
+      id: "patient-4",
+      name: "Emma Wilson",
+      email: "patient4@example.com",
+      phone: "4567890123",
+      age: 32,
+      gender: "Female",
+      bloodGroup: "AB-",
+      dateOfBirth: "1992-08-15",
+      allergies: [],
+      medicalHistory: [],
+      currentMedications: [],
+      address: "",
+      emergencyContact: "",
+      notes: "",
+      createdAt: new Date().toISOString(),
+      hospitalId: "",
+    },
+    {
+      id: "patient-5",
+      name: "Michael Davis",
+      email: "patient5@example.com",
+      phone: "5678901234",
+      age: 50,
+      gender: "Male",
+      bloodGroup: "O-",
+      dateOfBirth: "1974-12-01",
+      allergies: [],
+      medicalHistory: [],
+      currentMedications: [],
+      address: "",
+      emergencyContact: "",
+      notes: "",
+      createdAt: new Date().toISOString(),
+      hospitalId: "",
+    },
+  ]);
+
+  const [doctors, setDoctors] = useState<Doctor[]>([
+    {
+      id: 'D001',
+      name: 'Dr. Sarah Mitchell',
+      email: 'sarah.mitchell@hospital.com',
+      phone: '+1-555-0201',
+      specialization: 'Cardiology',
+      qualification: 'MD, FACC',
+      experience: 12,
+      rating: 4.8,
+      available: true,
+      hospitalId: 'H001',
+      consultationFee: 250,
+      avatarUrl: '/placeholder/150/150',
+      status: 'approved',
+    },
+    {
+      id: 'D002',
+      name: 'Dr. Michael Chen',
+      email: 'michael.chen@hospital.com',
+      phone: '+1-555-0202',
+      specialization: 'Internal Medicine',
+      qualification: 'MD',
+      experience: 8,
+      rating: 4.6,
+      available: true,
+      hospitalId: 'H001',
+      consultationFee: 200,
+      avatarUrl: '/placeholder/150/150',
+      status: 'approved',
+    },
+    {
+      id: 'D003',
+      name: 'Dr. Emily Rodriguez',
+      email: 'emily.rodriguez@hospital.com',
+      phone: '+1-555-0203',
+      specialization: 'Pediatrics',
+      qualification: 'MD, FAAP',
+      experience: 10,
+      rating: 4.9,
+      available: true,
+      hospitalId: 'H001',
+      consultationFee: 180,
+      avatarUrl: '/placeholder/150/150',
+      status: 'approved',
+    },
+    {
+      id: 'D004',
+      name: 'Dr. James Thompson',
+      email: 'james.thompson@hospital.com',
+      phone: '+1-555-0204',
+      specialization: 'Orthopedics',
+      qualification: 'MD, FAAOS',
+      experience: 15,
+      rating: 4.7,
+      available: false,
+      hospitalId: 'H001',
+      consultationFee: 300,
+      avatarUrl: '/placeholder/150/150',
+      status: 'approved',
+    },
+    {
+      id: 'D005',
+      name: 'Dr. Lisa Park',
+      email: 'lisa.park@hospital.com',
+      phone: '+1-555-0205',
+      specialization: 'Dermatology',
+      qualification: 'MD',
+      experience: 6,
+      rating: 4.5,
+      available: true,
+      hospitalId: 'H001',
+      consultationFee: 220,
+      avatarUrl: '/placeholder/150/150',
+      status: 'approved',
+    },
+  ]);
+
+  const [hospitals, setHospitals] = useState<Hospital[]>([
+    {
+      id: 'hospital-1',
+      name: 'City General Hospital',
+      email: 'hospital@example.com',
+      phone: '1122334455',
+      address: '123 Main St, City, State',
+      city: 'New York',
+      state: 'NY',
+      totalDoctors: 5,
+      facilities: ['Emergency Care', 'Surgery', 'Radiology', 'Laboratory', 'Pharmacy', 'ICU'],
+      status: 'approved',
+      registrationNumber: 'HOSP001',
+    },
+  ]);
+
+  const [appointments, setAppointments] = useState<Appointment[]>([
+    {
+      id: 'A001',
+      patientId: 'P001',
+      patientName: 'John Doe',
+      doctorId: 'D001',
+      doctorName: 'Dr. Sarah Mitchell',
+      hospitalId: 'H001',
+      type: 'inperson',
+      date: '2024-01-15',
+      time: '10:00',
+      status: 'completed',
+      reason: 'Regular checkup',
+      notes: 'Blood pressure normal, continue current medication',
+    },
+    {
+      id: 'A002',
+      patientId: 'P002',
+      patientName: 'Jane Smith',
+      doctorId: 'D002',
+      doctorName: 'Dr. Michael Chen',
+      hospitalId: 'H001',
+      type: 'inperson',
+      date: '2024-01-16',
+      time: '14:30',
+      status: 'completed',
+      reason: 'Asthma follow-up',
+      notes: 'Asthma well controlled, adjust inhaler usage',
+    },
+    {
+      id: 'A003',
+      patientId: 'P003',
+      patientName: 'Robert Johnson',
+      doctorId: 'D001',
+      doctorName: 'Dr. Sarah Mitchell',
+      hospitalId: 'H001',
+      type: 'inperson',
+      date: '2024-01-17',
+      time: '09:00',
+      status: 'completed',
+      reason: 'Cardiac consultation',
+      notes: 'EKG shows normal sinus rhythm, continue medications',
+    },
+    {
+      id: 'A004',
+      patientId: 'P004',
+      patientName: 'Maria Garcia',
+      doctorId: 'D005',
+      doctorName: 'Dr. Lisa Park',
+      hospitalId: 'H001',
+      type: 'inperson',
+      date: '2024-01-18',
+      time: '11:15',
+      status: 'booked',
+      reason: 'Thyroid check',
+    },
+    {
+      id: 'A005',
+      patientId: 'P005',
+      patientName: 'David Wilson',
+      doctorId: 'D002',
+      doctorName: 'Dr. Michael Chen',
+      hospitalId: 'H001',
+      type: 'video',
+      date: '2024-01-19',
+      time: '15:00',
+      status: 'booked',
+      reason: 'Arthritis management',
+    },
+    {
+      id: 'A006',
+      patientId: 'P001',
+      patientName: 'John Doe',
+      doctorId: 'D003',
+      doctorName: 'Dr. Emily Rodriguez',
+      hospitalId: 'H001',
+      type: 'inperson',
+      date: '2024-01-20',
+      time: '13:30',
+      status: 'pending',
+      reason: 'Follow-up consultation',
+    },
+    {
+      id: 'A007',
+      patientId: 'P002',
+      patientName: 'Jane Smith',
+      doctorId: 'D004',
+      doctorName: 'Dr. James Thompson',
+      hospitalId: 'H001',
+      type: 'inperson',
+      date: '2024-01-21',
+      time: '10:30',
+      status: 'cancelled',
+      reason: 'Knee pain assessment',
+    },
+  ]);
+
+  const [medicines, setMedicines] = useState<Medicine[]>([
+    {
+      id: 'M001',
+      name: 'Lisinopril',
+      description: 'ACE inhibitor for hypertension',
+      price: 15.99,
+      stock: 150,
+      category: 'Cardiovascular',
+      manufacturer: 'Generic Pharma',
+      requiresPrescription: true,
+    },
+    {
+      id: 'M002',
+      name: 'Albuterol Inhaler',
+      description: 'Bronchodilator for asthma',
+      price: 45.50,
+      stock: 75,
+      category: 'Respiratory',
+      manufacturer: 'AstraZeneca',
+      requiresPrescription: true,
+    },
+    {
+      id: 'M003',
+      name: 'Metformin',
+      description: 'Oral diabetes medication',
+      price: 12.25,
+      stock: 200,
+      category: 'Endocrine',
+      manufacturer: 'Generic Pharma',
+      requiresPrescription: true,
+    },
+    {
+      id: 'M004',
+      name: 'Ibuprofen',
+      description: 'NSAID for pain and inflammation',
+      price: 8.99,
+      stock: 300,
+      category: 'Pain Relief',
+      manufacturer: 'Generic Pharma',
+      requiresPrescription: false,
+    },
+    {
+      id: 'M005',
+      name: 'Levothyroxine',
+      description: 'Thyroid hormone replacement',
+      price: 22.75,
+      stock: 100,
+      category: 'Endocrine',
+      manufacturer: 'AbbVie',
+      requiresPrescription: true,
+    },
+  ]);
+
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [nutritionPlans, setNutritionPlans] = useState<NutritionPlan[]>([]);
   const [yogaTrainers, setYogaTrainers] = useState<YogaTrainer[]>([
@@ -123,7 +455,7 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       status: 'approved',
       rating: 4.7,
       reviews: 45,
-      profileImage: '/api/placeholder/150/150',
+      profileImage: '/placeholder/150/150',
       createdAt: '2024-01-15T10:00:00Z',
     },
     {
@@ -143,7 +475,7 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       status: 'approved',
       rating: 4.9,
       reviews: 32,
-      profileImage: '/api/placeholder/150/150',
+      profileImage: '/placeholder/150/150',
       createdAt: '2024-02-20T14:30:00Z',
     },
   ]);
@@ -308,6 +640,56 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
           medicinesData = [];
           failedLoads++;
         }
+      } else if (userRole === 'hospital' && userId) {
+        // Hospital loads their data
+        try {
+          doctorsData = await api.hospitals.getDoctors(userId);
+        } catch (error) {
+          console.warn('Failed to load doctors from backend:', error);
+          doctorsData = [];
+          failedLoads++;
+        }
+
+        try {
+          patientsData = await api.hospitals.getPatients(userId);
+        } catch (error) {
+          console.warn('Failed to load patients from backend:', error);
+          patientsData = [];
+          failedLoads++;
+        }
+
+        try {
+          hospitalsData = await api.hospitals.getAll();
+        } catch (error) {
+          console.warn('Failed to load hospitals from backend:', error);
+          hospitalsData = [];
+          failedLoads++;
+        }
+
+        try {
+          appointmentsData = await api.appointments.getAll();
+          // Filter appointments for this hospital and normalize status
+          appointmentsData = appointmentsData.filter(apt => apt.hospital?.id === userId || apt.hospitalId === userId);
+          appointmentsData = appointmentsData.map(apt => ({
+            ...apt,
+            status: apt.status?.toLowerCase() === 'upcoming' ? 'booked' : apt.status?.toLowerCase(),
+            type: apt.type?.toLowerCase(),
+            date: apt.appointmentDate,
+            time: apt.appointmentTime,
+          }));
+        } catch (error) {
+          console.warn('Failed to load appointments from backend:', error);
+          appointmentsData = [];
+          failedLoads++;
+        }
+
+        try {
+          medicinesData = await api.medicines.getAll();
+        } catch (error) {
+          console.warn('Failed to load medicines from backend:', error);
+          medicinesData = [];
+          failedLoads++;
+        }
       } else {
         // Fallback for other roles or no userId - load general data
         try {
@@ -444,8 +826,6 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
         const newDoctor = await api.doctors.create(doctor);
         setDoctors([...doctors, newDoctor]);
         toast.success('Doctor added successfully');
-        // Reload data to reflect changes in dashboard counts
-        loadDataFromBackend();
       } catch (error) {
         toast.error('Failed to add doctor');
       }

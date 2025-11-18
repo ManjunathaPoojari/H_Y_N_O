@@ -5,8 +5,10 @@ import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { FileText, Download, Calendar, Users, TrendingUp, BarChart3 } from 'lucide-react';
+import { FileText, Download, Calendar, Users, TrendingUp, BarChart3, FileBarChart } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAppStore } from '../../lib/app-store';
+import { useAuth } from '../../lib/auth-context';
 
 interface ReportData {
   hospitalId: string;
@@ -25,9 +27,11 @@ interface ReportData {
 }
 
 export const HospitalReports: React.FC = () => {
+  const { patients, appointments, doctors } = useAppStore();
+  const { user } = useAuth();
   const [selectedReport, setSelectedReport] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>('2024-01-01');
+  const [endDate, setEndDate] = useState<string>('2024-01-31');
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -36,55 +40,148 @@ export const HospitalReports: React.FC = () => {
     { value: 'patient', label: 'Patient Report', icon: Users },
     { value: 'doctor-performance', label: 'Doctor Performance Report', icon: TrendingUp },
     { value: 'overview', label: 'Hospital Overview Report', icon: BarChart3 },
+    { value: 'comprehensive', label: 'Comprehensive Facility Report', icon: FileBarChart },
   ];
 
   const generateReport = async () => {
-    if (!selectedReport) {
-      toast.error('Please select a report type');
+    if (!selectedReport || !user?.id) {
+      toast.error('Please select a report type and ensure you are logged in');
       return;
     }
 
     setLoading(true);
     try {
-      const hospitalId = 'H001'; // In a real app, get from auth context
-      let endpoint = '';
+      const hospitalId = user.id;
+      const now = new Date().toISOString();
+      const reportPeriod = startDate && endDate ? `${startDate} to ${endDate}` : 'All Time';
+      const start = startDate ? new Date(startDate) : new Date(0);
+      const end = endDate ? new Date(endDate) : new Date();
+
+      // Filter data for current hospital
+      const hospitalPatients = patients.filter(p => p.hospitalId === hospitalId);
+      const hospitalAppointments = appointments.filter(a => a.hospitalId === hospitalId && new Date(a.date) >= start && new Date(a.date) <= end);
+      const hospitalDoctors = doctors.filter(d => d.hospitalId === hospitalId);
+
+      let data: ReportData = {
+        hospitalId,
+        reportPeriod,
+        generatedAt: now,
+      };
 
       switch (selectedReport) {
         case 'appointment':
-          endpoint = `/api/hospitals/${hospitalId}/reports/appointments`;
+          const completedAppts = hospitalAppointments.filter(a => a.status === 'completed');
+          const activePatients = hospitalPatients.filter(p => hospitalAppointments.some(a => a.patientId === p.id && a.status === 'booked')).length;
+          data = {
+            ...data,
+            totalPatients: hospitalPatients.length,
+            activePatients,
+            summary: {
+              totalAppointments: hospitalAppointments.length,
+              completedAppointments: completedAppts.length,
+              totalPatients: hospitalPatients.length,
+              activePatients,
+            }
+          };
           break;
+
         case 'patient':
-          endpoint = `/api/hospitals/${hospitalId}/reports/patients`;
+          const ageDistribution: Record<string, number> = {};
+          hospitalPatients.forEach(p => {
+            const age = p.age;
+            let group = 'Unknown';
+            if (age <= 18) group = '0-18';
+            else if (age <= 35) group = '19-35';
+            else if (age <= 50) group = '36-50';
+            else if (age <= 65) group = '51-65';
+            else group = '65+';
+            ageDistribution[group] = (ageDistribution[group] || 0) + 1;
+          });
+          data = {
+            ...data,
+            totalPatients: hospitalPatients.length,
+            ageDistribution,
+          };
           break;
+
         case 'doctor-performance':
-          endpoint = `/api/hospitals/${hospitalId}/reports/doctors`;
+          const doctorMetrics: Record<string, { name: string; appointments: number; completed: number }> = {};
+          hospitalDoctors.forEach(d => {
+            const docAppts = hospitalAppointments.filter(a => a.doctorId === d.id);
+            const docCompleted = docAppts.filter(a => a.status === 'completed');
+            doctorMetrics[d.id] = {
+              name: d.name,
+              appointments: docAppts.length,
+              completed: docCompleted.length,
+            };
+          });
+          data = {
+            ...data,
+            totalPatients: hospitalPatients.length,
+            doctorMetrics: JSON.stringify(doctorMetrics, null, 2),
+          };
           break;
+
         case 'overview':
-          endpoint = `/api/hospitals/${hospitalId}/reports/overview`;
+          const overviewCompleted = hospitalAppointments.filter(a => a.status === 'completed');
+          data = {
+            ...data,
+            summary: {
+              totalPatients: hospitalPatients.length,
+              activePatients: hospitalPatients.filter(p => hospitalAppointments.some(a => a.patientId === p.id && a.status === 'booked')).length,
+              totalAppointments: hospitalAppointments.length,
+              completedAppointments: overviewCompleted.length,
+            }
+          };
           break;
+
+        case 'comprehensive':
+          const compAgeDist: Record<string, number> = {};
+          hospitalPatients.forEach(p => {
+            const age = p.age;
+            let group = 'Unknown';
+            if (age <= 18) group = '0-18';
+            else if (age <= 35) group = '19-35';
+            else if (age <= 50) group = '36-50';
+            else if (age <= 65) group = '51-65';
+            else group = '65+';
+            compAgeDist[group] = (compAgeDist[group] || 0) + 1;
+          });
+
+          const compDoctorMetrics: Record<string, { name: string; appointments: number; completed: number }> = {};
+          hospitalDoctors.forEach(d => {
+            const docAppts = hospitalAppointments.filter(a => a.doctorId === d.id);
+            const docCompleted = docAppts.filter(a => a.status === 'completed');
+            compDoctorMetrics[d.id] = {
+              name: d.name,
+              appointments: docAppts.length,
+              completed: docCompleted.length,
+            };
+          });
+
+          const compCompleted = hospitalAppointments.filter(a => a.status === 'completed');
+          const compActivePatients = hospitalPatients.filter(p => hospitalAppointments.some(a => a.patientId === p.id && a.status === 'booked')).length;
+          data = {
+            ...data,
+            totalPatients: hospitalPatients.length,
+            activePatients: compActivePatients,
+            ageDistribution: compAgeDist,
+            summary: {
+              totalPatients: hospitalPatients.length,
+              activePatients: compActivePatients,
+              totalAppointments: hospitalAppointments.length,
+              completedAppointments: compCompleted.length,
+            },
+            doctorMetrics: JSON.stringify(compDoctorMetrics, null, 2),
+          };
+          break;
+
         default:
           throw new Error('Invalid report type');
       }
 
-      const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
-
-      const response = await fetch(`${endpoint}?${params}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate report');
-      }
-
-      const data = await response.json();
       setReportData(data);
-      toast.success('Report generated successfully');
+      toast.success('Report generated successfully using facility data');
     } catch (error) {
       console.error('Error generating report:', error);
       toast.error('Failed to generate report. Please try again.');

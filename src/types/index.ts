@@ -16,6 +16,7 @@ export interface Patient {
   emergencyContact?: string;
   notes?: string;
   createdAt: string;
+  hospitalId?: string;
 }
 
 export interface Doctor {
@@ -34,6 +35,8 @@ export interface Doctor {
   avatarUrl?: string;
   status: 'approved' | 'pending' | 'suspended';
   password?: string;
+  address?: string;
+  bio?: string;
 }
 
 export interface Hospital {

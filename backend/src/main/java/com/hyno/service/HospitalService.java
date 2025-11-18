@@ -51,7 +51,8 @@ public class HospitalService {
             return hospital;
         } catch (Exception e) {
             logger.error("Error fetching hospital by ID: {}", id, e);
-            throw e;
+            // Return empty optional to treat database errors as not found
+            return Optional.empty();
         }
     }
 
@@ -152,16 +153,23 @@ public class HospitalService {
             Optional<Hospital> optionalHospital = hospitalRepository.findById(id);
             if (optionalHospital.isPresent()) {
                 Hospital hospital = optionalHospital.get();
-                hospital.setName(hospitalDetails.getName());
-                hospital.setEmail(hospitalDetails.getEmail());
-                hospital.setPhone(hospitalDetails.getPhone());
-                hospital.setAddress(hospitalDetails.getAddress());
-                hospital.setCity(hospitalDetails.getCity());
-                hospital.setState(hospitalDetails.getState());
-                hospital.setPincode(hospitalDetails.getPincode());
-                hospital.setRegistrationNumber(hospitalDetails.getRegistrationNumber());
-                hospital.setTotalDoctors(hospitalDetails.getTotalDoctors());
-                hospital.setStatus(hospitalDetails.getStatus());
+                if (hospitalDetails.getName() != null) hospital.setName(hospitalDetails.getName());
+                if (hospitalDetails.getEmail() != null) hospital.setEmail(hospitalDetails.getEmail());
+                if (hospitalDetails.getPhone() != null) hospital.setPhone(hospitalDetails.getPhone());
+                if (hospitalDetails.getAddress() != null) hospital.setAddress(hospitalDetails.getAddress());
+                if (hospitalDetails.getCity() != null) hospital.setCity(hospitalDetails.getCity());
+                if (hospitalDetails.getState() != null) hospital.setState(hospitalDetails.getState());
+                if (hospitalDetails.getPincode() != null) hospital.setPincode(hospitalDetails.getPincode());
+                if (hospitalDetails.getRegistrationNumber() != null) hospital.setRegistrationNumber(hospitalDetails.getRegistrationNumber());
+                if (hospitalDetails.getTotalDoctors() != null) hospital.setTotalDoctors(hospitalDetails.getTotalDoctors());
+                if (hospitalDetails.getStatus() != null) hospital.setStatus(hospitalDetails.getStatus());
+                if (hospitalDetails.getEstablishedYear() != null) hospital.setEstablishedYear(hospitalDetails.getEstablishedYear());
+                if (hospitalDetails.getBedCount() != null) hospital.setBedCount(hospitalDetails.getBedCount());
+                if (hospitalDetails.getRating() != null) hospital.setRating(hospitalDetails.getRating());
+                if (hospitalDetails.getDescription() != null) hospital.setDescription(hospitalDetails.getDescription());
+                if (hospitalDetails.getFacilities() != null) {
+                    hospital.setFacilities(hospitalDetails.getFacilities());
+                }
                 Hospital updatedHospital = hospitalRepository.save(hospital);
                 logger.info("Hospital updated successfully: {}", id);
                 return updatedHospital;

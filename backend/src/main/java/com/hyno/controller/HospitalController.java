@@ -36,6 +36,20 @@ public class HospitalController {
         }
     }
 
+    @GetMapping("/{hospitalId}")
+    public ResponseEntity<com.hyno.entity.Hospital> getHospitalById(@PathVariable String hospitalId) {
+        try {
+            Optional<com.hyno.entity.Hospital> hospital = hospitalService.getHospitalById(hospitalId);
+            if (hospital.isPresent()) {
+                return ResponseEntity.ok(hospital.get());
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @GetMapping("/{hospitalId}/doctors")
     public ResponseEntity<List<com.hyno.entity.Doctor>> getDoctorsByHospital(@PathVariable String hospitalId) {
         try {
@@ -70,6 +84,20 @@ public class HospitalController {
     }
 
     // Hospital Schedule
+    @PutMapping("/{hospitalId}")
+    public ResponseEntity<com.hyno.entity.Hospital> updateHospital(@PathVariable String hospitalId, @RequestBody com.hyno.entity.Hospital hospitalDetails) {
+        try {
+            com.hyno.entity.Hospital updatedHospital = hospitalService.updateHospital(hospitalId, hospitalDetails);
+            if (updatedHospital != null) {
+                return ResponseEntity.ok(updatedHospital);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @GetMapping("/{hospitalId}/schedule-slots")
     public ResponseEntity<Map<String, Object>> getHospitalSchedule(@PathVariable String hospitalId) {
         try {
