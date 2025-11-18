@@ -18,6 +18,7 @@ import { NutritionWellness } from './components/patient/NutritionWellness';
 import { PremiumPlans } from './components/patient/PremiumPlans';
 import { UserProfile } from './components/patient/UserProfile';
 import { YogaFitness } from './components/patient/YogaFitness';
+import DailyTracker from './components/patient/DailyTracker';
 import { PatientMeetings } from './components/patient/PatientMeetings';
 import { ChatInterface } from './components/common/ChatInterface';
 import { DoctorDashboard } from './components/doctor/DoctorDashboard';
@@ -178,6 +179,7 @@ function AppContent() {
           {currentPath === '/patient/reports' && <PatientReports />}
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
+          {currentPath === '/patient/nutrition/daily-tracker' && <DailyTracker />}
           {currentPath === '/patient/nutrition/premium' && <PremiumPlans onNavigate={navigate} />}
           {currentPath === '/patient/nutrition/profile' && <UserProfile />}
           {currentPath === '/patient/yoga' && <YogaFitness onNavigate={navigate} />}
