@@ -48,6 +48,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 import { Card, CardContent } from './components/ui/card';
 import { Video, MessageSquare, MapPin, Building2 } from 'lucide-react';
+import WaterTracking from './components/patient/WaterTracking';
 
 function AppContent() {
   const [currentPath, setCurrentPath] = useState('/');
@@ -80,6 +81,10 @@ function AppContent() {
     // Public routes
     if (currentPath === '/') {
       return <LandingPage onNavigate={navigate} />;
+    }
+
+    if (currentPath === '/test-water') {
+      return <WaterTracking />;
     }
 
     if (currentPath === '/login') {
@@ -179,7 +184,11 @@ function AppContent() {
           {currentPath === '/patient/reports' && <PatientReports />}
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
+<<<<<<< Updated upstream
           {currentPath === '/patient/nutrition/daily-tracker' && <DailyTracker />}
+=======
+          {currentPath === '/patient/nutrition/daily-tracker' && <WaterTracking />}
+>>>>>>> Stashed changes
           {currentPath === '/patient/nutrition/premium' && <PremiumPlans onNavigate={navigate} />}
           {currentPath === '/patient/nutrition/profile' && <UserProfile />}
           {currentPath === '/patient/yoga' && <YogaFitness onNavigate={navigate} />}

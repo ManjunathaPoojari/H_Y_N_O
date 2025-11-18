@@ -39,7 +39,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
           {
             icon: Calendar,
             title: 'Daily Tracker',
-            description: 'Track your daily nutrition and wellness goals',
+            description: 'Track your daily nutrition, wellness goals, and water intake',
             path: '/patient/nutrition/daily-tracker',
             color: 'text-purple-400'
           },

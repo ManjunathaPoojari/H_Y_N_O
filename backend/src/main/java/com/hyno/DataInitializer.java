@@ -75,6 +75,20 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        // Force table creation by calling count() on repositories
+        patientRepository.count();
+        doctorRepository.count();
+        hospitalRepository.count();
+        adminRepository.count();
+        appointmentRepository.count();
+        chatRoomRepository.count();
+        chatMessageRepository.count();
+        medicineRepository.count();
+        nutritionProfileRepository.count();
+        recipeRepository.count();
+        mealPlanRepository.count();
+        premiumPlanRepository.count();
+
         // Create sample patients
         
         if (patientRepository.findByEmail("patient@example.com").isEmpty()) {
