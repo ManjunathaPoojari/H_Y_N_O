@@ -1,10 +1,17 @@
-# TODO: Change YogaTrainer.id to Unique String Type (UUID)
+# Implement Patients Tab in Admin Sidebar
 
 ## Tasks
-- [x] Update YogaTrainer.java: Change id from Long to String, add UUID generation
-- [x] Update YogaTrainerRepository.java: Change JpaRepository generic type from Long to String
-- [x] Update YogaTrainerService.java: Change method signatures from Long id to String id
-- [x] Update YogaController.java: Change @PathVariable from Long to String in trainer endpoints
-- [x] Update YogaSessionService.java: Adjust any references to trainer.getId() if needed
-- [x] Test the changes to ensure no compilation errors
-- [x] Add Google OAuth2 support for patient login
+- [x] Add Patients tab to admin navigation in DashboardLayout.tsx
+- [x] Position the tab after Doctors for logical grouping
+- [x] Use Users icon and path '/admin/patients'
+- [x] Verify the tab appears and navigates correctly
+- [x] Test AdminPatients component loads properly
+
+## Current Progress
+- [x] Analyzed DashboardLayout.tsx and App.tsx
+- [x] Confirmed AdminPatients route exists
+- [x] Planned the navigation item addition
+- [x] Added the Patients navigation item to admin sidebar
+- [x] Verified navigation item is present in DashboardLayout.tsx
+- [x] Confirmed AdminPatients component exists and is properly implemented
+- [x] Verified route is configured in App.tsx

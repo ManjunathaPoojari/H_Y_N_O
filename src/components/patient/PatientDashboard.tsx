@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Calendar, Video, MessageSquare, FileText, Clock, MapPin, User, Hospital, TrendingUp, Activity, Heart, Sparkles } from 'lucide-react';
+import { Calendar, Video, MessageSquare, MapPin, FileText, Clock, User, Hospital, Activity, Heart, Stethoscope, Pill, Dumbbell, ChevronRight } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
 import { useAuth } from '../../lib/auth-context';
 
@@ -12,214 +12,301 @@ interface PatientDashboardProps {
 export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }) => {
   const { appointments } = useAppStore();
   const { user } = useAuth();
+
   const upcomingAppointments = appointments.filter(a => a.status === 'booked').slice(0, 3);
   const recentReports = [
     { id: 1, name: 'Blood Test Report', date: '2025-10-12', type: 'Lab Report' },
     { id: 2, name: 'X-Ray Chest', date: '2025-10-08', type: 'Radiology' },
   ];
 
+  const quickActions = [
+    {
+      icon: Video,
+      label: 'Video Consultation',
+      description: 'Connect with doctor remotely',
+      path: '/patient/book/video',
+      color: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
+      iconColor: 'text-blue-600'
+    },
+    {
+      icon: MessageSquare,
+      label: 'Chat Consultation',
+      description: 'Text-based medical advice',
+      path: '/patient/book/chat',
+      color: 'bg-green-50 hover:bg-green-100 border-green-200',
+      iconColor: 'text-green-600'
+    },
+    {
+      icon: MapPin,
+      label: 'In-Person Visit',
+      description: 'Visit clinic or hospital',
+      path: '/patient/book/inperson',
+      color: 'bg-orange-50 hover:bg-orange-100 border-orange-200',
+      iconColor: 'text-orange-600'
+    },
+    {
+      icon: Hospital,
+      label: 'Emergency Care',
+      description: 'Immediate medical attention',
+      path: '/patient/book/hospital',
+      color: 'bg-red-50 hover:bg-red-100 border-red-200',
+      iconColor: 'text-red-600'
+    }
+  ];
+
+  const healthServices = [
+    {
+      icon: Pill,
+      label: 'Online Pharmacy',
+      description: 'Order medications online',
+      path: '/patient/pharmacy',
+      color: 'bg-purple-50 hover:bg-purple-100 border-purple-200',
+      iconColor: 'text-purple-600'
+    },
+    {
+      icon: Heart,
+      label: 'Nutrition & Diet',
+      description: 'Personalized diet plans',
+      path: '/patient/nutrition',
+      color: 'bg-pink-50 hover:bg-pink-100 border-pink-200',
+      iconColor: 'text-pink-600'
+    },
+    {
+      icon: Dumbbell,
+      label: 'Yoga & Fitness',
+      description: 'Wellness and exercise programs',
+      path: '/patient/yoga',
+      color: 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200',
+      iconColor: 'text-indigo-600'
+    },
+    {
+      icon: FileText,
+      label: 'Medical Reports',
+      description: 'View test results & reports',
+      path: '/patient/reports',
+      color: 'bg-teal-50 hover:bg-teal-100 border-teal-200',
+      iconColor: 'text-teal-600'
+    }
+  ];
+
   return (
-    <div className="space-y-8 p-6 relative">
-      {/* Background Gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 -z-10"></div>
-      <div className="fixed top-0 right-0 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob -z-10"></div>
-      <div className="fixed bottom-0 left-0 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000 -z-10"></div>
-
-      {/* Welcome Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl mb-2 bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent">
-            Welcome back, {user?.name || 'User'}!
-          </h1>
-          <p className="text-gray-600 flex items-center gap-2">
-            <Activity className="h-4 w-4 text-green-500 animate-pulse" />
-            Here's your health summary for today
-          </p>
-        </div>
-        <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-200/50 backdrop-blur-sm">
-          <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="text-sm text-green-700">All Systems Healthy</span>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer" onClick={() => onNavigate('/my-profile')}>
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-            <CardTitle className="text-sm font-medium text-blue-100">Patient ID</CardTitle>
-            <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-              <User className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-3xl mb-1">{user?.id || 'P001'}</div>
-            <p className="text-sm text-blue-100">Your unique health ID</p>
-          </CardContent>
-        </Card>
-
-        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-            <CardTitle className="text-sm font-medium text-green-100">Upcoming</CardTitle>
-            <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Calendar className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-3xl mb-1">{upcomingAppointments.length}</div>
-            <p className="text-sm text-green-100">Scheduled consultations</p>
-          </CardContent>
-        </Card>
-
-        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-purple-500 to-pink-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-            <CardTitle className="text-sm font-medium text-purple-100">Health Reports</CardTitle>
-            <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-              <FileText className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-3xl mb-1">{recentReports.length}</div>
-            <p className="text-sm text-purple-100">Available reports</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <Card className="border-0 bg-white/60 backdrop-blur-xl shadow-2xl">
-        <CardHeader>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-blue-600" />
-                Quick Actions
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-1">Book consultations instantly</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Welcome back, {user?.name || 'Patient'}!
+              </h1>
+              <p className="text-gray-600 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-green-500" />
+                Your health dashboard overview
+              </p>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full border border-green-200">
+              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-green-700 font-medium">All Systems Healthy</span>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { icon: Video, label: 'Video Call', path: '/patient/book/video', gradient: 'from-blue-500 to-blue-600' },
-              { icon: MessageSquare, label: 'Chat', path: '/patient/book/chat', gradient: 'from-green-500 to-emerald-600' },
-              { icon: MapPin, label: 'In-Person', path: '/patient/book/inperson', gradient: 'from-purple-500 to-pink-600' },
-              { icon: Hospital, label: 'Hospital', path: '/patient/book/hospital', gradient: 'from-orange-500 to-amber-600' }
-            ].map((action, index) => (
-              <Button
-                key={index}
-                className={`group h-auto py-6 flex flex-col gap-3 bg-gradient-to-br ${action.gradient} hover:shadow-2xl transition-all duration-300 hover:scale-105 border-0 relative overflow-hidden`}
-                onClick={() => onNavigate(action.path)}
-              >
-                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors"></div>
-                <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <action.icon className="h-6 w-6" />
-                </div>
-                <span className="text-sm">{action.label}</span>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Two Column Layout */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Upcoming Appointments */}
-        <Card className="border-0 bg-white/60 backdrop-blur-xl shadow-2xl">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Patient ID</CardTitle>
+              <User className="h-4 w-4 text-gray-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900 mb-1">{user?.id || 'P001'}</div>
+              <p className="text-xs text-gray-500">Your unique health identifier</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Upcoming Appointments</CardTitle>
+              <Calendar className="h-4 w-4 text-gray-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900 mb-1">{upcomingAppointments.length}</div>
+              <p className="text-xs text-gray-500">Scheduled consultations</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Medical Reports</CardTitle>
+              <FileText className="h-4 w-4 text-gray-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900 mb-1">{recentReports.length}</div>
+              <p className="text-xs text-gray-500">Available test results</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <Card className="mb-8 border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-blue-600" />
-              Upcoming Appointments
+              <Stethoscope className="h-5 w-5 text-blue-600" />
+              Book Consultation
             </CardTitle>
+            <p className="text-sm text-gray-600">Choose your preferred consultation method</p>
           </CardHeader>
           <CardContent>
-            {upcomingAppointments.length > 0 ? (
-              <div className="space-y-4">
-                {upcomingAppointments.map((appointment) => (
-                  <div key={appointment.id} className="group p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="mb-1 group-hover:text-blue-600 transition-colors">{appointment.doctorName}</h4>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Clock className="h-3 w-3" />
-                          <span>{appointment.date} at {appointment.time}</span>
-                        </div>
-                      </div>
-                      <Badge variant={appointment.type === 'video' ? 'default' : 'secondary'} className="capitalize">
-                        {appointment.type}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-3">{appointment.reason}</p>
-                    <Button size="sm" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" onClick={() => onNavigate('/patient/appointments')}>
-                      View Details
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">No upcoming appointments</p>
-                <Button onClick={() => onNavigate('/patient/book/video')} className="bg-gradient-to-r from-blue-600 to-purple-600">
-                  Book Appointment
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Health Services */}
-        <Card className="border-0 bg-white/60 backdrop-blur-xl shadow-2xl">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Heart className="h-5 w-5 text-red-500" fill="currentColor" />
-              Health Services
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {[
-                { icon: FileText, label: 'Online Pharmacy', path: '/patient/pharmacy', color: 'text-green-600', bg: 'bg-green-100' },
-                { icon: Activity, label: 'Nutrition & Diet', path: '/patient/nutrition', color: 'text-orange-600', bg: 'bg-orange-100' },
-                { icon: TrendingUp, label: 'Yoga & Fitness', path: '/patient/yoga', color: 'text-purple-600', bg: 'bg-purple-100' },
-                { icon: User, label: 'My Profile', path: '/my-profile', color: 'text-blue-600', bg: 'bg-blue-100' }
-              ].map((service, index) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {quickActions.map((action, index) => (
                 <button
                   key={index}
-                  onClick={() => onNavigate(service.path)}
-                  className="group w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-100 hover:shadow-xl hover:border-gray-200 transition-all duration-300 hover:scale-[1.02]"
+                  onClick={() => onNavigate(action.path)}
+                  className={`group p-6 rounded-lg border transition-all duration-200 hover:shadow-md ${action.color}`}
                 >
-                  <div className={`h-12 w-12 ${service.bg} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                    <service.icon className={`h-6 w-6 ${service.color}`} />
+                  <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-lg bg-white shadow-sm group-hover:scale-110 transition-transform ${action.iconColor}`}>
+                      <action.icon className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h3 className="font-semibold text-gray-900 mb-1">{action.label}</h3>
+                      <p className="text-sm text-gray-600">{action.description}</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
                   </div>
-                  <div className="flex-1 text-left">
-                    <h4 className="group-hover:text-blue-600 transition-colors">{service.label}</h4>
-                    <p className="text-sm text-gray-500">Manage your {service.label.toLowerCase()}</p>
-                  </div>
-                  <div className="text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all">→</div>
                 </button>
               ))}
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      <style>{`
-        @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          25% { transform: translate(20px, -20px) scale(1.1); }
-          50% { transform: translate(-20px, 20px) scale(0.9); }
-          75% { transform: translate(20px, 20px) scale(1.05); }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-      `}</style>
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Upcoming Appointments */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                Upcoming Appointments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {upcomingAppointments.length > 0 ? (
+                <div className="space-y-4">
+                  {upcomingAppointments.map((appointment) => (
+                    <div key={appointment.id} className="p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-1">{appointment.doctorName}</h4>
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                            <Clock className="h-3 w-3" />
+                            <span>{appointment.date} at {appointment.time}</span>
+                          </div>
+                          <Badge variant={appointment.type === 'video' ? 'default' : 'secondary'} className="text-xs">
+                            {appointment.type}
+                          </Badge>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">{appointment.reason}</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => onNavigate('/patient/appointments')}
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 mb-4">No upcoming appointments</p>
+                  <Button onClick={() => onNavigate('/patient/book/video')}>
+                    Book Your First Appointment
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Health Services */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Heart className="h-5 w-5 text-red-500" />
+                Health Services
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {healthServices.map((service, index) => (
+                  <button
+                    key={index}
+                    onClick={() => onNavigate(service.path)}
+                    className={`group w-full p-4 rounded-lg border transition-all duration-200 hover:shadow-sm ${service.color}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`p-2 rounded-lg bg-white shadow-sm ${service.iconColor}`}>
+                        <service.icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <h4 className="font-medium text-gray-900">{service.label}</h4>
+                        <p className="text-sm text-gray-600">{service.description}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Activity / Quick Access */}
+        <Card className="mt-8 border-0 shadow-sm">
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+            <p className="text-sm text-gray-600">Your latest health-related activities</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentReports.map((report) => (
+                <div key={report.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 bg-blue-50 rounded-lg">
+                      <FileText className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">{report.name}</h4>
+                      <p className="text-sm text-gray-600">{report.type} • {report.date}</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => onNavigate('/patient/reports')}>
+                    View
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <style>{`
+          @keyframes blob {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(20px, -20px) scale(1.1); }
+            50% { transform: translate(-20px, 20px) scale(0.9); }
+            75% { transform: translate(20px, 20px) scale(1.05); }
+          }
+          .animate-blob {
+            animation: blob 7s infinite;
+          }
+          .animation-delay-2000 {
+            animation-delay: 2s;
+          }
+        `}</style>
+      </div>
     </div>
   );
 };

@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { Label } from '../ui/label';
 import {
   Table,
   TableBody,
@@ -20,15 +22,29 @@ import {
 } from '../ui/dialog';
 import {
   CheckCircle, XCircle, Eye, Search, UserCog,
-  Star, Phone, Mail, Ban, Building, Calendar
+  Star, Phone, Mail, Ban, Building, Calendar, Plus
 } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
+import { Doctor } from '../../types';
 
 export const DoctorManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'approved' | 'pending' | 'suspended'>('all');
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
-  const { doctors, approveDoctor, suspendDoctor } = useAppStore();
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newDoctor, setNewDoctor] = useState<Partial<Doctor>>({
+    name: '',
+    email: '',
+    phone: '',
+    specialization: '',
+    qualification: '',
+    experience: 0,
+    consultationFee: 0,
+    rating: 0,
+    available: true,
+    status: 'pending',
+  });
+  const { doctors, hospitals, trainers, patients, approveDoctor, suspendDoctor, addDoctor } = useAppStore();
 
   const filteredDoctors = doctors.filter(doctor => {
     const matchesSearch = doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -87,21 +103,174 @@ export const DoctorManagement = () => {
         </Card>
       </div>
 
-      {/* Search and Table */}
+
+
+      {/* Search and Filter */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <CardTitle>All Doctors</CardTitle>
-            <div className="relative w-full md:w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <CardContent className="pt-6">
+          <div className="flex gap-4 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search doctors..."
+                placeholder="Search doctors by name or specialization..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
+                className="pl-10"
               />
             </div>
+            <div className="flex gap-2">
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Doctor
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add New Doctor</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="name">Name</Label>
+                        <Input
+                          id="name"
+                          value={newDoctor.name}
+                          onChange={(e) => setNewDoctor({...newDoctor, name: e.target.value})}
+                          placeholder="Enter doctor name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={newDoctor.email}
+                          onChange={(e) => setNewDoctor({...newDoctor, email: e.target.value})}
+                          placeholder="Enter email address"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="phone">Phone</Label>
+                        <Input
+                          id="phone"
+                          value={newDoctor.phone}
+                          onChange={(e) => setNewDoctor({...newDoctor, phone: e.target.value})}
+                          placeholder="Enter phone number"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="specialization">Specialization</Label>
+                        <Input
+                          id="specialization"
+                          value={newDoctor.specialization}
+                          onChange={(e) => setNewDoctor({...newDoctor, specialization: e.target.value})}
+                          placeholder="e.g., Cardiology, Neurology"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="qualification">Qualification</Label>
+                        <Input
+                          id="qualification"
+                          value={newDoctor.qualification}
+                          onChange={(e) => setNewDoctor({...newDoctor, qualification: e.target.value})}
+                          placeholder="e.g., MBBS, MD"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="experience">Experience (Years)</Label>
+                        <Input
+                          id="experience"
+                          type="number"
+                          value={newDoctor.experience}
+                          onChange={(e) => setNewDoctor({...newDoctor, experience: parseInt(e.target.value) || 0})}
+                          placeholder="Enter years of experience"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="consultationFee">Consultation Fee (₹)</Label>
+                        <Input
+                          id="consultationFee"
+                          type="number"
+                          value={newDoctor.consultationFee}
+                          onChange={(e) => setNewDoctor({...newDoctor, consultationFee: parseInt(e.target.value) || 0})}
+                          placeholder="Enter consultation fee"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="rating">Rating</Label>
+                        <Input
+                          id="rating"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="5"
+                          value={newDoctor.rating}
+                          onChange={(e) => setNewDoctor({...newDoctor, rating: parseFloat(e.target.value) || 0})}
+                          placeholder="Enter rating (0-5)"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={() => {
+                        if (newDoctor.name && newDoctor.email && newDoctor.phone && newDoctor.specialization) {
+                          const doctorToAdd: Doctor = {
+                            id: `D${String(doctors.length + 1).padStart(3, '0')}`,
+                            ...newDoctor,
+                            createdAt: new Date().toISOString(),
+                          } as Doctor;
+                          addDoctor(doctorToAdd);
+                          setIsAddDialogOpen(false);
+                          setNewDoctor({
+                            name: '',
+                            email: '',
+                            phone: '',
+                            specialization: '',
+                            qualification: '',
+                            experience: 0,
+                            consultationFee: 0,
+                            rating: 0,
+                            available: true,
+                            status: 'pending',
+                          });
+                        }
+                      }}>
+                        Add Doctor
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              {(['all', 'approved', 'pending', 'suspended'] as const).map(status => (
+                <Button
+                  key={status}
+                  variant={filter === status ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFilter(status)}
+                  className="capitalize"
+                >
+                  {status}
+                </Button>
+              ))}
+            </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Doctors Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>All Doctors</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>

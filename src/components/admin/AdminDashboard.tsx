@@ -7,13 +7,13 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
-import { Users, Building2, UserCog, Calendar, AlertCircle, CheckCircle, XCircle, TrendingUp, Plus } from 'lucide-react';
+import { Users, Building2, UserCog, Calendar, AlertCircle, CheckCircle, XCircle, TrendingUp, Plus, Dumbbell, Pill, FileText, Settings } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
 import { useSearch } from '../../lib/search-context';
 import api from '../../lib/api-client';
 
 export const AdminDashboard = () => {
-  const { patients, doctors, hospitals, appointments, approveHospital, rejectHospital, approveDoctor, suspendDoctor, addDoctor } = useAppStore();
+  const { patients, doctors, hospitals, trainers, appointments, approveHospital, rejectHospital, approveDoctor, suspendDoctor, addDoctor, addPatient, addTrainer, addHospital } = useAppStore();
   const { searchQuery } = useSearch();
   const [stats, setStats] = useState({
     totalPatients: 0,
@@ -38,6 +38,44 @@ export const AdminDashboard = () => {
     password: '',
   });
 
+  // Add Patient Form State
+  const [showAddPatientForm, setShowAddPatientForm] = useState(false);
+  const [patientForm, setPatientForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    gender: '',
+    address: '',
+    emergencyContact: '',
+    password: '',
+  });
+
+  // Add Trainer Form State
+  const [showAddTrainerForm, setShowAddTrainerForm] = useState(false);
+  const [trainerForm, setTrainerForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    specialization: '',
+    experience: '',
+    certification: '',
+    password: '',
+  });
+
+  // Add Hospital Form State
+  const [showAddHospitalForm, setShowAddHospitalForm] = useState(false);
+  const [hospitalForm, setHospitalForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    registrationNumber: '',
+    password: '',
+  });
+
   // Load admin stats on component mount
   useEffect(() => {
     const loadStats = async () => {
@@ -59,7 +97,8 @@ export const AdminDashboard = () => {
           totalDoctors: doctors.length,
           totalHospitals: hospitals.length,
           pendingApprovals: hospitals.filter(h => h.status === 'pending').length +
-                            doctors.filter(d => d.status === 'pending').length,
+                            doctors.filter(d => d.status === 'pending').length +
+                            trainers.filter(t => t.status === 'pending').length,
           activeAppointments: appointments.filter(a => a.status === 'booked').length,
           emergencies: 2,
         });
@@ -67,7 +106,7 @@ export const AdminDashboard = () => {
     };
 
     loadStats();
-  }, [patients, doctors, hospitals, appointments]);
+  }, [patients, doctors, hospitals, trainers, appointments]);
 
   // Filter data based on search query
   const filteredHospitals = (Array.isArray(hospitals) ? hospitals : []).filter(h => {
@@ -142,6 +181,129 @@ export const AdminDashboard = () => {
     }
   };
 
+  // Handle Add Patient Form
+  const handleAddPatient = async () => {
+    if (!patientForm.name || !patientForm.email || !patientForm.password) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const newPatient = {
+      id: `PAT${String(patients.length + 1).padStart(3, '0')}`,
+      name: patientForm.name,
+      email: patientForm.email,
+      phone: patientForm.phone,
+      age: 0, // Will be calculated from dateOfBirth if provided
+      gender: patientForm.gender as 'Male' | 'Female' | 'Other',
+      dateOfBirth: patientForm.dateOfBirth,
+      address: patientForm.address,
+      emergencyContact: patientForm.emergencyContact,
+      medicalHistory: [],
+      appointments: [],
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      await addPatient(newPatient);
+      setPatientForm({
+        name: '',
+        email: '',
+        phone: '',
+        dateOfBirth: '',
+        gender: '',
+        address: '',
+        emergencyContact: '',
+        password: '',
+      });
+      setShowAddPatientForm(false);
+    } catch (error) {
+      console.error('Failed to add patient:', error);
+    }
+  };
+
+  // Handle Add Trainer Form
+  const handleAddTrainer = async () => {
+    if (!trainerForm.name || !trainerForm.email || !trainerForm.specialization || !trainerForm.password) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const newTrainer = {
+      id: `TRA${String(trainers.length + 1).padStart(3, '0')}`,
+      name: trainerForm.name,
+      email: trainerForm.email,
+      phone: trainerForm.phone,
+      trainerType: trainerForm.specialization,
+      experienceYears: parseInt(trainerForm.experience) || 0,
+      location: 'Online', // Default location
+      pricePerSession: 1000, // Default price
+      bio: trainerForm.certification,
+      specialties: [trainerForm.specialization],
+      qualifications: [trainerForm.certification],
+      languages: ['English'],
+      modes: ['virtual'],
+      status: 'approved' as const,
+      rating: 0,
+      reviews: 0,
+      password: trainerForm.password,
+    };
+
+    try {
+      await addTrainer(newTrainer);
+      setTrainerForm({
+        name: '',
+        email: '',
+        phone: '',
+        specialization: '',
+        experience: '',
+        certification: '',
+        password: '',
+      });
+      setShowAddTrainerForm(false);
+    } catch (error) {
+      console.error('Failed to add trainer:', error);
+    }
+  };
+
+  // Handle Add Hospital Form
+  const handleAddHospital = async () => {
+    if (!hospitalForm.name || !hospitalForm.email || !hospitalForm.address || !hospitalForm.city || !hospitalForm.state || !hospitalForm.password) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const newHospital = {
+      id: `HOS${String(hospitals.length + 1).padStart(3, '0')}`,
+      name: hospitalForm.name,
+      email: hospitalForm.email,
+      phone: hospitalForm.phone,
+      address: hospitalForm.address,
+      city: hospitalForm.city,
+      state: hospitalForm.state,
+      totalDoctors: 0,
+      facilities: [],
+      status: 'approved' as const,
+      registrationNumber: hospitalForm.registrationNumber,
+    };
+
+    try {
+      await addHospital(newHospital);
+      setHospitalForm({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        city: '',
+        state: '',
+        registrationNumber: '',
+        password: '',
+      });
+      setShowAddHospitalForm(false);
+    } catch (error) {
+      console.error('Failed to add hospital:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -184,16 +346,7 @@ export const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">Pending Approvals</CardTitle>
-            <AlertCircle className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{stats.pendingApprovals}</div>
-            <p className="text-xs text-gray-600 mt-1">Awaiting verification</p>
-          </CardContent>
-        </Card>
+
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -218,92 +371,7 @@ export const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Pending Approvals Section */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Pending Hospitals */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Pending Hospital Approvals</span>
-              <Badge variant="secondary">{pendingHospitals.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {pendingHospitals.length > 0 ? (
-                pendingHospitals.map((hospital) => (
-                  <div key={hospital.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="mb-1">{hospital.name}</h4>
-                        <p className="text-sm text-gray-600">{hospital.city}, {hospital.state}</p>
-                        <p className="text-xs text-gray-500 mt-1">Reg: {hospital.registrationNumber}</p>
-                      </div>
-                      <Badge variant="outline" className="text-orange-600 border-orange-600">
-                        Pending
-                      </Badge>
-                    </div>
-                    <div className="flex gap-2 mt-3">
-                      <Button size="sm" className="flex-1" onClick={() => approveHospital(hospital.id)}>
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        Approve
-                      </Button>
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => rejectHospital(hospital.id)}>
-                        <XCircle className="h-4 w-4 mr-1" />
-                        Reject
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500 text-center py-8">No pending hospital approvals</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Pending Doctors */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Pending Doctor Approvals</span>
-              <Badge variant="secondary">{pendingDoctors.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {pendingDoctors.length > 0 ? (
-                pendingDoctors.map((doctor) => (
-                  <div key={doctor.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="mb-1">{doctor.name}</h4>
-                        <p className="text-sm text-gray-600">{doctor.specialization}</p>
-                        <p className="text-xs text-gray-500 mt-1">{doctor.qualification}</p>
-                      </div>
-                      <Badge variant="outline" className="text-orange-600 border-orange-600">
-                        Pending
-                      </Badge>
-                    </div>
-                    <div className="flex gap-2 mt-3">
-                      <Button size="sm" className="flex-1" onClick={() => approveDoctor(doctor.id)}>
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        Approve
-                      </Button>
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => suspendDoctor(doctor.id)}>
-                        <XCircle className="h-4 w-4 mr-1" />
-                        Reject
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500 text-center py-8">No pending doctor approvals</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Add Doctor Form */}
       {showAddDoctorForm && (
@@ -437,26 +505,54 @@ export const AdminDashboard = () => {
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
             <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => setShowAddDoctorForm(!showAddDoctorForm)}>
               <Plus className="h-5 w-5" />
               <span className="text-sm">Add Doctor</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/patients'}>
-              <Users className="h-5 w-5" />
-              <span className="text-sm">View All Patients</span>
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/approvals'}>
+              <CheckCircle className="h-5 w-5" />
+              <span className="text-sm">Pending Approvals</span>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/hospitals'}>
+              <Building2 className="h-5 w-5" />
+              <span className="text-sm">Manage Hospitals</span>
             </Button>
             <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/doctors'}>
               <UserCog className="h-5 w-5" />
               <span className="text-sm">Manage Doctors</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/hospitals'}>
-              <Building2 className="h-5 w-5" />
-              <span className="text-sm">View Hospitals</span>
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/trainers'}>
+              <Dumbbell className="h-5 w-5" />
+              <span className="text-sm">Manage Trainers</span>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/users'}>
+              <Users className="h-5 w-5" />
+              <span className="text-sm">User Management</span>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/patients'}>
+              <Users className="h-5 w-5" />
+              <span className="text-sm">Manage Patients</span>
             </Button>
             <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/appointments'}>
               <Calendar className="h-5 w-5" />
               <span className="text-sm">View Appointments</span>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/pharmacy'}>
+              <Pill className="h-5 w-5" />
+              <span className="text-sm">Pharmacy</span>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/emergency'}>
+              <AlertCircle className="h-5 w-5" />
+              <span className="text-sm">Emergency</span>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/reports'}>
+              <FileText className="h-5 w-5" />
+              <span className="text-sm">Reports</span>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => window.location.href = '/admin/settings'}>
+              <Settings className="h-5 w-5" />
+              <span className="text-sm">Settings</span>
             </Button>
           </div>
         </CardContent>

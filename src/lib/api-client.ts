@@ -541,7 +541,7 @@ export const adminAPI = {
     if (sortBy) params.append('sortBy', sortBy);
     if (sortDir) params.append('sortDir', sortDir);
     if (search) params.append('search', search);
-    return apiCall<any>(`/patients?${params.toString()}`);
+    return apiCall<any>(`/admin/patients?${params.toString()}`);
   },
   getPatientById: (id: string) => apiCall<any>(`/patients/${id}`),
   updatePatient: (id: string, patient: any) =>
@@ -651,6 +651,11 @@ export const trainerAPI = {
 
   reject: (id: string) =>
     apiCall<any>(`/trainers/${id}/reject`, {
+      method: 'PUT',
+    }),
+
+  suspend: (id: string) =>
+    apiCall<any>(`/trainers/${id}/suspend`, {
       method: 'PUT',
     }),
 

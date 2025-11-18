@@ -12,6 +12,7 @@ import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { DashboardLayout } from './components/DashboardLayout';
 import { PatientDashboard } from './components/patient/PatientDashboard';
 import { BookAppointment } from './components/patient/BookAppointment';
+import { BookAppointmentSelection } from './components/patient/BookAppointmentSelection';
 import { MyAppointments } from './components/patient/MyAppointments';
 import { PatientProfile } from './components/patient/PatientProfile';
 import { PatientReports } from './components/patient/PatientReports';
@@ -35,6 +36,7 @@ import { HospitalPatients } from './components/hospital/HospitalPatients';
 import { HospitalReports } from './components/hospital/HospitalReports';
 import { HospitalEmergency } from './components/hospital/HospitalEmergency';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import { PendingApprovals } from './components/admin/PendingApprovals';
 import { AdminPatients } from './components/admin/AdminPatients';
 import { AdminAppointments } from './components/admin/AdminAppointments';
 import { AdminReports } from './components/admin/AdminReports';
@@ -44,6 +46,7 @@ import { HospitalManagement } from './components/admin/HospitalManagement';
 import { DoctorManagement } from './components/admin/DoctorManagement';
 import { AdminPharmacy } from './components/admin/AdminPharmacy';
 import { TrainerManagement } from './components/admin/TrainerManagement';
+import { AdminUserManagement } from './components/admin/AdminUserManagement';
 import { AdminProfile } from './components/admin/AdminProfile';
 import { TrainerDashboard } from './components/trainer/TrainerDashboard';
 import { ConfigStatus } from './components/ConfigStatus';
@@ -186,48 +189,7 @@ function AppContent() {
       return (
         <DashboardLayout role="patient" onNavigate={navigate} currentPath={currentPath}>
           {currentPath === '/patient/dashboard' && <PatientDashboard onNavigate={navigate} />}
-          {currentPath === '/patient/book' && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-3xl mb-2">Book Appointment</h1>
-                <p className="text-gray-600">Choose your preferred consultation type</p>
-              </div>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/patient/book/video')}>
-                  <CardContent className="p-6 text-center">
-                    <Video className="h-12 w-12 mx-auto mb-4 text-blue-600" />
-                    <h3 className="text-lg font-semibold mb-2">Video Consultation</h3>
-                    <p className="text-gray-600 text-sm">Connect with doctor via video call</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/patient/book/chat')}>
-                  <CardContent className="p-6 text-center">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-4 text-green-600" />
-                    <h3 className="text-lg font-semibold mb-2">Chat Consultation</h3>
-                    <p className="text-gray-600 text-sm">Text-based consultation with doctor</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/patient/book/inperson')}>
-                  <CardContent className="p-6 text-center">
-                    <MapPin className="h-12 w-12 mx-auto mb-4 text-orange-600" />
-                    <h3 className="text-lg font-semibold mb-2">In-Person Visit</h3>
-                    <p className="text-gray-600 text-sm">Visit doctor at clinic/hospital</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/patient/book/hospital')}>
-                  <CardContent className="p-6 text-center">
-                    <Building2 className="h-12 w-12 mx-auto mb-4 text-purple-600" />
-                    <h3 className="text-lg font-semibold mb-2">Hospital Appointment</h3>
-                    <p className="text-gray-600 text-sm">Book hospital-based consultation</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
+          {currentPath === '/patient/book' && <BookAppointmentSelection onNavigate={navigate} />}
           {currentPath === '/patient/book/video' && <BookAppointment type="video" />}
           {currentPath === '/patient/book/chat' && <BookAppointment type="chat" />}
           {currentPath === '/patient/book/inperson' && <BookAppointment type="inperson" />}
@@ -311,9 +273,11 @@ function AppContent() {
       return (
         <DashboardLayout role="admin" onNavigate={navigate} currentPath={currentPath}>
           {currentPath === '/admin-dashboard' && <AdminDashboard />}
+          {currentPath === '/admin/approvals' && <PendingApprovals />}
           {currentPath === '/admin/hospitals' && <HospitalManagement />}
           {currentPath === '/admin/doctors' && <DoctorManagement />}
           {currentPath === '/admin/patients' && <AdminPatients />}
+          {currentPath === '/admin/users' && <AdminUserManagement />}
           {currentPath === '/admin/appointments' && <AdminAppointments />}
           {currentPath === '/admin/pharmacy' && <AdminPharmacy />}
           {currentPath === '/admin/emergency' && <AdminEmergency />}

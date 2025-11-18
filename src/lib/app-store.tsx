@@ -173,7 +173,8 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       if (userRole === 'admin') {
         // Admin loads all data - handle each API call separately to prevent one failure from stopping others
         try {
-          patientsData = await api.admin.getAllPatients();
+          const response = await api.admin.getAllPatients(0, 10000);
+          patientsData = response.content || response;
         } catch (error) {
           console.warn('Failed to load patients from backend:', error);
           patientsData = [];
@@ -209,6 +210,15 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
         } catch (error) {
           console.warn('Failed to load medicines from backend:', error);
           medicinesData = [];
+          failedLoads++;
+        }
+
+        try {
+          const trainersData = await api.trainers.getAll();
+          setTrainers(trainersData);
+        } catch (error) {
+          console.warn('Failed to load trainers from backend:', error);
+          // Keep existing trainers data if backend fails
           failedLoads++;
         }
       } else if (userRole === 'patient' && userId) {

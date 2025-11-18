@@ -47,7 +47,7 @@ export const AdminPharmacy = () => {
 
   // Medicine Form State
   const [showMedicineForm, setShowMedicineForm] = useState(false);
-  const [editingMedicine, setEditingMedicine] = useState(null);
+  const [editingMedicine, setEditingMedicine] = useState<Medicine | null>(null);
   const [medicineForm, setMedicineForm] = useState({
     name: '',
     description: '',
@@ -116,12 +116,12 @@ export const AdminPharmacy = () => {
   };
 
   const handleEditMedicine = async () => {
-    if (!medicineForm.name || !medicineForm.price || !medicineForm.stock) {
+    if (!medicineForm.name || !medicineForm.price || !medicineForm.stock || !editingMedicine) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    const updatedMedicine = {
+    const updatedMedicine: Medicine = {
       ...editingMedicine,
       name: medicineForm.name,
       description: medicineForm.description,
@@ -142,7 +142,7 @@ export const AdminPharmacy = () => {
     }
   };
 
-  const handleDeleteMedicine = async (medicineId) => {
+  const handleDeleteMedicine = async (medicineId: string) => {
     try {
       await api.pharmacy.deleteMedicine(medicineId);
       setMedicines(medicines.filter(med => med.id !== medicineId));
@@ -166,7 +166,7 @@ export const AdminPharmacy = () => {
     setShowMedicineForm(false);
   };
 
-  const startEditMedicine = (medicine) => {
+  const startEditMedicine = (medicine: Medicine) => {
     setEditingMedicine(medicine);
     setMedicineForm({
       name: medicine.name,
@@ -180,7 +180,7 @@ export const AdminPharmacy = () => {
   };
 
   // Handle Order Status Updates
-  const handleUpdateOrderStatus = async (orderId, status) => {
+  const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
       await api.pharmacy.updateOrderStatus(orderId, status);
       setOrders(orders.map(order =>

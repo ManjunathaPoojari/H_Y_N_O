@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import {
   Activity, Bell, Search, LogOut, Menu, Settings,
   LayoutDashboard, Users, Calendar, MessageSquare, Video,
-  FileText, Building2, UserCog, AlertCircle,
+  FileText, Building2, UserCog, AlertCircle, CheckCircle,
   Pill, User, Hospital, Stethoscope, Apple, Dumbbell
 } from 'lucide-react';
 import { Input } from './ui/input';
@@ -83,10 +83,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       case 'admin':
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/admin-dashboard' },
+          { icon: CheckCircle, label: 'Pending Approvals', path: '/admin/approvals' },
+          { icon: Users, label: 'User Management', path: '/admin/users' },
           { icon: Building2, label: 'Hospitals', path: '/admin/hospitals' },
           { icon: UserCog, label: 'Doctors', path: '/admin/doctors' },
-          { icon: Dumbbell, label: 'Trainers', path: '/admin/trainers' },
           { icon: Users, label: 'Patients', path: '/admin/patients' },
+          { icon: Dumbbell, label: 'Trainers', path: '/admin/trainers' },
           { icon: Calendar, label: 'Appointments', path: '/admin/appointments' },
           { icon: Pill, label: 'Pharmacy', path: '/admin/pharmacy' },
           { icon: AlertCircle, label: 'Emergency', path: '/admin/emergency' },
