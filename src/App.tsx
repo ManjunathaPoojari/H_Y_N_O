@@ -15,10 +15,15 @@ import { PatientProfile } from './components/patient/PatientProfile';
 import { PatientReports } from './components/patient/PatientReports';
 import { OnlinePharmacy } from './components/patient/OnlinePharmacy';
 import { NutritionWellness } from './components/patient/NutritionWellness';
+import { HealthyRecipes } from './components/patient/HealthyRecipes';
 import { PremiumPlans } from './components/patient/PremiumPlans';
 import { UserProfile } from './components/patient/UserProfile';
 import { YogaFitness } from './components/patient/YogaFitness';
+<<<<<<< HEAD
 import DailyTracker from './components/patient/DailyTracker';
+=======
+import { WellnessCommunity } from './components/patient/WellnessCommunity';
+>>>>>>> 4e65214484a86abdfbe7623e8fd6fbe48db07b60
 import { PatientMeetings } from './components/patient/PatientMeetings';
 import { ChatInterface } from './components/common/ChatInterface';
 import { DoctorDashboard } from './components/doctor/DoctorDashboard';
@@ -184,13 +189,18 @@ function AppContent() {
           {currentPath === '/patient/reports' && <PatientReports />}
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
+<<<<<<< HEAD
 <<<<<<< Updated upstream
           {currentPath === '/patient/nutrition/daily-tracker' && <DailyTracker />}
 =======
           {currentPath === '/patient/nutrition/daily-tracker' && <WaterTracking />}
 >>>>>>> Stashed changes
+=======
+          {currentPath === '/patient/nutrition/recipes' && <HealthyRecipes onNavigate={navigate} />}
+>>>>>>> 4e65214484a86abdfbe7623e8fd6fbe48db07b60
           {currentPath === '/patient/nutrition/premium' && <PremiumPlans onNavigate={navigate} />}
           {currentPath === '/patient/nutrition/profile' && <UserProfile />}
+          {currentPath === '/patient/community' && <WellnessCommunity onNavigate={navigate} />}
           {currentPath === '/patient/yoga' && <YogaFitness onNavigate={navigate} />}
           {currentPath === '/my-profile' && <PatientProfile />}
         </DashboardLayout>

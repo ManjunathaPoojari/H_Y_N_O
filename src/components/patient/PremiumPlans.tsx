@@ -14,57 +14,10 @@ interface PremiumPlansProps {
 
 export const PremiumPlans: React.FC<PremiumPlansProps> = ({ onNavigate }) => {
   const { addNotification } = useNotifications();
-  const [selectedNutritionist, setSelectedNutritionist] = useState<any>(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [showBookingForm, setShowBookingForm] = useState(false);
-  const [bookingForm, setBookingForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    consultationType: '',
-    preferredDate: '',
-    preferredTime: '',
-    healthGoals: ''
-  });
-  const [bookingSubmitted, setBookingSubmitted] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
-
-  const handleBookConsultation = () => {
-    setShowBookingForm(true);
-  };
-
-  const handleBookingSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Here you would typically send the booking data to your backend
-    console.log('Booking submitted:', bookingForm);
-    setBookingSubmitted(true);
-    addNotification({
-      type: 'system',
-      title: 'Booking Submitted',
-      message: 'Your consultation booking has been submitted successfully. We\'ll contact you soon to confirm your appointment.',
-      unread: true
-    });
-    setTimeout(() => {
-      setShowBookingForm(false);
-      setSelectedNutritionist(null);
-      setBookingSubmitted(false);
-      setBookingForm({
-        name: '',
-        email: '',
-        phone: '',
-        consultationType: '',
-        preferredDate: '',
-        preferredTime: '',
-        healthGoals: ''
-      });
-    }, 2000);
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setBookingForm(prev => ({ ...prev, [field]: value }));
-  };
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const handleSelectPlan = (plan: any) => {
     setSelectedPlan(plan);
@@ -81,6 +34,19 @@ export const PremiumPlans: React.FC<PremiumPlansProps> = ({ onNavigate }) => {
   };
 
   const plans = [
+    {
+      name: 'Go Free',
+      price: 'Free',
+      features: [
+        'Basic meal suggestions',
+        'Limited recipe access',
+        'Basic nutrition tracking',
+        'Access to community forum',
+        'Daily nutrition tips',
+        'Basic progress tracking'
+      ],
+      color: 'from-blue-500 to-blue-600'
+    },
     {
       name: 'Basic Plan',
       price: '₹799/month',
@@ -99,22 +65,9 @@ export const PremiumPlans: React.FC<PremiumPlansProps> = ({ onNavigate }) => {
         'All Basic features',
         'One-on-one virtual coaching sessions (2 per month)',
         'Advanced analytics and insights on nutrition data',
-        'Custom meal plans tailored to goals (e.g., weight loss, muscle gain)',
-        'Integration with wearable devices for automatic tracking'
+        'Custom meal plans tailored to goals (e.g., weight loss, muscle gain)'
       ],
-      color: 'from-green-500 to-green-600'
-    },
-    {
-      name: 'Elite Plan',
-      price: '₹2399/month',
-      features: [
-        'All Advanced features',
-        'Unlimited coaching sessions',
-        'Priority support and 24/7 chat access',
-        'Exclusive premium recipes and expert tips',
-        'Family plan option (up to 4 members)'
-      ],
-      color: 'from-purple-500 to-purple-600'
+      color: 'from-blue-500 to-blue-600'
     }
   ];
 
@@ -327,87 +280,102 @@ export const PremiumPlans: React.FC<PremiumPlansProps> = ({ onNavigate }) => {
 
   return (
     <div className="space-y-8 p-6">
-      {/* Nutritionists Section */}
-      <div className="mb-12">
-        <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
-          Meet Our Expert Nutritionists & Dietitians
-        </h2>
+      <h1 className="text-3xl font-bold text-center mb-8">Choose Plans</h1>
+      {/* Plans Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {plans.map((plan, index) => (
+          <Card key={index} className="relative overflow-hidden">
+            <CardHeader className={`bg-gradient-to-r ${plan.color} text-white`}>
+              <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
+              <div className="text-2xl font-bold">{plan.price}</div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <ul className="space-y-2 mb-6">
+                {plan.features.map((feature, idx) => (
+                  <li key={idx} className="flex items-center">
+                    <Check className="h-4 w-4 text-green-500 mr-2" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Button onClick={() => handleSelectPlan(plan)} className="w-full">
+                Select Plan
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-        {/* Nutritionists Slides */}
-        <div className="relative">
-          {/* Navigation Buttons */}
+      {/* Nutritionists Carousel */}
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold text-center mb-8">Our Expert Nutritionists</h2>
+        <div className="relative overflow-hidden rounded-lg">
+          <div className="flex transition-transform duration-300 ease-in-out" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+            {/* Slide 1 */}
+            <div className="flex-shrink-0 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
+              {nutritionists.slice(0, 4).map((nutritionist) => (
+                <Card key={nutritionist.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6 text-center">
+                    <img src={nutritionist.photo} alt={nutritionist.name} className="w-24 h-24 rounded-full mx-auto mb-4" />
+                    <h3 className="font-bold text-lg">{nutritionist.name}</h3>
+                    <p className="text-sm text-gray-600 mb-2">{nutritionist.specialty}</p>
+                    <div className="flex items-center justify-center mb-2">
+                      <nutritionist.icon className={`h-4 w-4 mr-1 ${nutritionist.color}`} />
+                      <span className="text-sm">{nutritionist.rating}</span>
+                    </div>
+                    <p className="text-xs text-gray-500">{nutritionist.experience}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            {/* Slide 2 */}
+            <div className="flex-shrink-0 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
+              {nutritionists.slice(4, 8).map((nutritionist) => (
+                <Card key={nutritionist.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6 text-center">
+                    <img src={nutritionist.photo} alt={nutritionist.name} className="w-24 h-24 rounded-full mx-auto mb-4" />
+                    <h3 className="font-bold text-lg">{nutritionist.name}</h3>
+                    <p className="text-sm text-gray-600 mb-2">{nutritionist.specialty}</p>
+                    <div className="flex items-center justify-center mb-2">
+                      <nutritionist.icon className={`h-4 w-4 mr-1 ${nutritionist.color}`} />
+                      <span className="text-sm">{nutritionist.rating}</span>
+                    </div>
+                    <p className="text-xs text-gray-500">{nutritionist.experience}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            {/* Slide 3 */}
+            <div className="flex-shrink-0 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
+              {nutritionists.slice(8, 12).map((nutritionist) => (
+                <Card key={nutritionist.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6 text-center">
+                    <img src={nutritionist.photo} alt={nutritionist.name} className="w-24 h-24 rounded-full mx-auto mb-4" />
+                    <h3 className="font-bold text-lg">{nutritionist.name}</h3>
+                    <p className="text-sm text-gray-600 mb-2">{nutritionist.specialty}</p>
+                    <div className="flex items-center justify-center mb-2">
+                      <nutritionist.icon className={`h-4 w-4 mr-1 ${nutritionist.color}`} />
+                      <span className="text-sm">{nutritionist.rating}</span>
+                    </div>
+                    <p className="text-xs text-gray-500">{nutritionist.experience}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
           <button
             onClick={() => setCurrentSlide(Math.max(0, currentSlide - 1))}
             className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-shadow"
           >
             <ChevronLeft className="h-6 w-6 text-gray-600" />
           </button>
-
           <button
-            onClick={() => setCurrentSlide(Math.min(1, currentSlide + 1))}
+            onClick={() => setCurrentSlide(Math.min(2, currentSlide + 1))}
             className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-shadow"
           >
             <ChevronRight className="h-6 w-6 text-gray-600" />
           </button>
-
-          {/* Slide Container */}
-          <div className="overflow-hidden">
-            <div
-              className="flex transition-transform duration-300 ease-in-out"
-              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-            >
-              {/* Slide 1: First 6 Nutritionists */}
-              <div className="w-full flex-shrink-0">
-                <div className="grid md:grid-cols-3 gap-6">
-                  {nutritionists.slice(0, 6).map((nutritionist, index) => (
-                    <Card key={index} className="text-center hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedNutritionist(nutritionist)}>
-                      <CardContent className="p-6">
-                        <img
-                          src={nutritionist.photo}
-                          alt={nutritionist.name}
-                          className="w-20 h-20 rounded-full mx-auto mb-4 object-cover border-4 border-gray-100"
-                        />
-                        <h3 className="text-xl font-semibold mb-2">{nutritionist.name}</h3>
-                        <p className="text-gray-600 mb-2">{nutritionist.specialty}</p>
-                        <p className="text-sm text-gray-500 mb-3">{nutritionist.experience} experience</p>
-                        <div className="flex items-center justify-center gap-1">
-                          <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-medium">{nutritionist.rating}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-
-              {/* Slide 2: Next 6 Nutritionists */}
-              <div className="w-full flex-shrink-0">
-                <div className="grid md:grid-cols-3 gap-6">
-                  {nutritionists.slice(6, 12).map((nutritionist, index) => (
-                    <Card key={index + 6} className="text-center hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedNutritionist(nutritionist)}>
-                      <CardContent className="p-6">
-                        <img
-                          src={nutritionist.photo}
-                          alt={nutritionist.name}
-                          className="w-20 h-20 rounded-full mx-auto mb-4 object-cover border-4 border-gray-100"
-                        />
-                        <h3 className="text-xl font-semibold mb-2">{nutritionist.name}</h3>
-                        <p className="text-gray-600 mb-2">{nutritionist.specialty}</p>
-                        <p className="text-sm text-gray-500 mb-3">{nutritionist.experience} experience</p>
-                        <div className="flex items-center justify-center gap-1">
-                          <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-medium">{nutritionist.rating}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Slide Indicators */}
-          <div className="flex justify-center mt-6 space-x-2">
+          <div className="flex justify-center mt-4 space-x-2">
             <button
               onClick={() => setCurrentSlide(0)}
               className={`w-3 h-3 rounded-full transition-colors ${currentSlide === 0 ? 'bg-blue-600' : 'bg-gray-300'}`}
@@ -416,312 +384,46 @@ export const PremiumPlans: React.FC<PremiumPlansProps> = ({ onNavigate }) => {
               onClick={() => setCurrentSlide(1)}
               className={`w-3 h-3 rounded-full transition-colors ${currentSlide === 1 ? 'bg-blue-600' : 'bg-gray-300'}`}
             />
+            <button
+              onClick={() => setCurrentSlide(2)}
+              className={`w-3 h-3 rounded-full transition-colors ${currentSlide === 2 ? 'bg-blue-600' : 'bg-gray-300'}`}
+            />
           </div>
         </div>
       </div>
 
-      {/* Plans Grid */}
-      <div>
-        <h2 className="text-3xl font-bold text-center mb-4 text-gray-800">
-          Choose Plans
-        </h2>
-        <p className="text-lg text-gray-600 text-center mb-8">
-          Select the perfect plan for your nutritional journey
-        </p>
-        <div className="grid md:grid-cols-3 gap-6">
-          {plans.map((plan, index) => (
-            <Card key={index} className="relative overflow-hidden hover:shadow-lg transition-shadow">
-              <CardHeader className={`bg-gradient-to-r ${plan.color} text-white`}>
-                <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                <div className="text-3xl font-bold">{plan.price}</div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                  onClick={() => handleSelectPlan(plan)}
-                >
-                  Select Plan
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Nutritionist Detail Dialog */}
-      <Dialog open={!!selectedNutritionist} onOpenChange={() => setSelectedNutritionist(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">
-              {selectedNutritionist?.name}
-            </DialogTitle>
-          </DialogHeader>
-
-          {selectedNutritionist && (
-            <div className="space-y-6">
-              {/* Photo and Basic Info */}
-              <div className="flex flex-col items-center text-center">
-                <img
-                  src={selectedNutritionist.photo}
-                  alt={selectedNutritionist.name}
-                  className="w-32 h-32 rounded-full object-cover border-4 border-gray-100 mb-4"
-                />
-                <h3 className="text-xl font-semibold mb-2">{selectedNutritionist.specialty}</h3>
-                <div className="flex items-center gap-2 mb-2">
-                  <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                  <span className="font-medium">{selectedNutritionist.rating} rating</span>
-                </div>
-                <p className="text-gray-600">{selectedNutritionist.experience} experience</p>
-              </div>
-
-              {/* Contact Information */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-lg">Contact Information</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">{selectedNutritionist.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">{selectedNutritionist.phone}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">{selectedNutritionist.location}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-lg">Qualifications</h4>
-                  <p className="text-sm text-gray-600">{selectedNutritionist.qualifications}</p>
-                  <h4 className="font-semibold text-lg">Languages</h4>
-                  <p className="text-sm text-gray-600">{selectedNutritionist.languages}</p>
-                </div>
-              </div>
-
-              {/* Bio */}
-              <div>
-                <h4 className="font-semibold text-lg mb-2">About</h4>
-                <p className="text-gray-600 leading-relaxed">{selectedNutritionist.bio}</p>
-              </div>
-
-              {/* Achievements */}
-              <div>
-                <h4 className="font-semibold text-lg mb-2">Key Achievements</h4>
-                <ul className="list-disc list-inside space-y-1">
-                  {selectedNutritionist.achievements.map((achievement: string, index: number) => (
-                    <li key={index} className="text-gray-600 text-sm">{achievement}</li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-center gap-3 pt-4">
-                <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleBookConsultation}>
-                  Book Consultation
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Booking Form Dialog */}
-      <Dialog open={showBookingForm} onOpenChange={() => setShowBookingForm(false)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">
-              Book Consultation with {selectedNutritionist?.name}
-            </DialogTitle>
-          </DialogHeader>
-
-          {bookingSubmitted ? (
-            <div className="text-center py-8">
-              <Check className="h-16 w-16 text-green-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-green-600 mb-2">Booking Submitted Successfully!</h3>
-              <p className="text-gray-600">Thank you for booking a consultation. We'll contact you soon to confirm your appointment.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleBookingSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                  <Input
-                    type="text"
-                    value={bookingForm.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    required
-                    placeholder="Enter your full name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <Input
-                    type="email"
-                    value={bookingForm.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    required
-                    placeholder="Enter your email"
-                  />
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                  <Input
-                    type="tel"
-                    value={bookingForm.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    required
-                    placeholder="Enter your phone number"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Consultation Type</label>
-                  <Select value={bookingForm.consultationType} onValueChange={(value: string) => handleInputChange('consultationType', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select consultation type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="initial">Initial Consultation</SelectItem>
-                      <SelectItem value="followup">Follow-up Consultation</SelectItem>
-                      <SelectItem value="nutrition-plan">Nutrition Plan Review</SelectItem>
-                      <SelectItem value="dietary-counseling">Dietary Counseling</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Date</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      type="date"
-                      value={bookingForm.preferredDate}
-                      onChange={(e) => handleInputChange('preferredDate', e.target.value)}
-                      required
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Time</label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Select value={bookingForm.preferredTime} onValueChange={(value: string) => handleInputChange('preferredTime', value)}>
-                      <SelectTrigger className="pl-10">
-                        <SelectValue placeholder="Select time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="09:00">9:00 AM</SelectItem>
-                        <SelectItem value="10:00">10:00 AM</SelectItem>
-                        <SelectItem value="11:00">11:00 AM</SelectItem>
-                        <SelectItem value="14:00">2:00 PM</SelectItem>
-                        <SelectItem value="15:00">3:00 PM</SelectItem>
-                        <SelectItem value="16:00">4:00 PM</SelectItem>
-                        <SelectItem value="17:00">5:00 PM</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Health Goals & Concerns</label>
-                <Textarea
-                  value={bookingForm.healthGoals}
-                  onChange={(e) => handleInputChange('healthGoals', e.target.value)}
-                  required
-                  placeholder="Please describe your health goals, current dietary habits, and any specific concerns you'd like to address..."
-                  rows={4}
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => setShowBookingForm(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                  Book Consultation
-                </Button>
-              </div>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-
       {/* Payment Dialog */}
-      <Dialog open={showPaymentDialog} onOpenChange={() => setShowPaymentDialog(false)}>
-        <DialogContent className="max-w-md">
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">
-              Complete Payment
-            </DialogTitle>
+            <DialogTitle>Complete Payment</DialogTitle>
           </DialogHeader>
-
           {paymentCompleted ? (
-            <div className="text-center py-8">
-              <Check className="h-16 w-16 text-green-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-green-600 mb-2">Payment Successful!</h3>
-              <p className="text-gray-600">Thank you for subscribing to the {selectedPlan?.name}. Your plan is now active.</p>
+            <div className="text-center">
+              <Check className="h-16 w-16 text-green-500 mx-auto mb-4" />
+              <h3 className="text-lg font-bold mb-2">Payment Successful!</h3>
+              <p className="text-gray-600">Thank you for subscribing to {selectedPlan?.name}.</p>
             </div>
           ) : (
-            selectedPlan && (
-              <div className="space-y-6">
-                <div className="text-center">
-                  <h3 className="text-xl font-semibold mb-2">{selectedPlan.name}</h3>
-                  <p className="text-2xl font-bold text-blue-600">{selectedPlan.price}</p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Card Number</label>
+                <Input placeholder="1234 5678 9012 3456" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Expiry Date</label>
+                  <Input placeholder="MM/YY" />
                 </div>
-
-                <div className="space-y-3">
-                  <h4 className="font-semibold">Plan Features:</h4>
-                  <ul className="space-y-2">
-                    {selectedPlan.features.map((feature: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <Button
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 mx-auto"
-                      onClick={handlePaymentComplete}
-                    >
-                      <QrCode className="h-5 w-5" />
-                      Scan
-                    </Button>
-                    <p className="text-xs text-gray-500 mt-2">Use your phone's camera to scan and pay</p>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setShowPaymentDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button className="bg-green-600 hover:bg-green-700" onClick={handlePaymentComplete}>
-                    Complete Payment
-                  </Button>
+                <div>
+                  <label className="block text-sm font-medium mb-2">CVV</label>
+                  <Input placeholder="123" />
                 </div>
               </div>
-            )
+              <Button onClick={handlePaymentComplete} className="w-full">
+                Pay {selectedPlan?.price}
+              </Button>
+            </div>
           )}
         </DialogContent>
       </Dialog>

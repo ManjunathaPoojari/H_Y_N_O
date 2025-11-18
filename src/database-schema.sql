@@ -246,6 +246,50 @@ CREATE TABLE order_items (
 -- NUTRITION & WELLNESS
 -- ============================================
 
+-- Recipes Table
+CREATE TABLE recipes (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    description TEXT,
+    category VARCHAR(50),
+    cuisine_type VARCHAR(100),
+    prep_time_minutes INT,
+    cook_time_minutes INT,
+    servings INT,
+    difficulty VARCHAR(20),
+    instructions TEXT,
+    calories_per_serving INT,
+    protein_g_per_serving DECIMAL(5,2),
+    carbs_g_per_serving DECIMAL(5,2),
+    fat_g_per_serving DECIMAL(5,2),
+    fiber_g_per_serving DECIMAL(5,2),
+    sugar_g_per_serving DECIMAL(5,2),
+    sodium_mg_per_serving DECIMAL(7,2),
+    is_vegetarian BOOLEAN DEFAULT FALSE,
+    is_vegan BOOLEAN DEFAULT FALSE,
+    is_gluten_free BOOLEAN DEFAULT FALSE,
+    is_dairy_free BOOLEAN DEFAULT FALSE,
+    image_url VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_category (category),
+    INDEX idx_cuisine (cuisine_type),
+    INDEX idx_difficulty (difficulty),
+    INDEX idx_vegetarian (is_vegetarian),
+    INDEX idx_vegan (is_vegan),
+    INDEX idx_gluten_free (is_gluten_free),
+    INDEX idx_dairy_free (is_dairy_free)
+) ENGINE=InnoDB;
+
+-- Recipe Ingredients Table
+CREATE TABLE recipe_ingredients (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    recipe_id BIGINT NOT NULL,
+    ingredient VARCHAR(200) NOT NULL,
+    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+    INDEX idx_recipe (recipe_id)
+) ENGINE=InnoDB;
+
 CREATE TABLE nutrition_plans (
     id VARCHAR(50) PRIMARY KEY,
     patient_id VARCHAR(50) NOT NULL,
