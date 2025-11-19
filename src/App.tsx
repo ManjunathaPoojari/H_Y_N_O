@@ -49,6 +49,8 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 import { Card, CardContent } from './components/ui/card';
 import { Video, MessageSquare, MapPin, Building2 } from 'lucide-react';
+import { MealKitsPage } from "./components/patient/MealKitsPage";
+
 
 function AppContent() {
   const [currentPath, setCurrentPath] = useState('/');
@@ -181,6 +183,7 @@ function AppContent() {
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
           {currentPath === '/patient/nutrition/recipes' && <HealthyRecipes onNavigate={navigate} />}
+          {currentPath === '/patient/nutrition/meal-kits' && <MealKitsPage onNavigate={navigate} />}
           {currentPath === '/patient/nutrition/premium' && <PremiumPlans onNavigate={navigate} />}
           {currentPath === '/patient/nutrition/profile' && <UserProfile />}
           {currentPath === '/patient/community' && <WellnessCommunity onNavigate={navigate} />}
