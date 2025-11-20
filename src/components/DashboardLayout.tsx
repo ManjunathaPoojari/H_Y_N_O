@@ -1,18 +1,19 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import {
-  Activity, Bell, Search, LogOut,
+  Activity, Bell, Search, LogOut, Menu,
   LayoutDashboard, Users, Calendar, MessageSquare, Video,
-  FileText, Settings, Building2, UserCog, AlertCircle,
-  Pill, User, Hospital, Stethoscope, Apple, Dumbbell
+  FileText, Building2, UserCog, AlertCircle,
+  Pill, User, Hospital, Stethoscope, Apple, Dumbbell, ShieldCheck
 } from 'lucide-react';
 import { Input } from './ui/input';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Badge } from './ui/badge';
 import { useAuth } from '../lib/auth-context';
 import { useSearch } from '../lib/search-context';
 import { useNotifications } from '../lib/notification-context';
+import api from '../lib/api-client';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -30,6 +31,27 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { user, logout } = useAuth();
   const { searchQuery, setSearchQuery } = useSearch();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  // Fetch pending approvals count for admin
+  useEffect(() => {
+    if (role === 'admin') {
+      const fetchPendingCount = async () => {
+        try {
+          const [doctors, hospitals, trainers] = await Promise.all([
+            api.admin.getPendingDoctors(),
+            api.admin.getPendingHospitals(),
+            api.admin.getPendingTrainers(),
+          ]);
+          const total = (doctors?.length || 0) + (hospitals?.length || 0) + (trainers?.length || 0);
+          setPendingCount(total);
+        } catch (error) {
+          console.error('Failed to fetch pending count:', error);
+        }
+      };
+      fetchPendingCount();
+    }
+  }, [role]);
 
   const handleLogout = () => {
     logout();
@@ -42,12 +64,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       case 'patient':
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/patient/dashboard' },
-          { icon: Calendar, label: 'Book Appointment', path: '/patient/book', children: [
-            { label: 'In-Person', path: '/patient/book/inperson' },
-            { label: 'Video Consultation', path: '/patient/book/video' },
-            { label: 'Chat Consultation', path: '/patient/book/chat' },
-            { label: 'Hospital', path: '/patient/book/hospital' },
-          ]},
+          {
+            icon: Calendar, label: 'Book Appointment', path: '/patient/book', children: [
+              { label: 'In-Person', path: '/patient/book/inperson' },
+              { label: 'Video Consultation', path: '/patient/book/video' },
+              { label: 'Chat Consultation', path: '/patient/book/chat' },
+              { label: 'Hospital', path: '/patient/book/hospital' },
+            ]
+          },
           { icon: Calendar, label: 'My Appointments', path: '/patient/appointments' },
           { icon: MessageSquare, label: 'Chat', path: '/patient/chat' },
           { icon: Video, label: 'Video Consultation', path: '/patient/meetings' },
@@ -83,15 +107,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       case 'admin':
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/admin-dashboard' },
-          { icon: Building2, label: 'Hospitals', path: '/admin/hospitals' },
-          { icon: UserCog, label: 'Doctors', path: '/admin/doctors' },
-          { icon: Dumbbell, label: 'Trainers', path: '/admin/trainers' },
-          { icon: Users, label: 'Patients', path: '/admin/patients' },
+          { icon: ShieldCheck, label: 'Pending Approvals', path: '/admin/pending-approvals' },
+          { icon: Users, label: 'User Management', path: '/admin/users' },
           { icon: Calendar, label: 'Appointments', path: '/admin/appointments' },
           { icon: Pill, label: 'Pharmacy', path: '/admin/pharmacy' },
           { icon: AlertCircle, label: 'Emergency', path: '/admin/emergency' },
           { icon: FileText, label: 'Reports', path: '/admin/reports' },
-          { icon: Settings, label: 'Settings', path: '/admin/settings' },
         ];
 
       case 'trainer':
@@ -110,14 +131,61 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const navItems = getNavItems();
 
+  const getProfilePath = () => {
+    switch (role) {
+      case 'patient':
+        return '/my-profile';
+      case 'doctor':
+        return '/doctor/profile';
+      case 'hospital':
+        return '/hospital/profile';
+      case 'trainer':
+        return '/trainer/profile';
+      case 'admin':
+        return '/admin/profile';
+      default:
+        return null;
+    }
+  };
+
+  const getSettingsPath = () => {
+    switch (role) {
+      case 'admin':
+        return '/admin/settings';
+      default:
+        return null;
+    }
+  };
+
+  const getDashboardPath = () => {
+    switch (role) {
+      case 'patient':
+        return '/patient/dashboard';
+      case 'doctor':
+        return '/doctor-dashboard';
+      case 'hospital':
+        return '/hospital-dashboard';
+      case 'trainer':
+        return '/trainer-dashboard';
+      case 'admin':
+        return '/admin-dashboard';
+      default:
+        return '/';
+    }
+  };
+
+  const profilePath = getProfilePath();
+  const settingsPath = getSettingsPath();
+  const dashboardPath = getDashboardPath();
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r shadow-sm">
         <div className="p-4 border-b">
           <div className="flex items-center gap-2">
-            <Activity className="h-6 w-6 text-blue-600" />
-            <span className="text-xl text-blue-600">HYNO</span>
+            <Activity className="h-6 w-6 text-emerald-600" />
+            <span className="text-xl text-emerald-600 font-bold">HYNO</span>
           </div>
         </div>
 
@@ -132,32 +200,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               >
                 <item.icon className="h-4 w-4 mr-3" />
                 {item.label}
+                {item.path === '/admin/pending-approvals' && pendingCount > 0 && (
+                  <Badge variant="destructive" className="ml-auto text-xs">
+                    {pendingCount}
+                  </Badge>
+                )}
               </Button>
             ))}
           </div>
         </nav>
 
-        {/* Logout Button at Bottom */}
-        <div className="absolute bottom-0 w-64 p-4 border-t bg-white">
-          <div className="flex items-center gap-3 mb-4">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback>{user?.name.charAt(0) || 'U'}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-medium">{user?.name}</p>
-              <p className="text-xs text-gray-500 capitalize">{role}</p>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
-        </div>
       </aside>
 
       {/* Main Content */}
@@ -166,6 +218,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <header className="bg-white border-b sticky top-0 z-40">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-semibold text-gray-900">
+                  Welcome, {user?.name || 'User'}
+                </span>
+              </div>
               {role === 'patient' && (
                 <Button variant="outline" size="sm" className="hidden md:flex">
                   <AlertCircle className="h-4 w-4 mr-2 text-red-500" />
@@ -256,15 +313,44 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>{user?.name.charAt(0) || 'U'}</AvatarFallback>
-                </Avatar>
-                <div className="hidden md:block">
-                  <p className="text-sm">{user?.name}</p>
-                  <p className="text-xs text-gray-500 capitalize">{role}</p>
-                </div>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <p className="text-sm font-semibold">{user?.name || 'User'}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                    <p className="text-xs text-gray-400 capitalize mt-1">{role}</p>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {dashboardPath && (
+                    <DropdownMenuItem onClick={() => onNavigate(dashboardPath)}>
+                      Dashboard
+                    </DropdownMenuItem>
+                  )}
+                  {profilePath && (
+                    <DropdownMenuItem onClick={() => onNavigate(profilePath)}>
+                      Profile
+                    </DropdownMenuItem>
+                  )}
+                  {settingsPath && (
+                    <DropdownMenuItem onClick={() => onNavigate(settingsPath)}>
+                      Settings
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>

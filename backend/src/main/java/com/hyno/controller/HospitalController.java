@@ -98,6 +98,26 @@ public class HospitalController {
         }
     }
 
+    @PutMapping("/{hospitalId}/approve")
+    public ResponseEntity<com.hyno.entity.Hospital> approveHospital(@PathVariable String hospitalId) {
+        try {
+            com.hyno.entity.Hospital approvedHospital = hospitalService.approveHospital(hospitalId);
+            return approvedHospital != null ? ResponseEntity.ok(approvedHospital) : ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PutMapping("/{hospitalId}/reject")
+    public ResponseEntity<com.hyno.entity.Hospital> rejectHospital(@PathVariable String hospitalId) {
+        try {
+            com.hyno.entity.Hospital rejectedHospital = hospitalService.rejectHospital(hospitalId);
+            return rejectedHospital != null ? ResponseEntity.ok(rejectedHospital) : ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @GetMapping("/{hospitalId}/schedule-slots")
     public ResponseEntity<Map<String, Object>> getHospitalSchedule(@PathVariable String hospitalId) {
         try {

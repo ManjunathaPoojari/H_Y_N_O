@@ -49,8 +49,8 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
               Back to Home
             </Button>
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Activity className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl text-blue-600">HYNO</span>
+              <Activity className="h-8 w-8 text-emerald-600" />
+              <span className="text-2xl text-emerald-600 font-bold">HYNO</span>
             </div>
           </div>
 

@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent } from './ui/card';
-import { Activity, Eye, EyeOff } from 'lucide-react';
+import { Activity, Eye, EyeOff, User, Stethoscope, Building2, Dumbbell } from 'lucide-react';
 import { useAuth } from '../lib/auth-context';
 import { toast } from 'sonner';
 import { PasswordStrengthIndicator } from './ui/password-strength-indicator';
@@ -63,7 +63,7 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
   const { register } = useAuth();
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -157,7 +157,28 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
       };
 
       // Add role-specific data
-      if (formData.role === 'TRAINER') {
+      if (formData.role === 'PATIENT') {
+        registerData.age = formData.age;
+        registerData.gender = formData.gender;
+        registerData.bloodGroup = formData.bloodGroup;
+        registerData.dateOfBirth = formData.dateOfBirth;
+        registerData.address = formData.address.trim();
+        const fullEmergencyContact = `${formData.emergencyCountryCode}${formData.emergencyContact.trim()}`;
+        registerData.emergencyContact = fullEmergencyContact;
+      } else if (formData.role === 'DOCTOR') {
+        registerData.specialization = formData.specialization.trim();
+        registerData.qualification = formData.qualification.trim();
+        registerData.experience = formData.experience;
+        if (formData.hospitalId && formData.hospitalId.trim()) {
+          registerData.hospitalId = formData.hospitalId.trim();
+        }
+      } else if (formData.role === 'HOSPITAL') {
+        registerData.hospitalAddress = formData.hospitalAddress.trim();
+        registerData.city = formData.city.trim();
+        registerData.state = formData.state.trim();
+        registerData.pincode = formData.pincode.trim();
+        registerData.registrationNumber = formData.registrationNumber.trim();
+      } else if (formData.role === 'TRAINER') {
         registerData.trainerType = formData.trainerType;
         registerData.experienceYears = parseInt(formData.experienceYears);
         registerData.location = formData.location.trim();
@@ -193,8 +214,8 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
               onClick={() => onNavigate('/')}
               className="flex items-center justify-center gap-2 mb-4 hover:scale-105 transition-all duration-200 mx-auto"
             >
-              <Activity className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl text-blue-600">HYNO</span>
+              <Activity className="h-8 w-8 text-emerald-600" />
+              <span className="text-2xl text-emerald-600 font-bold">HYNO</span>
             </button>
             <h1 className="text-3xl font-bold text-gray-800">Create Account</h1>
             <p className="text-gray-500 text-sm mt-2">
@@ -279,8 +300,8 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
             </div>
 
             {/* Role Selection */}
-            <div className="space-y-2">
-              <Label>Join as</Label>
+            <div className="space-y-3">
+              <Label className="text-base font-semibold text-gray-800">I am a</Label>
               <div className="grid grid-cols-2 gap-3">
                 {(['PATIENT', 'DOCTOR', 'HOSPITAL', 'TRAINER'] as const).map((role) => (
                   <button
@@ -289,32 +310,48 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
                     onClick={() =>
                       setFormData((prev) => ({ ...prev, role }))
                     }
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 hover:scale-105 ${
-                      formData.role === role
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                    }`}
+                    className={`group relative p-5 rounded-lg border-2 transition-all duration-300 ${formData.role === role
+                      ? 'border-emerald-500 bg-emerald-50 shadow-md'
+                      : 'border-gray-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30'
+                      }`}
                   >
-                    <div className="text-center">
-                      <div className="text-2xl mb-1">
-                        {role === 'PATIENT'
-                          ? '👤'
-                          : role === 'DOCTOR'
-                          ? '👨‍⚕️'
-                          : role === 'HOSPITAL'
-                          ? '🏥'
-                          : '🏋️‍♂️'}
+                    <div className="flex flex-col items-center justify-center space-y-2.5">
+                      <div className={`p-2.5 rounded-lg transition-colors ${formData.role === role
+                        ? 'bg-emerald-100'
+                        : 'bg-gray-50 group-hover:bg-emerald-50'
+                        }`}>
+                        {role === 'PATIENT' ? (
+                          <User className={`h-5 w-5 ${formData.role === role ? 'text-emerald-600' : 'text-gray-500'
+                            }`} />
+                        ) : role === 'DOCTOR' ? (
+                          <Stethoscope className={`h-5 w-5 ${formData.role === role ? 'text-emerald-600' : 'text-gray-500'
+                            }`} />
+                        ) : role === 'HOSPITAL' ? (
+                          <Building2 className={`h-5 w-5 ${formData.role === role ? 'text-emerald-600' : 'text-gray-500'
+                            }`} />
+                        ) : (
+                          <Dumbbell className={`h-5 w-5 ${formData.role === role ? 'text-emerald-600' : 'text-gray-500'
+                            }`} />
+                        )}
                       </div>
-                      <div className="text-sm font-medium">
+                      <div className={`text-sm font-semibold ${formData.role === role
+                        ? 'text-emerald-700'
+                        : 'text-gray-700 group-hover:text-emerald-700'
+                        }`}>
                         {role === 'PATIENT'
                           ? 'Patient'
                           : role === 'DOCTOR'
-                          ? 'Doctor'
-                          : role === 'HOSPITAL'
-                          ? 'Hospital'
-                          : 'Trainer'}
+                            ? 'Doctor'
+                            : role === 'HOSPITAL'
+                              ? 'Hospital'
+                              : 'Trainer'}
                       </div>
                     </div>
+                    {formData.role === role && (
+                      <div className="absolute top-2 right-2">
+                        <div className="h-2 w-2 bg-emerald-500 rounded-full"></div>
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
@@ -445,9 +482,8 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
                       placeholder="(555) 123-4567"
                       value={formData.emergencyContact}
                       onChange={handleInputChange}
-                      className={`flex-1 ${
-                        errors.emergencyContact ? 'border-red-500' : ''
-                      }`}
+                      className={`flex-1 ${errors.emergencyContact ? 'border-red-500' : ''
+                        }`}
                     />
                   </div>
                   {errors.emergencyContact && (
@@ -755,9 +791,8 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
                   placeholder="••••••••"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className={`pr-10 ${
-                    errors.confirmPassword ? 'border-red-500' : ''
-                  }`}
+                  className={`pr-10 ${errors.confirmPassword ? 'border-red-500' : ''
+                    }`}
                   required
                 />
                 <button

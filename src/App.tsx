@@ -44,6 +44,9 @@ import { AdminEmergency } from './components/admin/AdminEmergency';
 import { HospitalManagement } from './components/admin/HospitalManagement';
 import { DoctorManagement } from './components/admin/DoctorManagement';
 import { AdminPharmacy } from './components/admin/AdminPharmacy';
+import { PendingApprovals } from './components/admin/PendingApprovals';
+import { UserManagement } from './components/admin/UserManagement';
+import { AdminProfile } from './components/admin/AdminProfile';
 import { TrainerDashboard } from './components/trainer/TrainerDashboard';
 import { ConfigStatus } from './components/ConfigStatus';
 import { AboutUs } from './components/AboutUs';
@@ -61,7 +64,23 @@ function AppContent() {
   // Initialize path from URL on mount
   useEffect(() => {
     const path = window.location.pathname;
-    if (path && path !== '/') {
+    const publicPaths = ['/', '/login', '/admin-login', '/doctor-login', '/hospital-login', '/trainer-login', '/register', '/forgot-password', '/reset-password', '/about', '/terms', '/privacy'];
+
+    // Check if user is authenticated (has token and user in localStorage)
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+
+    if (!publicPaths.includes(path)) {
+      if (token && storedUser) {
+        // User is authenticated, allow access to protected route
+        setCurrentPath(path);
+      } else {
+        // User is not authenticated, store path and redirect to landing
+        localStorage.setItem('storedPath', path);
+        setCurrentPath('/');
+        window.history.replaceState(null, '', '/');
+      }
+    } else {
       setCurrentPath(path);
     }
   }, []);
@@ -75,9 +94,14 @@ function AppContent() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+
   const navigate = (path: string) => {
     setCurrentPath(path);
     window.history.pushState(null, '', path);
+    // Store path for cross-tab persistence
+    if (isAuthenticated) {
+      localStorage.setItem('storedPath', path);
+    }
   };
 
   // Render based on current path
@@ -280,8 +304,11 @@ function AppContent() {
       return (
         <DashboardLayout role="admin" onNavigate={navigate} currentPath={currentPath}>
           {currentPath === '/admin-dashboard' && <AdminDashboard />}
+          {currentPath === '/admin/pending-approvals' && <PendingApprovals />}
           {currentPath === '/admin/hospitals' && <HospitalManagement />}
           {currentPath === '/admin/doctors' && <DoctorManagement />}
+          {currentPath === '/admin/profile' && <AdminProfile />}
+          {currentPath === '/admin/users' && <UserManagement />}
           {currentPath === '/admin/patients' && <AdminPatients />}
           {currentPath === '/admin/appointments' && <AdminAppointments />}
           {currentPath === '/admin/pharmacy' && <AdminPharmacy />}

@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -92,6 +91,16 @@ public class HospitalService {
         logger.info("Fetching hospitals by status: {}", status);
         try {
             List<Hospital> hospitals = hospitalRepository.findByStatus(status);
+            // Check for both uppercase and lowercase to handle inconsistencies
+            if (status.equalsIgnoreCase("pending")) {
+                List<Hospital> pendingUpper = hospitalRepository.findByStatus("PENDING");
+                // Combine and remove duplicates
+                for (Hospital hosp : pendingUpper) {
+                    if (!hospitals.stream().anyMatch(h -> h.getId().equals(hosp.getId()))) {
+                        hospitals.add(hosp);
+                    }
+                }
+            }
             logger.info("Retrieved {} hospitals with status: {}", hospitals.size(), status);
             return hospitals;
         } catch (Exception e) {

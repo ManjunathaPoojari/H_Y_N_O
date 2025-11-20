@@ -77,6 +77,16 @@ public class DoctorService {
         logger.info("Fetching doctors by status: {}", status);
         try {
             List<Doctor> doctors = doctorRepository.findByStatus(status);
+            // Check for both uppercase and lowercase to handle inconsistencies
+            if (status.equalsIgnoreCase("pending")) {
+                List<Doctor> pendingUpper = doctorRepository.findByStatus("PENDING");
+                // Combine and remove duplicates
+                for (Doctor doc : pendingUpper) {
+                    if (!doctors.stream().anyMatch(d -> d.getId().equals(doc.getId()))) {
+                        doctors.add(doc);
+                    }
+                }
+            }
             logger.info("Retrieved {} doctors with status: {}", doctors.size(), status);
             return doctors;
         } catch (Exception e) {

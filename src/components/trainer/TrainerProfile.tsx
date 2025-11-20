@@ -1,17 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import {
-  User, Mail, Phone, MapPin, Award, Star, Calendar,
-  Edit, Save, X, Plus, Trash2, Camera, Globe
-} from 'lucide-react';
+import { Award, Edit, Mail, MapPin, Phone, Plus, Save, Star, Trash2, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuth } from '../../lib/auth-context';
 import apiClient from '../../lib/api-client';
-import { toast } from 'sonner';
 
 interface TrainerProfileProps {
   onNavigate: (path: string) => void;
@@ -31,67 +28,115 @@ interface TrainerProfile {
   qualifications: string[];
   languages: string[];
   pricePerSession: number;
-  availability: {
-    monday: string[];
-    tuesday: string[];
-    wednesday: string[];
-    thursday: string[];
-    friday: string[];
-    saturday: string[];
-    sunday: string[];
-  };
+  availability: Record<string, string[]>;
   socialLinks: {
     website?: string;
     instagram?: string;
     youtube?: string;
   };
-  profileImage: string;
+  profileImage?: string;
 }
 
-const mockProfile: TrainerProfile = {
-  id: '1',
-  name: 'Priya Sharma',
-  email: 'priya.sharma@example.com',
-  phone: '+91 9876543210',
-  bio: 'Certified yoga instructor with 8+ years of experience specializing in Hatha Yoga, Prenatal Yoga, and Meditation. Passionate about helping people achieve wellness through mindful movement and breathwork.',
-  location: 'Mumbai, Maharashtra, India',
-  experience: 8,
-  rating: 4.9,
-  reviews: 156,
-  specialties: ['Hatha Yoga', 'Prenatal Yoga', 'Meditation', 'Breathing Techniques'],
-  qualifications: ['RYT 500 Certified', 'Prenatal Yoga Specialist', 'Meditation Teacher Certification'],
-  languages: ['English', 'Hindi', 'Marathi'],
-  pricePerSession: 800,
-  availability: {
-    monday: ['06:00 AM', '07:00 AM', '05:00 PM', '06:00 PM'],
-    tuesday: ['06:00 AM', '07:00 AM', '05:00 PM', '06:00 PM'],
-    wednesday: ['06:00 AM', '07:00 AM', '05:00 PM', '06:00 PM'],
-    thursday: ['06:00 AM', '07:00 AM', '05:00 PM', '06:00 PM'],
-    friday: ['06:00 AM', '07:00 AM', '05:00 PM', '06:00 PM'],
-    saturday: ['08:00 AM', '09:00 AM', '10:00 AM'],
-    sunday: ['08:00 AM', '09:00 AM', '10:00 AM']
-  },
-  socialLinks: {
-    website: 'https://priyayoga.com',
-    instagram: '@priya_yoga_mumbai',
-    youtube: '@PriyaYogaStudio'
-  },
-  profileImage: '🧘‍♀️'
+const defaultAvailability: Record<string, string[]> = {
+  monday: [],
+  tuesday: [],
+  wednesday: [],
+  thursday: [],
+  friday: [],
+  saturday: [],
+  sunday: [],
 };
 
 export const TrainerProfile: React.FC<TrainerProfileProps> = ({ onNavigate }) => {
   const { user } = useAuth();
-  const [profile, setProfile] = useState<TrainerProfile>(mockProfile);
+  const [profile, setProfile] = useState<TrainerProfile | null>(null);
+  const [editedProfile, setEditedProfile] = useState<TrainerProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedProfile, setEditedProfile] = useState<TrainerProfile>(mockProfile);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [newSpecialty, setNewSpecialty] = useState('');
   const [newQualification, setNewQualification] = useState('');
   const [newLanguage, setNewLanguage] = useState('');
 
-  const handleSave = () => {
-    setProfile(editedProfile);
-    setIsEditing(false);
-    toast.success('Profile updated successfully!');
+  const normalizeTrainer = (trainer: any): TrainerProfile => ({
+    id: String(trainer.id ?? ''),
+    name: trainer.name ?? '',
+    email: trainer.email ?? '',
+    phone: trainer.phone ?? '',
+    bio: trainer.bio ?? '',
+    location: trainer.location ?? '',
+    experience: trainer.experienceYears ?? trainer.experience ?? 0,
+    rating: trainer.rating ?? 0,
+    reviews: trainer.reviews ?? 0,
+    specialties: Array.isArray(trainer.specialties) ? trainer.specialties : [],
+    qualifications: Array.isArray(trainer.qualifications) ? trainer.qualifications : [],
+    languages: Array.isArray(trainer.languages) ? trainer.languages : [],
+    pricePerSession: Number(trainer.pricePerSession ?? 0),
+    availability: trainer.availability && typeof trainer.availability === 'object'
+      ? { ...defaultAvailability, ...trainer.availability }
+      : { ...defaultAvailability },
+    socialLinks: trainer.socialLinks && typeof trainer.socialLinks === 'object'
+      ? trainer.socialLinks
+      : {},
+    profileImage: trainer.profileImage,
+  });
+
+  const fetchProfile = async () => {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const data = await apiClient.trainers.getById(user.id);
+      const normalized = normalizeTrainer(data);
+      setProfile(normalized);
+      setEditedProfile(normalized);
+    } catch (error: any) {
+      console.error('Failed to load trainer profile', error);
+      toast.error(error?.message || 'Unable to load trainer profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  const updateEditedProfile = (updater: (prev: TrainerProfile) => TrainerProfile) => {
+    setEditedProfile(prev => (prev ? updater(prev) : prev));
+  };
+
+  const handleSave = async () => {
+    if (!editedProfile) return;
+    setIsSaving(true);
+    try {
+      await apiClient.trainers.update(editedProfile.id, {
+        name: editedProfile.name,
+        email: editedProfile.email,
+        phone: editedProfile.phone,
+        bio: editedProfile.bio,
+        location: editedProfile.location,
+        pricePerSession: editedProfile.pricePerSession,
+        experienceYears: editedProfile.experience,
+        specialties: editedProfile.specialties,
+        qualifications: editedProfile.qualifications,
+        languages: editedProfile.languages,
+        socialLinks: editedProfile.socialLinks,
+        availability: editedProfile.availability,
+      });
+      setProfile(editedProfile);
+      setIsEditing(false);
+      toast.success('Profile updated successfully');
+    } catch (error: any) {
+      console.error('Failed to update trainer profile', error);
+      toast.error(error?.message || 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -100,82 +145,87 @@ export const TrainerProfile: React.FC<TrainerProfileProps> = ({ onNavigate }) =>
   };
 
   const addSpecialty = () => {
-    if (newSpecialty.trim()) {
-      setEditedProfile(prev => ({
-        ...prev,
-        specialties: [...prev.specialties, newSpecialty.trim()]
-      }));
-      setNewSpecialty('');
-    }
+    if (!newSpecialty.trim()) return;
+    updateEditedProfile(prev => ({
+      ...prev,
+      specialties: [...prev.specialties, newSpecialty.trim()],
+    }));
+    setNewSpecialty('');
   };
 
   const removeSpecialty = (index: number) => {
-    setEditedProfile(prev => ({
+    updateEditedProfile(prev => ({
       ...prev,
-      specialties: prev.specialties.filter((_, i) => i !== index)
+      specialties: prev.specialties.filter((_, i) => i !== index),
     }));
   };
 
   const addQualification = () => {
-    if (newQualification.trim()) {
-      setEditedProfile(prev => ({
-        ...prev,
-        qualifications: [...prev.qualifications, newQualification.trim()]
-      }));
-      setNewQualification('');
-    }
+    if (!newQualification.trim()) return;
+    updateEditedProfile(prev => ({
+      ...prev,
+      qualifications: [...prev.qualifications, newQualification.trim()],
+    }));
+    setNewQualification('');
   };
 
   const removeQualification = (index: number) => {
-    setEditedProfile(prev => ({
+    updateEditedProfile(prev => ({
       ...prev,
-      qualifications: prev.qualifications.filter((_, i) => i !== index)
+      qualifications: prev.qualifications.filter((_, i) => i !== index),
     }));
   };
 
   const addLanguage = () => {
-    if (newLanguage.trim()) {
-      setEditedProfile(prev => ({
-        ...prev,
-        languages: [...prev.languages, newLanguage.trim()]
-      }));
-      setNewLanguage('');
-    }
+    if (!newLanguage.trim()) return;
+    updateEditedProfile(prev => ({
+      ...prev,
+      languages: [...prev.languages, newLanguage.trim()],
+    }));
+    setNewLanguage('');
   };
 
   const removeLanguage = (index: number) => {
-    setEditedProfile(prev => ({
+    updateEditedProfile(prev => ({
       ...prev,
-      languages: prev.languages.filter((_, i) => i !== index)
+      languages: prev.languages.filter((_, i) => i !== index),
     }));
   };
 
-  return (
-    <div className="space-y-6 p-6 relative">
-      {/* Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 -z-10"></div>
+  if (isLoading) {
+    return (
+      <div className="p-6 text-sm text-slate-500">
+        Loading your profile...
+      </div>
+    );
+  }
 
-      {/* Header */}
+  if (!profile || !editedProfile) {
+    return (
+      <div className="p-6 text-sm text-red-600">
+        Trainer profile not found. Please contact support.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl mb-2 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent">
-            My Profile
-          </h1>
-          <p className="text-slate-600">Manage your trainer profile and availability</p>
+          <p className="text-sm text-slate-500">Trainer workspace</p>
+          <h1 className="text-3xl font-semibold text-slate-900">My Profile</h1>
+          <p className="text-slate-600">Manage your professional details and availability</p>
         </div>
         {!isEditing ? (
-          <Button
-            onClick={() => setIsEditing(true)}
-            className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-          >
+          <Button onClick={() => setIsEditing(true)} className="gap-2">
             <Edit className="h-4 w-4" />
-            Edit Profile
+            Edit profile
           </Button>
         ) : (
           <div className="flex gap-2">
-            <Button onClick={handleSave} className="gap-2 bg-green-600 hover:bg-green-700">
+            <Button onClick={handleSave} className="gap-2" disabled={isSaving}>
               <Save className="h-4 w-4" />
-              Save
+              {isSaving ? 'Saving...' : 'Save'}
             </Button>
             <Button onClick={handleCancel} variant="outline" className="gap-2">
               <X className="h-4 w-4" />
@@ -185,196 +235,211 @@ export const TrainerProfile: React.FC<TrainerProfileProps> = ({ onNavigate }) =>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Overview */}
-        <div className="lg:col-span-1">
-          <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <div className="relative inline-block mb-4">
-                  <div className="text-8xl">{profile.profileImage}</div>
-                  {isEditing && (
-                    <Button
-                      size="sm"
-                      className="absolute bottom-0 right-0 rounded-full w-8 h-8 p-0"
-                    >
-                      <Camera className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-
-                <h2 className="text-2xl mb-2">{profile.name}</h2>
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                  <span className="font-semibold">{profile.rating}</span>
-                  <span className="text-slate-600">({profile.reviews} reviews)</span>
-                </div>
-
-                <div className="space-y-3 text-left">
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 text-purple-600" />
-                    <span className="text-sm">{profile.email}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-5 w-5 text-purple-600" />
-                    <span className="text-sm">{profile.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-5 w-5 text-purple-600" />
-                    <span className="text-sm">{profile.location}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Award className="h-5 w-5 text-purple-600" />
-                    <span className="text-sm">{profile.experience} years experience</span>
-                  </div>
-                </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="border border-slate-200 shadow-sm">
+          <CardContent className="pt-6 text-center">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 text-2xl font-semibold text-slate-700">
+              {profile.profileImage ? (
+                <img
+                  src={profile.profileImage}
+                  alt={profile.name}
+                  className="h-20 w-20 rounded-full object-cover"
+                />
+              ) : (
+                profile.name.charAt(0).toUpperCase()
+              )}
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">{profile.name}</h2>
+            <div className="mt-2 flex items-center justify-center gap-2 text-sm text-slate-600">
+              <Star className="h-4 w-4 text-amber-500" />
+              <span>{profile.rating.toFixed(1)}</span>
+              <span>•</span>
+              <span>{profile.reviews} reviews</span>
+            </div>
+            <div className="mt-6 space-y-3 text-left text-sm text-slate-600">
+              <div className="flex items-center gap-3">
+                <Mail className="h-4 w-4 text-slate-500" />
+                <span>{profile.email}</span>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <div className="flex items-center gap-3">
+                <Phone className="h-4 w-4 text-slate-500" />
+                <span>{profile.phone || 'Not provided'}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="h-4 w-4 text-slate-500" />
+                <span>{profile.location || 'Add location'}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Award className="h-4 w-4 text-slate-500" />
+                <span>{profile.experience} years experience</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Profile Details */}
         <div className="lg:col-span-2">
           <Tabs defaultValue="basic" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm">
+            <TabsList className="grid w-full grid-cols-4 bg-slate-100">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="specialties">Specialties</TabsTrigger>
               <TabsTrigger value="availability">Availability</TabsTrigger>
-              <TabsTrigger value="social">Social Links</TabsTrigger>
+              <TabsTrigger value="social">Social</TabsTrigger>
             </TabsList>
 
-            {/* Basic Info Tab */}
-            <TabsContent value="basic" className="space-y-4">
-              <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+            <TabsContent value="basic">
+              <Card className="border border-slate-200 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Basic Information</CardTitle>
+                  <CardTitle>Basic information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Full Name</label>
+                      <label className="block text-sm font-medium text-slate-600">Full name</label>
                       {isEditing ? (
                         <Input
                           value={editedProfile.name}
-                          onChange={(e) => setEditedProfile(prev => ({ ...prev, name: e.target.value }))}
+                          onChange={(e) =>
+                            updateEditedProfile(prev => ({ ...prev, name: e.target.value }))
+                          }
                         />
                       ) : (
                         <p className="text-sm text-slate-600">{profile.name}</p>
                       )}
                     </div>
-
                     <div>
-                      <label className="block text-sm font-medium mb-2">Email</label>
+                      <label className="block text-sm font-medium text-slate-600">Email</label>
                       {isEditing ? (
                         <Input
                           type="email"
                           value={editedProfile.email}
-                          onChange={(e) => setEditedProfile(prev => ({ ...prev, email: e.target.value }))}
+                          onChange={(e) =>
+                            updateEditedProfile(prev => ({ ...prev, email: e.target.value }))
+                          }
                         />
                       ) : (
                         <p className="text-sm text-slate-600">{profile.email}</p>
                       )}
                     </div>
-
                     <div>
-                      <label className="block text-sm font-medium mb-2">Phone</label>
+                      <label className="block text-sm font-medium text-slate-600">Phone</label>
                       {isEditing ? (
                         <Input
                           value={editedProfile.phone}
-                          onChange={(e) => setEditedProfile(prev => ({ ...prev, phone: e.target.value }))}
+                          onChange={(e) =>
+                            updateEditedProfile(prev => ({ ...prev, phone: e.target.value }))
+                          }
                         />
                       ) : (
-                        <p className="text-sm text-slate-600">{profile.phone}</p>
+                        <p className="text-sm text-slate-600">{profile.phone || 'Not provided'}</p>
                       )}
                     </div>
-
                     <div>
-                      <label className="block text-sm font-medium mb-2">Location</label>
+                      <label className="block text-sm font-medium text-slate-600">Location</label>
                       {isEditing ? (
                         <Input
                           value={editedProfile.location}
-                          onChange={(e) => setEditedProfile(prev => ({ ...prev, location: e.target.value }))}
+                          onChange={(e) =>
+                            updateEditedProfile(prev => ({ ...prev, location: e.target.value }))
+                          }
                         />
                       ) : (
-                        <p className="text-sm text-slate-600">{profile.location}</p>
+                        <p className="text-sm text-slate-600">{profile.location || 'Not provided'}</p>
                       )}
                     </div>
-
                     <div>
-                      <label className="block text-sm font-medium mb-2">Price per Session (₹)</label>
+                      <label className="block text-sm font-medium text-slate-600">
+                        Price per session (₹)
+                      </label>
                       {isEditing ? (
                         <Input
                           type="number"
                           value={editedProfile.pricePerSession}
-                          onChange={(e) => setEditedProfile(prev => ({ ...prev, pricePerSession: parseInt(e.target.value) || 0 }))}
+                          onChange={(e) =>
+                            updateEditedProfile(prev => ({
+                              ...prev,
+                              pricePerSession: Number(e.target.value) || 0,
+                            }))
+                          }
                         />
                       ) : (
-                        <p className="text-sm text-slate-600">₹{profile.pricePerSession}</p>
+                        <p className="text-sm text-slate-600">
+                          ₹{profile.pricePerSession.toLocaleString()}
+                        </p>
                       )}
                     </div>
-
                     <div>
-                      <label className="block text-sm font-medium mb-2">Years of Experience</label>
+                      <label className="block text-sm font-medium text-slate-600">
+                        Years of experience
+                      </label>
                       {isEditing ? (
                         <Input
                           type="number"
                           value={editedProfile.experience}
-                          onChange={(e) => setEditedProfile(prev => ({ ...prev, experience: parseInt(e.target.value) || 0 }))}
+                          onChange={(e) =>
+                            updateEditedProfile(prev => ({
+                              ...prev,
+                              experience: Number(e.target.value) || 0,
+                            }))
+                          }
                         />
                       ) : (
                         <p className="text-sm text-slate-600">{profile.experience} years</p>
                       )}
                     </div>
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium mb-2">Bio</label>
+                    <label className="block text-sm font-medium text-slate-600">Bio</label>
                     {isEditing ? (
                       <Textarea
-                        value={editedProfile.bio}
-                        onChange={(e) => setEditedProfile(prev => ({ ...prev, bio: e.target.value }))}
                         rows={4}
+                        value={editedProfile.bio}
+                        onChange={(e) =>
+                          updateEditedProfile(prev => ({ ...prev, bio: e.target.value }))
+                        }
                       />
                     ) : (
-                      <p className="text-sm text-slate-600">{profile.bio}</p>
+                      <p className="text-sm text-slate-600">
+                        {profile.bio || 'Tell patients more about your experience and approach.'}
+                      </p>
                     )}
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Specialties Tab */}
-            <TabsContent value="specialties" className="space-y-4">
-              <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+            <TabsContent value="specialties">
+              <Card className="border border-slate-200 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Specialties & Qualifications</CardTitle>
+                  <CardTitle>Specialties & qualifications</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Specialties */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">Yoga Specialties</label>
-                    <div className="flex flex-wrap gap-2 mb-3">
+                    <p className="text-sm font-medium text-slate-600 mb-2">Specialties</p>
+                    <div className="flex flex-wrap gap-2">
                       {(isEditing ? editedProfile : profile).specialties.map((specialty, index) => (
-                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                        <Badge key={specialty + index} variant="secondary" className="flex items-center gap-1">
                           {specialty}
                           {isEditing && (
                             <button
                               onClick={() => removeSpecialty(index)}
-                              className="ml-1 hover:bg-red-200 rounded-full p-0.5"
+                              className="rounded-full p-0.5 hover:bg-red-100"
                             >
                               <X className="h-3 w-3" />
                             </button>
                           )}
                         </Badge>
                       ))}
+                      {(!profile.specialties || profile.specialties.length === 0) && (
+                        <span className="text-sm text-slate-500">No specialties listed yet.</span>
+                      )}
                     </div>
                     {isEditing && (
-                      <div className="flex gap-2">
+                      <div className="mt-3 flex gap-2">
                         <Input
                           placeholder="Add new specialty"
                           value={newSpecialty}
                           onChange={(e) => setNewSpecialty(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && addSpecialty()}
+                          onKeyDown={(e) => e.key === 'Enter' && addSpecialty()}
                         />
                         <Button onClick={addSpecialty} size="sm">
                           <Plus className="h-4 w-4" />
@@ -383,13 +448,15 @@ export const TrainerProfile: React.FC<TrainerProfileProps> = ({ onNavigate }) =>
                     )}
                   </div>
 
-                  {/* Qualifications */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">Qualifications & Certifications</label>
-                    <div className="space-y-2 mb-3">
+                    <p className="text-sm font-medium text-slate-600 mb-2">Qualifications</p>
+                    <div className="space-y-2">
                       {(isEditing ? editedProfile : profile).qualifications.map((qualification, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-slate-50 rounded">
-                          <span className="text-sm">{qualification}</span>
+                        <div
+                          key={qualification + index}
+                          className="flex items-center justify-between rounded border border-slate-200 px-3 py-2 text-sm"
+                        >
+                          <span>{qualification}</span>
                           {isEditing && (
                             <Button
                               onClick={() => removeQualification(index)}
@@ -402,14 +469,17 @@ export const TrainerProfile: React.FC<TrainerProfileProps> = ({ onNavigate }) =>
                           )}
                         </div>
                       ))}
+                      {(!profile.qualifications || profile.qualifications.length === 0) && (
+                        <span className="text-sm text-slate-500">Add your certifications.</span>
+                      )}
                     </div>
                     {isEditing && (
-                      <div className="flex gap-2">
+                      <div className="mt-3 flex gap-2">
                         <Input
                           placeholder="Add new qualification"
                           value={newQualification}
                           onChange={(e) => setNewQualification(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && addQualification()}
+                          onKeyDown={(e) => e.key === 'Enter' && addQualification()}
                         />
                         <Button onClick={addQualification} size="sm">
                           <Plus className="h-4 w-4" />
@@ -418,31 +488,33 @@ export const TrainerProfile: React.FC<TrainerProfileProps> = ({ onNavigate }) =>
                     )}
                   </div>
 
-                  {/* Languages */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">Languages Spoken</label>
-                    <div className="flex flex-wrap gap-2 mb-3">
+                    <p className="text-sm font-medium text-slate-600 mb-2">Languages</p>
+                    <div className="flex flex-wrap gap-2">
                       {(isEditing ? editedProfile : profile).languages.map((language, index) => (
-                        <Badge key={index} variant="outline" className="flex items-center gap-1">
+                        <Badge key={language + index} variant="outline" className="flex items-center gap-1">
                           {language}
                           {isEditing && (
                             <button
                               onClick={() => removeLanguage(index)}
-                              className="ml-1 hover:bg-red-200 rounded-full p-0.5"
+                              className="rounded-full p-0.5 hover:bg-red-100"
                             >
                               <X className="h-3 w-3" />
                             </button>
                           )}
                         </Badge>
                       ))}
+                      {(!profile.languages || profile.languages.length === 0) && (
+                        <span className="text-sm text-slate-500">Share the languages you speak.</span>
+                      )}
                     </div>
                     {isEditing && (
-                      <div className="flex gap-2">
+                      <div className="mt-3 flex gap-2">
                         <Input
                           placeholder="Add new language"
                           value={newLanguage}
                           onChange={(e) => setNewLanguage(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && addLanguage()}
+                          onKeyDown={(e) => e.key === 'Enter' && addLanguage()}
                         />
                         <Button onClick={addLanguage} size="sm">
                           <Plus className="h-4 w-4" />
@@ -454,101 +526,59 @@ export const TrainerProfile: React.FC<TrainerProfileProps> = ({ onNavigate }) =>
               </Card>
             </TabsContent>
 
-            {/* Availability Tab */}
-            <TabsContent value="availability" className="space-y-4">
-              <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+            <TabsContent value="availability">
+              <Card className="border border-slate-200 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Weekly Availability</CardTitle>
+                  <CardTitle>Weekly availability</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Object.entries(isEditing ? editedProfile.availability : profile.availability).map(([day, times]) => (
-                      <div key={day} className="p-4 border rounded-lg">
-                        <h4 className="font-medium capitalize mb-2">{day}</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {times.map((time, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
+                <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {Object.entries(isEditing ? editedProfile.availability : profile.availability).map(([day, times]) => (
+                    <div key={day} className="rounded-lg border border-slate-200 p-4">
+                      <h4 className="text-sm font-semibold capitalize text-slate-700 mb-2">{day}</h4>
+                      {times.length ? (
+                        <div className="flex flex-wrap gap-2">
+                          {times.map((time) => (
+                            <Badge key={`${day}-${time}`} variant="secondary" className="text-xs">
                               {time}
                             </Badge>
                           ))}
                         </div>
-                        {times.length === 0 && (
-                          <p className="text-sm text-slate-500 mt-1">No availability</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {isEditing && (
-                    <div className="mt-4 p-4 bg-amber-50 rounded-lg">
-                      <p className="text-sm text-amber-800">
-                        Availability editing will be implemented in the schedule management section.
-                      </p>
+                      ) : (
+                        <p className="text-sm text-slate-500">No availability published</p>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Social Links Tab */}
-            <TabsContent value="social" className="space-y-4">
-              <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+            <TabsContent value="social">
+              <Card className="border border-slate-200 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Social Media & Links</CardTitle>
+                  <CardTitle>Social & links</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Website</label>
-                    {isEditing ? (
-                      <Input
-                        placeholder="https://yourwebsite.com"
-                        value={editedProfile.socialLinks.website || ''}
-                        onChange={(e) => setEditedProfile(prev => ({
-                          ...prev,
-                          socialLinks: { ...prev.socialLinks, website: e.target.value }
-                        }))}
-                      />
-                    ) : (
-                      <p className="text-sm text-slate-600">
-                        {profile.socialLinks.website || 'Not provided'}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Instagram</label>
-                    {isEditing ? (
-                      <Input
-                        placeholder="@yourhandle"
-                        value={editedProfile.socialLinks.instagram || ''}
-                        onChange={(e) => setEditedProfile(prev => ({
-                          ...prev,
-                          socialLinks: { ...prev.socialLinks, instagram: e.target.value }
-                        }))}
-                      />
-                    ) : (
-                      <p className="text-sm text-slate-600">
-                        {profile.socialLinks.instagram || 'Not provided'}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">YouTube</label>
-                    {isEditing ? (
-                      <Input
-                        placeholder="@YourChannel"
-                        value={editedProfile.socialLinks.youtube || ''}
-                        onChange={(e) => setEditedProfile(prev => ({
-                          ...prev,
-                          socialLinks: { ...prev.socialLinks, youtube: e.target.value }
-                        }))}
-                      />
-                    ) : (
-                      <p className="text-sm text-slate-600">
-                        {profile.socialLinks.youtube || 'Not provided'}
-                      </p>
-                    )}
-                  </div>
+                  {['website', 'instagram', 'youtube'].map((key) => (
+                    <div key={key}>
+                      <label className="block text-sm font-medium text-slate-600 capitalize">{key}</label>
+                      {isEditing ? (
+                        <Input
+                          placeholder={`Add your ${key}`}
+                          value={editedProfile.socialLinks[key as keyof typeof editedProfile.socialLinks] || ''}
+                          onChange={(e) =>
+                            updateEditedProfile(prev => ({
+                              ...prev,
+                              socialLinks: { ...prev.socialLinks, [key]: e.target.value },
+                            }))
+                          }
+                        />
+                      ) : (
+                        <p className="text-sm text-slate-600">
+                          {profile.socialLinks[key as keyof typeof profile.socialLinks] || 'Not provided'}
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
             </TabsContent>

@@ -92,8 +92,8 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
               Back to Home
             </Button>
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Activity className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl text-blue-600">HYNO</span>
+              <Activity className="h-8 w-8 text-emerald-600" />
+              <span className="text-2xl text-emerald-600 font-bold">HYNO</span>
             </div>
           </div>
 
@@ -119,7 +119,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
-          <Activity className="h-8 w-8 text-blue-600 mx-auto mb-4 animate-pulse" />
+          <Activity className="h-8 w-8 text-emerald-600 mx-auto mb-4 animate-pulse" />
           <p>Validating reset link...</p>
         </div>
       </div>

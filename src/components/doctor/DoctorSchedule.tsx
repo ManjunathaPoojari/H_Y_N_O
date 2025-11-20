@@ -11,8 +11,10 @@ import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
 import { Calendar as CalendarIcon, Clock, Plus, Edit, Trash2, Users, Loader2 } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
+import { useAppStore } from '../../lib/app-store';
 import { doctorAPI } from '../../lib/api-client';
 import { toast } from 'sonner';
+import { Appointment } from '../../types';
 
 interface IndividualSlot {
   id: string;
@@ -37,20 +39,11 @@ interface ScheduleSlot {
   generatedSlots?: IndividualSlot[];
 }
 
-interface Appointment {
-  id: string;
-  patientName: string;
-  type: string;
-  status: string;
-  time: string;
-  reason: string;
-}
-
 export const DoctorSchedule = () => {
   const { user } = useAuth();
+  const { appointments } = useAppStore();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlot[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddSlot, setShowAddSlot] = useState(false);
   const [editingSlot, setEditingSlot] = useState<ScheduleSlot | null>(null);
@@ -123,26 +116,6 @@ export const DoctorSchedule = () => {
       }));
 
       setScheduleSlots(transformedSlots);
-      // For now, keep mock appointments - this can be updated when appointments API is available
-      const mockAppointments: Appointment[] = [
-        {
-          id: '1',
-          patientName: 'John Doe',
-          type: 'general',
-          status: 'confirmed',
-          time: '09:00',
-          reason: 'Regular checkup'
-        },
-        {
-          id: '2',
-          patientName: 'Jane Smith',
-          type: 'followup',
-          status: 'confirmed',
-          time: '10:00',
-          reason: 'Follow-up visit'
-        }
-      ];
-      setAppointments(mockAppointments);
     } catch (error) {
       console.error('Error loading schedule data:', error);
       toast.error('Failed to load schedule data');
@@ -235,10 +208,22 @@ export const DoctorSchedule = () => {
     }
   };
 
-  const handleDeleteSlot = (slotId: string) => {
-    if (window.confirm('Are you sure you want to delete this schedule slot?')) {
-      setScheduleSlots(prev => prev.filter(slot => slot.id !== slotId));
+  const handleDeleteSlot = async (slotId: string) => {
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    const confirmed = window.confirm('Are you sure you want to delete this schedule slot?');
+    if (!confirmed) return;
+
+    try {
+      await doctorAPI.deleteScheduleSlot(user.id, slotId);
       toast.success('Schedule slot deleted successfully');
+      loadScheduleData();
+    } catch (error) {
+      console.error('Error deleting schedule slot:', error);
+      toast.error('Failed to delete schedule slot');
     }
   };
 
@@ -260,11 +245,7 @@ export const DoctorSchedule = () => {
   const getAppointmentsForSelectedDate = () => {
     if (!selectedDate) return [];
     const dateString = selectedDate.toISOString().split('T')[0];
-    return appointments.filter(app => {
-      // In a real implementation, we'd have appointment dates
-      // For now, we'll show all appointments
-      return true;
-    });
+    return appointments.filter(app => app.date === dateString);
   };
 
   const selectedDateSlots = getSlotsForSelectedDate();
@@ -505,15 +486,16 @@ export const DoctorSchedule = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-7 gap-4">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => {
               const daySlots = scheduleSlots.filter(slot => {
-                const slotDate = new Date(slot.date);
-                return slotDate.getDay() === (index + 1) % 7; // Adjust for Monday start
+                const slotDate = new Date(`${slot.date}T00:00:00`);
+                return slotDate.getDay() === index;
               });
 
               const dayAppointments = appointments.filter(app => {
-                // In a real implementation, we'd filter by day
-                return true;
+                if (!app.date) return false;
+                const appointmentDate = new Date(`${app.date}T00:00:00`);
+                return appointmentDate.getDay() === index;
               });
 
               return (

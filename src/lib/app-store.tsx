@@ -75,410 +75,21 @@ interface AppStoreContextType {
 const AppStoreContext = createContext<AppStoreContextType | undefined>(undefined);
 
 export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [patients, setPatients] = useState<Patient[]>([
-    {
-      id: "1",
-      name: "John Doe",
-      email: "patient@example.com",
-      phone: "1234567890",
-      age: 30,
-      gender: "Male",
-      bloodGroup: "O+",
-      dateOfBirth: "1994-01-15",
-      allergies: ["Penicillin", "Peanuts"],
-      medicalHistory: ["Hypertension", "Diabetes"],
-      currentMedications: ["Metformin 500mg", "Lisinopril 10mg"],
-      address: "123 Main St, City, State",
-      emergencyContact: "Jane Doe - 0987654321",
-      notes: "Patient has been compliant with medication regimen",
-      createdAt: new Date().toISOString(),
-      hospitalId: "hospital-1",
-    },
-    {
-      id: "patient-2",
-      name: "Alice Johnson",
-      email: "patient2@example.com",
-      phone: "2345678901",
-      age: 28,
-      gender: "Female",
-      bloodGroup: "A+",
-      dateOfBirth: "1996-03-22",
-      allergies: [],
-      medicalHistory: [],
-      currentMedications: [],
-      address: "",
-      emergencyContact: "",
-      notes: "",
-      createdAt: new Date().toISOString(),
-      hospitalId: "",
-    },
-    {
-      id: "patient-3",
-      name: "Robert Brown",
-      email: "patient3@example.com",
-      phone: "3456789012",
-      age: 45,
-      gender: "Male",
-      bloodGroup: "B+",
-      dateOfBirth: "1979-05-10",
-      allergies: [],
-      medicalHistory: [],
-      currentMedications: [],
-      address: "",
-      emergencyContact: "",
-      notes: "",
-      createdAt: new Date().toISOString(),
-      hospitalId: "",
-    },
-    {
-      id: "patient-4",
-      name: "Emma Wilson",
-      email: "patient4@example.com",
-      phone: "4567890123",
-      age: 32,
-      gender: "Female",
-      bloodGroup: "AB-",
-      dateOfBirth: "1992-08-15",
-      allergies: [],
-      medicalHistory: [],
-      currentMedications: [],
-      address: "",
-      emergencyContact: "",
-      notes: "",
-      createdAt: new Date().toISOString(),
-      hospitalId: "",
-    },
-    {
-      id: "patient-5",
-      name: "Michael Davis",
-      email: "patient5@example.com",
-      phone: "5678901234",
-      age: 50,
-      gender: "Male",
-      bloodGroup: "O-",
-      dateOfBirth: "1974-12-01",
-      allergies: [],
-      medicalHistory: [],
-      currentMedications: [],
-      address: "",
-      emergencyContact: "",
-      notes: "",
-      createdAt: new Date().toISOString(),
-      hospitalId: "",
-    },
-  ]);
+  const [patients, setPatients] = useState<Patient[]>([]);
 
-  const [doctors, setDoctors] = useState<Doctor[]>([
-    {
-      id: 'D001',
-      name: 'Dr. Sarah Mitchell',
-      email: 'sarah.mitchell@hospital.com',
-      phone: '+1-555-0201',
-      specialization: 'Cardiology',
-      qualification: 'MD, FACC',
-      experience: 12,
-      rating: 4.8,
-      available: true,
-      hospitalId: 'H001',
-      consultationFee: 250,
-      avatarUrl: '/placeholder/150/150',
-      status: 'approved',
-    },
-    {
-      id: 'D002',
-      name: 'Dr. Michael Chen',
-      email: 'michael.chen@hospital.com',
-      phone: '+1-555-0202',
-      specialization: 'Internal Medicine',
-      qualification: 'MD',
-      experience: 8,
-      rating: 4.6,
-      available: true,
-      hospitalId: 'H001',
-      consultationFee: 200,
-      avatarUrl: '/placeholder/150/150',
-      status: 'approved',
-    },
-    {
-      id: 'D003',
-      name: 'Dr. Emily Rodriguez',
-      email: 'emily.rodriguez@hospital.com',
-      phone: '+1-555-0203',
-      specialization: 'Pediatrics',
-      qualification: 'MD, FAAP',
-      experience: 10,
-      rating: 4.9,
-      available: true,
-      hospitalId: 'H001',
-      consultationFee: 180,
-      avatarUrl: '/placeholder/150/150',
-      status: 'approved',
-    },
-    {
-      id: 'D004',
-      name: 'Dr. James Thompson',
-      email: 'james.thompson@hospital.com',
-      phone: '+1-555-0204',
-      specialization: 'Orthopedics',
-      qualification: 'MD, FAAOS',
-      experience: 15,
-      rating: 4.7,
-      available: false,
-      hospitalId: 'H001',
-      consultationFee: 300,
-      avatarUrl: '/placeholder/150/150',
-      status: 'approved',
-    },
-    {
-      id: 'D005',
-      name: 'Dr. Lisa Park',
-      email: 'lisa.park@hospital.com',
-      phone: '+1-555-0205',
-      specialization: 'Dermatology',
-      qualification: 'MD',
-      experience: 6,
-      rating: 4.5,
-      available: true,
-      hospitalId: 'H001',
-      consultationFee: 220,
-      avatarUrl: '/placeholder/150/150',
-      status: 'approved',
-    },
-  ]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
 
-  const [hospitals, setHospitals] = useState<Hospital[]>([
-    {
-      id: 'hospital-1',
-      name: 'City General Hospital',
-      email: 'hospital@example.com',
-      phone: '1122334455',
-      address: '123 Main St, City, State',
-      city: 'New York',
-      state: 'NY',
-      totalDoctors: 5,
-      facilities: ['Emergency Care', 'Surgery', 'Radiology', 'Laboratory', 'Pharmacy', 'ICU'],
-      status: 'approved',
-      registrationNumber: 'HOSP001',
-    },
-  ]);
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
 
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      id: 'A001',
-      patientId: 'P001',
-      patientName: 'John Doe',
-      doctorId: 'D001',
-      doctorName: 'Dr. Sarah Mitchell',
-      hospitalId: 'H001',
-      type: 'inperson',
-      date: '2024-01-15',
-      time: '10:00',
-      status: 'completed',
-      reason: 'Regular checkup',
-      notes: 'Blood pressure normal, continue current medication',
-    },
-    {
-      id: 'A002',
-      patientId: 'P002',
-      patientName: 'Jane Smith',
-      doctorId: 'D002',
-      doctorName: 'Dr. Michael Chen',
-      hospitalId: 'H001',
-      type: 'inperson',
-      date: '2024-01-16',
-      time: '14:30',
-      status: 'completed',
-      reason: 'Asthma follow-up',
-      notes: 'Asthma well controlled, adjust inhaler usage',
-    },
-    {
-      id: 'A003',
-      patientId: 'P003',
-      patientName: 'Robert Johnson',
-      doctorId: 'D001',
-      doctorName: 'Dr. Sarah Mitchell',
-      hospitalId: 'H001',
-      type: 'inperson',
-      date: '2024-01-17',
-      time: '09:00',
-      status: 'completed',
-      reason: 'Cardiac consultation',
-      notes: 'EKG shows normal sinus rhythm, continue medications',
-    },
-    {
-      id: 'A004',
-      patientId: 'P004',
-      patientName: 'Maria Garcia',
-      doctorId: 'D005',
-      doctorName: 'Dr. Lisa Park',
-      hospitalId: 'H001',
-      type: 'inperson',
-      date: '2024-01-18',
-      time: '11:15',
-      status: 'booked',
-      reason: 'Thyroid check',
-    },
-    {
-      id: 'A005',
-      patientId: 'P005',
-      patientName: 'David Wilson',
-      doctorId: 'D002',
-      doctorName: 'Dr. Michael Chen',
-      hospitalId: 'H001',
-      type: 'video',
-      date: '2024-01-19',
-      time: '15:00',
-      status: 'booked',
-      reason: 'Arthritis management',
-    },
-    {
-      id: 'A006',
-      patientId: 'P001',
-      patientName: 'John Doe',
-      doctorId: 'D003',
-      doctorName: 'Dr. Emily Rodriguez',
-      hospitalId: 'H001',
-      type: 'inperson',
-      date: '2024-01-20',
-      time: '13:30',
-      status: 'pending',
-      reason: 'Follow-up consultation',
-    },
-    {
-      id: 'A007',
-      patientId: 'P002',
-      patientName: 'Jane Smith',
-      doctorId: 'D004',
-      doctorName: 'Dr. James Thompson',
-      hospitalId: 'H001',
-      type: 'inperson',
-      date: '2024-01-21',
-      time: '10:30',
-      status: 'cancelled',
-      reason: 'Knee pain assessment',
-    },
-  ]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
-  const [medicines, setMedicines] = useState<Medicine[]>([
-    {
-      id: 'M001',
-      name: 'Lisinopril',
-      description: 'ACE inhibitor for hypertension',
-      price: 15.99,
-      stock: 150,
-      category: 'Cardiovascular',
-      manufacturer: 'Generic Pharma',
-      requiresPrescription: true,
-    },
-    {
-      id: 'M002',
-      name: 'Albuterol Inhaler',
-      description: 'Bronchodilator for asthma',
-      price: 45.50,
-      stock: 75,
-      category: 'Respiratory',
-      manufacturer: 'AstraZeneca',
-      requiresPrescription: true,
-    },
-    {
-      id: 'M003',
-      name: 'Metformin',
-      description: 'Oral diabetes medication',
-      price: 12.25,
-      stock: 200,
-      category: 'Endocrine',
-      manufacturer: 'Generic Pharma',
-      requiresPrescription: true,
-    },
-    {
-      id: 'M004',
-      name: 'Ibuprofen',
-      description: 'NSAID for pain and inflammation',
-      price: 8.99,
-      stock: 300,
-      category: 'Pain Relief',
-      manufacturer: 'Generic Pharma',
-      requiresPrescription: false,
-    },
-    {
-      id: 'M005',
-      name: 'Levothyroxine',
-      description: 'Thyroid hormone replacement',
-      price: 22.75,
-      stock: 100,
-      category: 'Endocrine',
-      manufacturer: 'AbbVie',
-      requiresPrescription: true,
-    },
-  ]);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
 
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [nutritionPlans, setNutritionPlans] = useState<NutritionPlan[]>([]);
-  const [yogaTrainers, setYogaTrainers] = useState<YogaTrainer[]>([
-    {
-      id: 'YT001',
-      name: 'Yoga Guru Amit',
-      specialization: ['Hatha Yoga', 'Power Yoga', 'Vinyasa'],
-      experience: 10,
-      rating: 4.8,
-      availability: ['Morning', 'Evening'],
-      sessionFee: 800,
-      mode: ['virtual', 'inperson'],
-    },
-    {
-      id: 'YT002',
-      name: 'Priya Sharma',
-      specialization: ['Prenatal Yoga', 'Restorative Yoga'],
-      experience: 7,
-      rating: 4.9,
-      availability: ['Morning', 'Afternoon'],
-      sessionFee: 1000,
-      mode: ['virtual', 'inperson'],
-    },
-  ]);
+  const [yogaTrainers, setYogaTrainers] = useState<YogaTrainer[]>([]);
 
-  const [trainers, setTrainers] = useState<Trainer[]>([
-    {
-      id: 'T001',
-      name: 'John Smith',
-      email: 'john.smith@example.com',
-      phone: '+1-555-0101',
-      trainerType: 'Fitness Trainer',
-      experienceYears: 8,
-      location: 'New York',
-      pricePerSession: 75,
-      bio: 'Certified personal trainer with 8 years of experience in strength training and weight loss programs.',
-      specialties: ['Strength Training', 'Weight Loss', 'HIIT'],
-      qualifications: ['NASM-CPT', 'ACSM'],
-      languages: ['English', 'Spanish'],
-      modes: ['in-person', 'virtual'],
-      status: 'approved',
-      rating: 4.7,
-      reviews: 45,
-      profileImage: '/placeholder/150/150',
-      createdAt: '2024-01-15T10:00:00Z',
-    },
-    {
-      id: 'T002',
-      name: 'Sarah Johnson',
-      email: 'sarah.johnson@example.com',
-      phone: '+1-555-0102',
-      trainerType: 'Yoga Instructor',
-      experienceYears: 6,
-      location: 'Los Angeles',
-      pricePerSession: 65,
-      bio: 'Passionate yoga instructor specializing in Vinyasa and restorative yoga for all levels.',
-      specialties: ['Vinyasa Yoga', 'Restorative Yoga', 'Meditation'],
-      qualifications: ['RYT-500', 'Prenatal Yoga Certified'],
-      languages: ['English', 'French'],
-      modes: ['in-person', 'virtual'],
-      status: 'approved',
-      rating: 4.9,
-      reviews: 32,
-      profileImage: '/placeholder/150/150',
-      createdAt: '2024-02-20T14:30:00Z',
-    },
-  ]);
+  const [trainers, setTrainers] = useState<Trainer[]>([]);
 
   // Load data from backend on mount (if enabled)
   useEffect(() => {
@@ -486,6 +97,16 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       loadDataFromBackend();
     }
   }, []);
+
+  const normalizeList = <T,>(data: any): T[] => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data.content)) return data.content;
+    if (Array.isArray(data.results)) return data.results;
+    if (Array.isArray(data.records)) return data.records;
+    if (Array.isArray(data.data)) return data.data;
+    return [];
+  };
 
   const loadDataFromBackend = async () => {
     let failedLoads = 0; // Track failed API calls to show single toast
@@ -500,6 +121,9 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       let hospitalsData: any[] = [];
       let appointmentsData: any[] = [];
       let medicinesData: any[] = [];
+      let trainerData: any[] = [];
+      let yogaTrainerData: any[] = [];
+      let nutritionPlansData: any[] = [];
 
       if (userRole === 'admin') {
         // Admin loads all data - handle each API call separately to prevent one failure from stopping others
@@ -718,14 +342,6 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
 
         try {
           appointmentsData = await api.appointments.getAll();
-          // Normalize status and type values to lowercase for frontend consistency
-          appointmentsData = appointmentsData.map(apt => ({
-            ...apt,
-            status: apt.status?.toLowerCase() === 'upcoming' ? 'booked' : apt.status?.toLowerCase(),
-            type: apt.type?.toLowerCase(),
-            date: apt.appointmentDate,
-            time: apt.appointmentTime,
-          }));
         } catch (error) {
           console.warn('Failed to load appointments from backend:', error);
           appointmentsData = [];
@@ -741,11 +357,55 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
       }
 
-      setPatients(patientsData);
-      setDoctors(doctorsData);
-      setHospitals(hospitalsData);
-      setAppointments(appointmentsData);
-      setMedicines(medicinesData);
+      const normalizedPatients = normalizeList<Patient>(patientsData);
+      const normalizedDoctors = normalizeList<Doctor>(doctorsData);
+      const normalizedHospitals = normalizeList<Hospital>(hospitalsData);
+      const normalizedAppointments = normalizeList<any>(appointmentsData);
+      try {
+        trainerData = await api.trainers.getAll();
+      } catch (error) {
+        console.warn('Failed to load trainers from backend:', error);
+        trainerData = [];
+        failedLoads++;
+      }
+
+      try {
+        yogaTrainerData = await api.yoga.getTrainers();
+      } catch (error) {
+        console.warn('Failed to load yoga trainers from backend:', error);
+        yogaTrainerData = [];
+        failedLoads++;
+      }
+
+      try {
+        nutritionPlansData = await api.nutrition.getPlans();
+      } catch (error) {
+        console.warn('Failed to load nutrition plans from backend:', error);
+        nutritionPlansData = [];
+        failedLoads++;
+      }
+
+      const normalizedMedicines = normalizeList<Medicine>(medicinesData);
+      const normalizedTrainers = normalizeList<Trainer>(trainerData);
+      const normalizedYoga = normalizeList<YogaTrainer>(yogaTrainerData);
+      const normalizedNutrition = normalizeList<NutritionPlan>(nutritionPlansData);
+
+      setPatients(normalizedPatients);
+      setDoctors(normalizedDoctors);
+      setHospitals(normalizedHospitals);
+      setAppointments(
+        normalizedAppointments.map(apt => ({
+          ...apt,
+          status: apt.status?.toLowerCase() === 'upcoming' ? 'booked' : apt.status?.toLowerCase(),
+          type: apt.type?.toLowerCase(),
+          date: apt.appointmentDate,
+          time: apt.appointmentTime,
+        })),
+      );
+      setMedicines(normalizedMedicines);
+      setTrainers(normalizedTrainers);
+      setYogaTrainers(normalizedYoga);
+      setNutritionPlans(normalizedNutrition);
 
       // Show single toast if any loads failed
       if (failedLoads > 0) {
@@ -753,8 +413,12 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
 
       // Only show success toast if at least some data was loaded
-      const hasData = patientsData.length > 0 || doctorsData.length > 0 || hospitalsData.length > 0 ||
-                     appointmentsData.length > 0 || medicinesData.length > 0;
+      const hasData =
+        normalizedPatients.length > 0 ||
+        normalizedDoctors.length > 0 ||
+        normalizedHospitals.length > 0 ||
+        normalizedAppointments.length > 0 ||
+        normalizedMedicines.length > 0;
       if (hasData) {
         // toast.success('Connected to backend successfully!');
       }
@@ -1183,7 +847,7 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const approveTrainer = async (trainerId: string) => {
     if (USE_BACKEND) {
       try {
-        await api.trainers.approve(trainerId);
+        await api.admin.approveTrainer(trainerId);
         setTrainers(trainers.map(t => t.id === trainerId ? { ...t, status: 'approved' } : t));
         toast.success('Trainer approved successfully');
       } catch (error) {
@@ -1198,7 +862,7 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const rejectTrainer = async (trainerId: string) => {
     if (USE_BACKEND) {
       try {
-        await api.trainers.reject(trainerId);
+        await api.admin.rejectTrainer(trainerId);
         setTrainers(trainers.map(t => t.id === trainerId ? { ...t, status: 'rejected' } : t));
         toast.success('Trainer rejected');
       } catch (error) {

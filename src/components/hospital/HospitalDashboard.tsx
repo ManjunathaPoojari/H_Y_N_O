@@ -1,628 +1,203 @@
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Building2, Users, Calendar, UserPlus, Stethoscope, TrendingUp, AlertCircle } from 'lucide-react';
-import { useAppStore } from '../../lib/app-store';
-import { useAuth } from '../../lib/auth-context';
-import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Textarea } from '../ui/textarea';
-import { doctorAPI, hospitalAPI } from '../../lib/api-client';
-import { HospitalDoctors } from './HospitalDoctors';
-import { HospitalAppointments } from './HospitalAppointments';
-import { HospitalPatients } from './HospitalPatients';
+import { Progress } from '../ui/progress';
+import {
+  Activity,
+  AlertCircle,
+  Bed,
+  Building2,
+  Landmark,
+  Stethoscope,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
 
 interface HospitalDashboardProps {
-  onNavigate?: (path: string) => void;
+  onNavigate: (path: string) => void;
 }
 
 export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate }) => {
-  const { doctors, appointments, updateAppointment, addDoctor } = useAppStore();
-  const { user } = useAuth();
-  const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
-  const [hospitalData, setHospitalData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [doctorForm, setDoctorForm] = useState({
-    name: '',
-    email: '',
-    specialization: '',
-    qualification: '',
-    experience: '',
-    consultationFee: '',
-    phone: ''
-  });
+  const departments = [
+    { name: 'Cardiology', load: 78, state: 'Busy' },
+    { name: 'Neurology', load: 54, state: 'Stable' },
+    { name: 'Pediatrics', load: 61, state: 'Stable' },
+    { name: 'Orthopedics', load: 83, state: 'Busy' },
+    { name: 'Emergency', load: 92, state: 'Critical' },
+  ];
 
-  useEffect(() => {
-    const fetchHospitalData = async () => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
+  const admissions = [
+    { name: 'James Wilson', dept: 'Cardiology', time: '10 min ago' },
+    { name: 'Linda Martinez', dept: 'Emergency', time: '25 min ago' },
+    { name: 'Robert Taylor', dept: 'Neurology', time: '1 hr ago' },
+    { name: 'Susan Anderson', dept: 'Pediatrics', time: '2 hr ago' },
+  ];
 
-      try {
-        setLoading(true);
-        const data = await hospitalAPI.getById(user.id);
-        setHospitalData(data);
-      } catch (err: any) {
-        console.error('Error fetching hospital data:', err);
-        // Fallback to hardcoded data if API fails
-        setHospitalData({ name: 'Hospital Dashboard', id: user.id });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHospitalData();
-  }, [user?.id]);
-
-  const hospitalDoctors = doctors.filter(d => (d.hospitalId === user?.id || d.hospital?.id === user?.id) && (d.status === 'approved' || d.status === 'pending'));
-  const pendingDoctors = doctors.filter(d => (d.hospitalId === user?.id || d.hospital?.id === user?.id) && d.status === 'pending');
-  const hospitalAppointments = appointments.filter(a => a.hospitalId === user?.id);
-  const pendingAppointments = hospitalAppointments.filter(a => a.status === 'pending');
-
-  const stats = {
-    totalDoctors: hospitalDoctors.length,
-    totalAppointments: hospitalAppointments.length,
-    pendingApprovals: pendingAppointments.length,
-    pendingDoctors: pendingDoctors.length,
-    todayAppointments: 8,
-  };
-
-  const handleAddDoctor = async () => {
-    if (!user?.id) {
-      toast.error('User not authenticated. Please login again.');
-      return;
-    }
-
-    // Validate required fields
-    if (!doctorForm.name || !doctorForm.email || !doctorForm.specialization) {
-      toast.error('Please fill in all required fields (Name, Email, Specialization).');
-      return;
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(doctorForm.email)) {
-      toast.error('Please enter a valid email address.');
-      return;
-    }
-
-    try {
-      const doctorData = {
-        // Remove id as backend generates it
-        ...doctorForm,
-        hospitalId: user.id, // Associate with current hospital
-        experience: parseInt(doctorForm.experience) || 0,
-        consultationFee: parseFloat(doctorForm.consultationFee) || 0,
-        status: 'pending', // New doctors need approval
-        available: true,
-        rating: 0,
-        password: 'defaultPassword123' // Default password, should be changed later
-      };
-
-      const newDoctor = await doctorAPI.create(doctorData);
-
-      // Check if the response indicates an error (e.g., duplicate email)
-      if (newDoctor && typeof newDoctor === 'object' && 'message' in newDoctor && newDoctor.message && (
-        newDoctor.message.toLowerCase().includes('duplicate') ||
-        newDoctor.message.toLowerCase().includes('already exists') ||
-        newDoctor.message.toLowerCase().includes('constraint violation')
-      )) {
-        throw new Error(newDoctor.message);
-      }
-
-      if (newDoctor && typeof newDoctor === 'object' && !('message' in newDoctor)) {
-        try {
-          addDoctor(newDoctor);
-        } catch (storeError) {
-          console.error('Error updating store:', storeError);
-          // Don't show error for store update, as doctor was created successfully
-        }
-
-        toast.success('Doctor added successfully and sent for admin approval! They will appear in your dashboard once approved.');
-      } else {
-        throw new Error(newDoctor?.message || 'No doctor data returned from server');
-      }
-
-      setIsAddDoctorOpen(false);
-      setDoctorForm({
-        name: '',
-        email: '',
-        specialization: '',
-        qualification: '',
-        experience: '',
-        consultationFee: '',
-        phone: ''
-      });
-    } catch (error: any) {
-      console.error('Error adding doctor:', error);
-      if (error.message && (error.message.includes('Duplicate entry') || error.message.includes('already exists'))) {
-        toast.error('A doctor with this email already exists. Please use a different email address.');
-      } else {
-        toast.error(error.message || 'Failed to add doctor. Please try again.');
-      }
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl mb-2">Hospital Dashboard</h1>
-          <p className="text-gray-600">Loading your hospital information...</p>
-        </div>
-        <Card>
-          <CardContent className="p-8">
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2">Loading...</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const infra = [
+    { label: 'ICU beds', used: 26, total: 30 },
+    { label: 'Ventilators', used: 14, total: 20 },
+    { label: 'Operating rooms', used: 6, total: 8 },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl mb-2">{hospitalData?.name || 'Keerthi Hospital'}</h1>
-        <p className="text-gray-600">Hospital Management Dashboard</p>
-      </div>
+    <div className="space-y-8">
+      <section className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">Network command center</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Hospital overview</h1>
+          <p className="text-muted-foreground mt-2">
+            Monitor occupancy, emergency readiness, and care teams in real time.
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => onNavigate('/hospital/emergency')}>
+          <AlertCircle className="h-4 w-4" />
+          Emergency status
+        </Button>
+      </section>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">Total Doctors</CardTitle>
-            <Stethoscope className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{stats.totalDoctors}</div>
-            <p className="text-xs text-gray-600 mt-1">Active practitioners</p>
-          </CardContent>
-        </Card>
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[
+          { title: 'Bed occupancy', value: '85%', helper: '142 / 167 beds', icon: Bed },
+          { title: 'Clinical staff on duty', value: '64', helper: '12 doctors • 52 nurses', icon: Stethoscope },
+          { title: 'Patients admitted', value: '1,893', helper: '+124 this week', icon: Users },
+          { title: 'Financial outlook', value: '+12.5%', helper: 'Month over month', icon: TrendingUp },
+        ].map((stat) => (
+          <Card key={stat.title} className="border-slate-200 shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-500">{stat.title}</CardTitle>
+              <span className="rounded-full bg-slate-100 p-2 text-slate-600">
+                <stat.icon className="h-4 w-4" />
+              </span>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold text-slate-900">{stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.helper}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </section>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">Pending Doctors</CardTitle>
-            <UserPlus className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{stats.pendingDoctors}</div>
-            <p className="text-xs text-gray-600 mt-1">Awaiting admin approval</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">Total Appointments</CardTitle>
-            <Calendar className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{stats.totalAppointments}</div>
-            <p className="text-xs text-gray-600 mt-1">All time bookings</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">Today's Appointments</CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{stats.todayAppointments}</div>
-            <p className="text-xs text-gray-600 mt-1">Scheduled for today</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Dialog open={isAddDoctorOpen} onOpenChange={setIsAddDoctorOpen}>
-              <DialogTrigger asChild>
-                <Button className="h-auto py-4 flex flex-col gap-2">
-                  <UserPlus className="h-5 w-5" />
-                  <span className="text-sm">Add Doctor</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Add New Doctor</DialogTitle>
-                </DialogHeader>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      value={doctorForm.name}
-                      onChange={(e) => setDoctorForm({...doctorForm, name: e.target.value})}
-                      placeholder="Dr. John Doe"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={doctorForm.email}
-                      onChange={(e) => setDoctorForm({...doctorForm, email: e.target.value})}
-                      placeholder="doctor@example.com"
-                    />
-                  </div>
-                <div>
-                  <Label htmlFor="specialization">Specialization</Label>
-                  <Select value={doctorForm.specialization} onValueChange={(value: string) => setDoctorForm({...doctorForm, specialization: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select specialization" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Cardiology">Cardiology</SelectItem>
-                      <SelectItem value="Neurology">Neurology</SelectItem>
-                      <SelectItem value="General Medicine">General Medicine</SelectItem>
-                      <SelectItem value="Orthopedics">Orthopedics</SelectItem>
-                      <SelectItem value="Dermatology">Dermatology</SelectItem>
-                      <SelectItem value="Pediatrics">Pediatrics</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                  <div>
-                    <Label htmlFor="qualification">Qualification</Label>
-                    <Input
-                      id="qualification"
-                      value={doctorForm.qualification}
-                      onChange={(e) => setDoctorForm({...doctorForm, qualification: e.target.value})}
-                      placeholder="MBBS, MD"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="experience">Experience (years)</Label>
-                    <Input
-                      id="experience"
-                      type="number"
-                      value={doctorForm.experience}
-                      onChange={(e) => setDoctorForm({...doctorForm, experience: e.target.value})}
-                      placeholder="5"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="consultationFee">Consultation Fee (₹)</Label>
-                    <Input
-                      id="consultationFee"
-                      type="number"
-                      value={doctorForm.consultationFee}
-                      onChange={(e) => setDoctorForm({...doctorForm, consultationFee: e.target.value})}
-                      placeholder="500"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      value={doctorForm.phone}
-                      onChange={(e) => setDoctorForm({...doctorForm, phone: e.target.value})}
-                      placeholder="+91 9876543210"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2 mt-4">
-                  <Button variant="outline" onClick={() => setIsAddDoctorOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleAddDoctor}>
-                    Add Doctor
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-            <Button className="h-auto py-4 flex flex-col gap-2" onClick={() => onNavigate?.('/hospital/appointments')}>
-              <Calendar className="h-5 w-5" />
-              <span className="text-sm">View Appointments</span>
+      <section className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2 border-slate-200 shadow-sm">
+          <CardHeader className="flex items-center justify-between">
+            <div>
+              <CardTitle>Department load</CardTitle>
+              <CardDescription>Live utilization by speciality</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => onNavigate('/hospital/reports')}>
+              View detailed report
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => onNavigate?.('/hospital/doctors')}>
-              <Stethoscope className="h-5 w-5" />
-              <span className="text-sm">Manage Doctors</span>
-            </Button>
-            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => onNavigate?.('/hospital/reports')}>
-              <TrendingUp className="h-5 w-5" />
-              <span className="text-sm">View Reports</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Our Doctors */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Our Doctors</CardTitle>
-          <Dialog open={isAddDoctorOpen} onOpenChange={setIsAddDoctorOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Add Doctor
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Add New Doctor</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    value={doctorForm.name}
-                    onChange={(e) => setDoctorForm({...doctorForm, name: e.target.value})}
-                    placeholder="Dr. John Doe"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={doctorForm.email}
-                    onChange={(e) => setDoctorForm({...doctorForm, email: e.target.value})}
-                    placeholder="doctor@example.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="specialization">Specialization</Label>
-                  <Select value={doctorForm.specialization} onValueChange={(value: string) => setDoctorForm({...doctorForm, specialization: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select specialization" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Cardiology">Cardiology</SelectItem>
-                      <SelectItem value="Neurology">Neurology</SelectItem>
-                      <SelectItem value="General Medicine">General Medicine</SelectItem>
-                      <SelectItem value="Orthopedics">Orthopedics</SelectItem>
-                      <SelectItem value="Dermatology">Dermatology</SelectItem>
-                      <SelectItem value="Pediatrics">Pediatrics</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="qualification">Qualification</Label>
-                  <Input
-                    id="qualification"
-                    value={doctorForm.qualification}
-                    onChange={(e) => setDoctorForm({...doctorForm, qualification: e.target.value})}
-                    placeholder="MBBS, MD"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="experience">Experience (years)</Label>
-                  <Input
-                    id="experience"
-                    type="number"
-                    value={doctorForm.experience}
-                    onChange={(e) => setDoctorForm({...doctorForm, experience: e.target.value})}
-                    placeholder="5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="consultationFee">Consultation Fee (₹)</Label>
-                  <Input
-                    id="consultationFee"
-                    type="number"
-                    value={doctorForm.consultationFee}
-                    onChange={(e) => setDoctorForm({...doctorForm, consultationFee: e.target.value})}
-                    placeholder="500"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    value={doctorForm.phone}
-                    onChange={(e) => setDoctorForm({...doctorForm, phone: e.target.value})}
-                    placeholder="+91 9876543210"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={() => setIsAddDoctorOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddDoctor}>
-                  Add Doctor
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {hospitalDoctors.map((doctor) => (
-              <div key={doctor.id} className="border rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4>{doctor.name}</h4>
-                      <Badge variant={doctor.available ? 'default' : 'secondary'}>
-                        {doctor.available ? 'Available' : 'Unavailable'}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600">{doctor.specialization}</p>
-                    <p className="text-xs text-gray-500 mt-1">{doctor.qualification}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
-                      <span>{doctor.experience} years exp.</span>
-                      <span>Rating: {doctor.rating}/5</span>
-                      <span>Fee: ₹{doctor.consultationFee}</span>
-                    </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {departments.map((dept) => (
+              <div key={dept.name} className="rounded-xl border border-slate-200 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-slate-900">{dept.name}</p>
+                    <p className="text-sm text-muted-foreground">{dept.load}% capacity</p>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <Button size="sm" variant="outline">Edit</Button>
-                    <Button size="sm" variant="outline">View Schedule</Button>
-                  </div>
+                  <Badge
+                    variant="outline"
+                    className={
+                      dept.state === 'Critical'
+                        ? 'border-red-200 text-red-600'
+                        : dept.state === 'Busy'
+                          ? 'border-amber-200 text-amber-600'
+                          : 'border-emerald-200 text-emerald-600'
+                    }
+                  >
+                    {dept.state}
+                  </Badge>
                 </div>
+                <Progress value={dept.load} className="mt-4 bg-slate-100" />
               </div>
             ))}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Pending Doctors */}
-      {pendingDoctors.length > 0 && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Pending Doctor Approvals</CardTitle>
-            <Badge variant="secondary">{pendingDoctors.length}</Badge>
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle>Recent admissions</CardTitle>
+            <CardDescription>Last 2 hours</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {pendingDoctors.map((doctor) => (
-                <div key={doctor.id} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4>{doctor.name}</h4>
-                        <Badge variant="outline" className="text-orange-600 border-orange-600">
-                          Pending Approval
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600">{doctor.specialization}</p>
-                      <p className="text-xs text-gray-500 mt-1">{doctor.qualification}</p>
-                      <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
-                        <span>{doctor.experience} years exp.</span>
-                        <span>Fee: ₹{doctor.consultationFee}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Button size="sm" variant="outline">Edit</Button>
-                      <Button size="sm" variant="outline">Remove</Button>
-                    </div>
+          <CardContent className="space-y-4">
+            {admissions.map((patient) => (
+              <div key={patient.name} className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3">
+                <span className="rounded-full bg-slate-100 px-3 py-2 text-sm font-medium text-slate-600">
+                  {patient.name.charAt(0)}
+                </span>
+                <div className="flex-1">
+                  <p className="font-medium text-slate-900">{patient.name}</p>
+                  <p className="text-sm text-muted-foreground">{patient.dept}</p>
+                </div>
+                <span className="text-xs text-slate-500">{patient.time}</span>
+              </div>
+            ))}
+            <Button variant="outline" className="w-full" onClick={() => onNavigate('/hospital/patients')}>
+              View all patients
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle>Emergency readiness</CardTitle>
+            <CardDescription>Live vitals from critical units</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {[
+              { label: 'Resuscitation bays', status: 'Available', icon: Activity },
+              { label: 'Surge triage', status: 'High traffic', icon: Building2 },
+              { label: 'Helipad', status: 'Operational', icon: Landmark },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full bg-slate-100 p-2 text-slate-600">
+                    <item.icon className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="font-medium text-slate-900">{item.label}</p>
+                    <p className="text-sm text-muted-foreground">{item.status}</p>
                   </div>
                 </div>
-              ))}
-            </div>
+                <Badge variant="outline">Live</Badge>
+              </div>
+            ))}
+            <Button variant="outline" className="w-full" onClick={() => onNavigate('/hospital/emergency')}>
+              Open emergency board
+            </Button>
           </CardContent>
         </Card>
-      )}
 
-      {/* Pending Appointments */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Pending Appointment Approvals</CardTitle>
-          <Badge variant="secondary">{pendingAppointments.length}</Badge>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {pendingAppointments.length > 0 ? (
-              pendingAppointments.map((appointment) => (
-                <div key={appointment.id} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4>{appointment.patientName}</h4>
-                        <Badge variant="outline" className="text-orange-600 border-orange-600">
-                          Pending
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-1">Doctor: {appointment.doctorName}</p>
-                      <p className="text-sm text-gray-600 mb-1">{appointment.reason}</p>
-                      <p className="text-xs text-gray-500">{appointment.date} at {appointment.time}</p>
-                    </div>
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle>Infrastructure usage</CardTitle>
+            <CardDescription>Key life-support resources</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {infra.map((item) => {
+              const percent = Math.round((item.used / item.total) * 100);
+              return (
+                <div key={item.label} className="rounded-lg border border-slate-200 p-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <p className="font-medium text-slate-900">{item.label}</p>
+                    <span className="text-slate-500">
+                      {item.used}/{item.total}
+                    </span>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => {
-                        updateAppointment(appointment.id, { status: 'booked' });
-                      }}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => {
-                        updateAppointment(appointment.id, { status: 'cancelled' });
-                      }}
-                    >
-                      Reject
-                    </Button>
-                  </div>
+                  <Progress value={percent} className="mt-3 bg-slate-100" />
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-8">No pending approvals</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Hospital Stats */}
-      <div className="grid md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Specializations Available</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Cardiology</span>
-                <Badge variant="secondary">1 Doctor</Badge>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Neurology</span>
-                <Badge variant="secondary">1 Doctor</Badge>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>General Medicine</span>
-                <Badge variant="secondary">3 Doctors</Badge>
-              </div>
-            </div>
+              );
+            })}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Facilities</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {['ICU', 'Emergency', 'Surgery', 'Lab', 'Pharmacy', 'Radiology'].map((facility) => (
-                <Badge key={facility} variant="outline">{facility}</Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">This Month</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Appointments</span>
-                <span>156</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">New Patients</span>
-                <span>42</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Revenue</span>
-                <span>₹2,45,000</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      </section>
     </div>
   );
 };

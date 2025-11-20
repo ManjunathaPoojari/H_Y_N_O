@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,7 +19,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/doctors")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:5173"})
+@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:3001", "http://localhost:5173" })
 public class DoctorController {
 
     @Autowired
@@ -72,11 +71,11 @@ public class DoctorController {
     }
 
     @PutMapping(value = "/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<Doctor> updateDoctor(
+    public ResponseEntity<Doctor> updateDoctorWithFile(
             @PathVariable String id,
             @RequestPart("doctor") Doctor doctorDetails,
             @RequestPart(value = "avatar", required = false) MultipartFile avatar) {
-        
+
         // Handle file upload if present
         if (avatar != null && !avatar.isEmpty()) {
             try {
@@ -85,25 +84,35 @@ public class DoctorController {
                 if (!Files.exists(uploadDir)) {
                     Files.createDirectories(uploadDir);
                 }
-                
+
                 // Generate unique filename
                 String originalFilename = avatar.getOriginalFilename();
-                String fileExtension = originalFilename != null ? originalFilename.substring(originalFilename.lastIndexOf(".")) : ".jpg";
+                String fileExtension = originalFilename != null
+                        ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                        : ".jpg";
                 String filename = UUID.randomUUID().toString() + fileExtension;
                 Path filePath = uploadDir.resolve(filename);
-                
+
                 // Save file
                 Files.copy(avatar.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-                
+
                 // Set avatar URL (assuming local serving; adjust for production)
                 doctorDetails.setAvatarUrl("/uploads/doctors/" + filename);
-                
+
             } catch (IOException e) {
                 // Log error but continue without avatar update
                 System.err.println("Error uploading avatar: " + e.getMessage());
             }
         }
-        
+
+        Doctor updatedDoctor = doctorService.updateDoctor(id, doctorDetails);
+        return updatedDoctor != null ? ResponseEntity.ok(updatedDoctor) : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping(value = "/{id}", consumes = "application/json")
+    public ResponseEntity<Doctor> updateDoctor(
+            @PathVariable String id,
+            @RequestBody Doctor doctorDetails) {
         Doctor updatedDoctor = doctorService.updateDoctor(id, doctorDetails);
         return updatedDoctor != null ? ResponseEntity.ok(updatedDoctor) : ResponseEntity.notFound().build();
     }

@@ -6,7 +6,6 @@ import com.hyno.entity.Hospital;
 import com.hyno.entity.Trainer;
 import com.hyno.entity.Admin;
 import com.hyno.entity.PasswordResetToken;
-import com.hyno.entity.EmailVerificationToken;
 import com.hyno.service.PatientService;
 import com.hyno.service.DoctorService;
 import com.hyno.service.HospitalService;
@@ -161,6 +160,15 @@ public class AuthController {
             // Check doctors
             Optional<Doctor> doctor = Optional.ofNullable(doctorService.getDoctorByEmail(normalizedEmail));
             if (doctor.isPresent() && passwordEncoder.matches(password, doctor.get().getPassword())) {
+                // Check if doctor is approved
+                String status = doctor.get().getStatus();
+                if (status == null || (!status.equalsIgnoreCase("approved"))) {
+                    logger.warn("Doctor login denied - not approved. Status: {}", status);
+                    return ResponseEntity.status(403).body(Map.of(
+                        "message", "Your account is waiting for admin approval. Please contact support if you have any questions.",
+                        "code", "PENDING_APPROVAL"
+                    ));
+                }
                 logger.info("Doctor login successful for: {}", email);
                 // Reset login attempts on successful login
                 loginAttempts.remove(email);
@@ -185,6 +193,15 @@ public class AuthController {
                 logger.info("Input password matches hash: {}", passwordEncoder.matches(password, storedPassword));
                 // Support both plain text (legacy) and hashed passwords
                 if (password.equals(storedPassword) || passwordEncoder.matches(password, storedPassword)) {
+                    // Check if hospital is approved
+                    String status = hospital.get().getStatus();
+                    if (status == null || (!status.equalsIgnoreCase("approved"))) {
+                        logger.warn("Hospital login denied - not approved. Status: {}", status);
+                        return ResponseEntity.status(403).body(Map.of(
+                            "message", "Your account is waiting for admin approval. Please contact support if you have any questions.",
+                            "code", "PENDING_APPROVAL"
+                        ));
+                    }
                     logger.info("Hospital login successful for: {}", email);
                     // Reset login attempts on successful login
                     loginAttempts.remove(email);
@@ -203,6 +220,15 @@ public class AuthController {
             // Check trainers
             Optional<Trainer> trainer = trainerService.getTrainerByEmail(email);
             if (trainer.isPresent() && passwordEncoder.matches(password, trainer.get().getPassword())) {
+                // Check if trainer is approved
+                String status = trainer.get().getStatus();
+                if (status == null || (!status.equalsIgnoreCase("approved"))) {
+                    logger.warn("Trainer login denied - not approved. Status: {}", status);
+                    return ResponseEntity.status(403).body(Map.of(
+                        "message", "Your account is waiting for admin approval. Please contact support if you have any questions.",
+                        "code", "PENDING_APPROVAL"
+                    ));
+                }
                 logger.info("Trainer login successful for: {}", email);
                 // Reset login attempts on successful login
                 loginAttempts.remove(email);

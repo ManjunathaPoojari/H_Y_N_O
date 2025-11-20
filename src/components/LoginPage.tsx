@@ -48,8 +48,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
             : '/patient/dashboard';
         onNavigate(path);
       } else toast.error('Invalid credentials');
-    } catch {
-      toast.error('Login failed. Try again.');
+    } catch (err: any) {
+      // Display the specific error message from backend (e.g., approval pending)
+      const errorMessage = err?.message || 'Login failed. Try again.';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -66,8 +68,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
               onClick={() => onNavigate('/')}
               className="flex items-center justify-center gap-2 mb-4 hover:scale-105 transition-all duration-200 mx-auto"
             >
-              <Activity className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl text-blue-600">HYNO</span>
+              <Activity className="h-8 w-8 text-emerald-600" />
+              <span className="text-2xl text-emerald-600 font-bold">HYNO</span>
             </button>
             <h1 className="text-3xl font-bold text-gray-800">Sign In</h1>
             <p className="text-gray-500 text-sm mt-2">Trusted Healthcare • 24/7 Support</p>

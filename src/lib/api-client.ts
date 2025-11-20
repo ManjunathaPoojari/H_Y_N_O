@@ -315,7 +315,7 @@ export const medicineAPI = {
   getById: (id: string) => apiCall<any>(`/medicines/${id}`),
 
   search: (query: string) =>
-    apiCall<any[]>(`/medicines/search?q=${encodeURIComponent(query)}`),
+    apiCall<any[]>(`/medicines/search?query=${encodeURIComponent(query)}`),
 
   create: (medicine: any) =>
     apiCall<any>('/medicines', {
@@ -548,6 +548,14 @@ export const feedbackAPI = {
 export const adminAPI = {
   getStats: () => apiCall<any>('/admin/stats'),
 
+  getAdminProfile: (id: string) => apiCall<any>(`/admin/admins/${id}`),
+
+  updateAdminProfile: (id: string, data: any) =>
+    apiCall<any>(`/admin/admins/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
   // Patient management
   getAllPatients: (page?: number, size?: number, sortBy?: string, sortDir?: string, search?: string) => {
     const params = new URLSearchParams();
@@ -572,6 +580,11 @@ export const adminAPI = {
   // Doctor management
   getAllDoctors: () => apiCall<any[]>('/admin/doctors'),
   getDoctorById: (id: string) => apiCall<any>(`/admin/doctors/${id}`),
+  createDoctor: (doctor: any) =>
+    apiCall<any>('/admin/doctors', {
+      method: 'POST',
+      body: JSON.stringify(doctor),
+    }),
   updateDoctor: (id: string, doctor: any) =>
     apiCall<any>(`/admin/doctors/${id}`, {
       method: 'PUT',
@@ -637,8 +650,22 @@ export const adminAPI = {
     }),
 
   // Pending approvals
+  getAllPendingApprovals: () => apiCall<any>('/admin/pending/all'),
   getPendingDoctors: () => apiCall<any[]>('/admin/pending/doctors'),
   getPendingHospitals: () => apiCall<any[]>('/admin/pending/hospitals'),
+  getPendingTrainers: () => apiCall<any[]>('/admin/pending/trainers'),
+
+  // Trainer management
+  getAllTrainers: () => apiCall<any[]>('/admin/trainers'),
+  getTrainerById: (id: string) => apiCall<any>(`/admin/trainers/${id}`),
+  approveTrainer: (id: string) =>
+    apiCall<any>(`/admin/trainers/${id}/approve`, {
+      method: 'PUT',
+    }),
+  rejectTrainer: (id: string) =>
+    apiCall<any>(`/admin/trainers/${id}/reject`, {
+      method: 'PUT',
+    }),
 };
 
 // Trainer API
@@ -657,16 +684,6 @@ export const trainerAPI = {
     apiCall<any>(`/trainers/${id}`, {
       method: 'PUT',
       body: JSON.stringify(trainer),
-    }),
-
-  approve: (id: string) =>
-    apiCall<any>(`/trainers/${id}/approve`, {
-      method: 'PUT',
-    }),
-
-  reject: (id: string) =>
-    apiCall<any>(`/trainers/${id}/reject`, {
-      method: 'PUT',
     }),
 
   delete: (id: string) =>

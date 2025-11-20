@@ -1,410 +1,186 @@
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Calendar, Users, Video, MessageSquare, Clock, FileText, Loader2, Settings } from 'lucide-react';
-import { useAuth } from '../../lib/auth-context';
-import { appointmentAPI, doctorAPI, patientAPI, chatAPI } from '../../lib/api-client';
-import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
-
-interface Appointment {
-  id: string;
-  patientName: string;
-  patientId: string;
-  type: string;
-  status: string;
-  reason: string;
-  appointmentDate: string;
-  time: string;
-}
-
-interface Patient {
-  id: string;
-  name: string;
-}
+import { Progress } from '../ui/progress';
+import {
+  ArrowRight,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Stethoscope,
+  Users,
+} from 'lucide-react';
 
 export const DoctorDashboard = () => {
-  const { user } = useAuth();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    todayAppointments: 0,
-    totalPatients: 0,
-    pendingRequests: 0,
-    completedToday: 0,
-  });
+  const schedule = [
+    { patient: 'Sarah Johnson', time: '09:30 AM', type: 'Follow-up', room: 'Telehealth', status: 'Ready' },
+    { patient: 'Michael Brown', time: '11:00 AM', type: 'Consultation', room: 'Room 214', status: 'Waiting' },
+    { patient: 'Emily Davis', time: '01:15 PM', type: 'Post-op', room: 'Room 118', status: 'Ready' },
+    { patient: 'Robert Wilson', time: '03:00 PM', type: 'Emergency', room: 'ER Bay 2', status: 'Critical' },
+  ];
 
-  useEffect(() => {
-    if (user?.id) {
-      loadDashboardData();
-    }
+  const tasks = [
+    { label: 'Lab reviews', value: 68 },
+    { label: 'Discharge notes', value: 42 },
+    { label: 'Prescription renewals', value: 80 },
+  ];
 
-    // Listen for appointment updates from other components
-    const handleAppointmentUpdate = () => {
-      if (user?.id) {
-        loadDashboardData();
-      }
-    };
-
-    const handleAppointmentCompleted = () => {
-      if (user?.id) {
-        loadDashboardData();
-      }
-    };
-
-    window.addEventListener('appointmentUpdated', handleAppointmentUpdate);
-    window.addEventListener('appointmentCompleted', handleAppointmentCompleted);
-
-    return () => {
-      window.removeEventListener('appointmentUpdated', handleAppointmentUpdate);
-      window.removeEventListener('appointmentCompleted', handleAppointmentCompleted);
-    };
-  }, [user]);
-
-  const loadDashboardData = async () => {
-    if (!user?.id) return;
-
-    try {
-      setLoading(true);
-      const appointmentsRes = await appointmentAPI.getByDoctor(user.id);
-
-      // Get unique patients from appointments
-      const uniquePatientIds = [...new Set(appointmentsRes.map(app => app.patientId))];
-      const patientsRes = await Promise.all(
-        uniquePatientIds.map(id => patientAPI.getById(id).catch(() => null))
-      ).then(results => results.filter(p => p !== null));
-
-      setAppointments(appointmentsRes);
-      setPatients(patientsRes);
-
-      // Calculate stats
-      const today = new Date().toISOString().split('T')[0];
-      const todayApps = appointmentsRes.filter(app =>
-        app.appointmentDate === today && app.status === 'UPCOMING'
-      );
-      const completedToday = appointmentsRes.filter(app =>
-        app.appointmentDate === today && app.status === 'COMPLETED'
-      );
-      const pendingRequests = appointmentsRes.filter(app =>
-        app.status === 'PENDING'
-      );
-
-      setStats({
-        todayAppointments: todayApps.length,
-        totalPatients: patientsRes.length,
-        pendingRequests: pendingRequests.length,
-        completedToday: completedToday.length,
-      });
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-      toast.error('Failed to load dashboard data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const todayAppointments = appointments.filter(a => {
-    const today = new Date().toISOString().split('T')[0];
-    return a.appointmentDate === today && a.status === 'UPCOMING';
-  }).slice(0, 4);
-
-  const handleStartVideo = async (appointmentId: string) => {
-    try {
-      toast.success('Starting video consultation...');
-      // Create chat room if it doesn't exist
-      await chatAPI.createChatRoom(appointmentId);
-      setTimeout(() => {
-        window.open('https://meet.google.com/new', '_blank');
-      }, 1000);
-    } catch (error) {
-      console.error('Error starting video call:', error);
-      toast.error('Failed to start video call');
-    }
-  };
-
-  const handleStartChat = async (appointmentId: string) => {
-    try {
-      toast.success('Opening chat window...');
-      // Create chat room if it doesn't exist
-      await chatAPI.createChatRoom(appointmentId);
-      // Navigate to chat or open chat interface
-      window.location.href = '/doctor/chat';
-    } catch (error) {
-      console.error('Error opening chat:', error);
-      toast.error('Failed to open chat');
-    }
-  };
-
-  const handleViewPatientHistory = (patientId: string) => {
-    // Navigate to patient profile page which should show history
-    window.location.href = `/doctor/patients?patientId=${patientId}`;
-  };
-
-  const handleAddNotes = (appointmentId: string) => {
-    // For now, show a toast - could be expanded to a modal or separate page
-    toast.info('Notes functionality will be implemented soon');
-  };
-
-  const handleApproveAppointment = async (appointmentId: string) => {
-    try {
-      await appointmentAPI.update(appointmentId, { status: 'UPCOMING' });
-      toast.success('Appointment approved');
-      loadDashboardData(); // Refresh data
-    } catch (error: any) {
-      console.error('Error approving appointment:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to approve appointment';
-      toast.error(errorMessage);
-    }
-  };
-
-  const handleRejectAppointment = async (appointmentId: string) => {
-    try {
-      await appointmentAPI.cancel(appointmentId);
-      toast.success('Appointment rejected');
-      loadDashboardData(); // Refresh data
-    } catch (error) {
-      console.error('Error rejecting appointment:', error);
-      toast.error('Failed to reject appointment');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading dashboard...</span>
-      </div>
-    );
-  }
+  const careTeam = [
+    { name: 'Nurse Patel', role: 'Lead nurse', availability: 'On shift' },
+    { name: 'Dr. Moore', role: 'Cardiology', availability: 'In surgery' },
+    { name: 'Dr. Lee', role: 'Telehealth', availability: 'Available' },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl mb-2">Welcome, Dr. {user?.name || 'Doctor'}</h1>
-        <p className="text-gray-600">Today's Schedule</p>
-      </div>
+    <div className="space-y-8">
+      <section>
+        <p className="text-sm text-muted-foreground">Today&apos;s workload</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Good morning, Dr. Smith</h1>
+        <p className="mt-2 text-muted-foreground">
+          Stay ahead of your appointments, reports, and team coordination from one place.
+        </p>
+      </section>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">Today's Appointments</CardTitle>
-            <Calendar className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{stats.todayAppointments}</div>
-            <p className="text-xs text-gray-600 mt-1">Scheduled for today</p>
-          </CardContent>
-        </Card>
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[
+          { title: 'Active patients', value: '128', helper: '+6 since yesterday', icon: Users },
+          { title: 'Today’s visits', value: '12', helper: '4 virtual, 8 in-person', icon: Calendar },
+          { title: 'Reports pending', value: '7', helper: 'Review before 5 PM', icon: FileText },
+          { title: 'Average wait', value: '11 min', helper: '↓ 2 min vs last week', icon: Clock },
+        ].map((stat) => (
+          <Card key={stat.title} className="border-slate-200 shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-500">{stat.title}</CardTitle>
+              <span className="rounded-full bg-slate-100 p-2 text-slate-600">
+                <stat.icon className="h-4 w-4" />
+              </span>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold text-slate-900">{stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.helper}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </section>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">Total Patients</CardTitle>
-            <Users className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{stats.totalPatients}</div>
-            <p className="text-xs text-gray-600 mt-1">Under your care</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">Pending Requests</CardTitle>
-            <Clock className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{stats.pendingRequests}</div>
-            <p className="text-xs text-gray-600 mt-1">Awaiting response</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">Completed Today</CardTitle>
-            <FileText className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{stats.completedToday}</div>
-            <p className="text-xs text-gray-600 mt-1">Consultations done</p>
-          </CardContent>
-        </Card>
-      </div>
-
-
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Button
-              className="h-auto py-4 flex flex-col gap-2"
-              onClick={() => window.open('https://meet.google.com/new', '_blank')}
-            >
-              <Video className="h-5 w-5" />
-              <span className="text-sm">Start Video Call</span>
+      <section className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2 border-slate-200 shadow-sm">
+          <CardHeader className="flex items-center justify-between">
+            <div>
+              <CardTitle>Today&apos;s agenda</CardTitle>
+              <CardDescription>Your next four consultations</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm">
+              See calendar
             </Button>
-            <Button
-              className="h-auto py-4 flex flex-col gap-2"
-              onClick={() => window.location.href = '/doctor/chat'}
-            >
-              <MessageSquare className="h-5 w-5" />
-              <span className="text-sm">Open Chat</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col gap-2"
-              onClick={() => window.location.href = '/doctor/patients'}
-            >
-              <Users className="h-5 w-5" />
-              <span className="text-sm">View Patients</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col gap-2"
-              onClick={() => window.location.href = '/doctor/schedule'}
-            >
-              <Calendar className="h-5 w-5" />
-              <span className="text-sm">Manage Schedule</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Today's Appointments */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Today's Appointments</CardTitle>
-          <Button variant="outline" size="sm">View All</Button>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {todayAppointments.map((appointment) => (
-              <div key={appointment.id} className="border rounded-lg p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4>{appointment.patientName}</h4>
-                      <Badge variant="secondary" className="capitalize">
-                        {appointment.type}
-                      </Badge>
-                      <Badge variant={appointment.status === 'upcoming' ? 'default' : 'outline'}>
-                        {appointment.status}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-1">{appointment.reason}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {appointment.time}
-                      </span>
-                      <span>Patient ID: {appointment.patientId}</span>
-                    </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {schedule.map((item) => (
+              <div
+                key={item.patient}
+                className="rounded-xl border border-slate-200 p-4 transition hover:border-slate-300"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">{item.type}</p>
+                    <p className="text-xl font-semibold text-slate-900">{item.patient}</p>
+                    <p className="text-sm text-muted-foreground">{item.room}</p>
                   </div>
+                  <Badge
+                    variant="outline"
+                    className={
+                      item.status === 'Critical'
+                        ? 'border-red-200 text-red-600'
+                        : item.status === 'Waiting'
+                          ? 'border-amber-200 text-amber-600'
+                          : 'border-emerald-200 text-emerald-600'
+                    }
+                  >
+                    {item.status}
+                  </Badge>
                 </div>
-                <div className="flex gap-2">
-                  {appointment.type === 'video' && (
-                    <Button size="sm" onClick={() => handleStartVideo(appointment.id)}>
-                      <Video className="h-4 w-4 mr-2" />
-                      Start Video
-                    </Button>
-                  )}
-                  {appointment.type === 'chat' && (
-                    <Button size="sm" onClick={() => handleStartChat(appointment.id)}>
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Start Chat
-                    </Button>
-                  )}
-                  <Button size="sm" variant="outline" onClick={() => handleViewPatientHistory(appointment.patientId)}>
-                    View Patient History
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleAddNotes(appointment.id)}>
-                    Add Notes
-                  </Button>
+                <div className="mt-4 inline-flex items-center gap-2 text-sm text-slate-500">
+                  <Clock className="h-4 w-4 text-slate-400" />
+                  {item.time}
                 </div>
               </div>
             ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Pending Requests */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Appointment Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {appointments.filter(a => a.status === 'PENDING').slice(0, 2).map((appointment) => (
-                <div key={appointment.id} className="border rounded-lg p-3">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h4 className="text-sm">{appointment.patientName}</h4>
-                      <p className="text-xs text-gray-600">{appointment.reason}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Requested: {appointment.appointmentDate} {appointment.time}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <Button
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleApproveAppointment(appointment.id)}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleRejectAppointment(appointment.id)}
-                    >
-                      Reject
-                    </Button>
-                  </div>
-                </div>
-              ))}
-              {appointments.filter(a => a.status === 'PENDING').length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">No pending requests</p>
-              )}
-            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-slate-200 shadow-sm">
           <CardHeader>
-            <CardTitle>Recent Patient Activity</CardTitle>
+            <CardTitle>Clinical queue</CardTitle>
+            <CardDescription>Items awaiting your sign-off</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {appointments.slice(0, 3).map((appointment) => (
-                <div key={appointment.id} className="flex items-start gap-3 pb-3 border-b last:border-b-0">
-                  <FileText className="h-5 w-5 text-blue-600 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm">
-                      {appointment.status === 'COMPLETED' ? 'Consultation completed' :
-                       appointment.status === 'UPCOMING' ? 'Upcoming appointment' :
-                       'Appointment requested'}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {appointment.patientName} • {appointment.appointmentDate}
-                    </p>
-                  </div>
+          <CardContent className="space-y-4">
+            {tasks.map((task) => (
+              <div key={task.label}>
+                <div className="flex items-center justify-between text-sm">
+                  <p className="font-medium text-slate-900">{task.label}</p>
+                  <span className="text-slate-500">{task.value}%</span>
                 </div>
-              ))}
-              {appointments.length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">No recent activity</p>
-              )}
-            </div>
+                <Progress value={task.value} className="mt-2 bg-slate-100" />
+              </div>
+            ))}
+            <Button variant="outline" className="mt-2 w-full">
+              Review items
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </CardContent>
         </Card>
-      </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle>Recent updates</CardTitle>
+            <CardDescription>Last 24 hours</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {[
+              { message: 'CT results uploaded for Daniel Cole', time: '12 min ago' },
+              { message: 'Medication query from Jane Cooper', time: '34 min ago' },
+              { message: 'Vitals update from Ward 5B', time: '1 hr ago' },
+              { message: 'Discharge summary ready for Lisa Wong', time: '3 hr ago' },
+            ].map((update) => (
+              <div key={update.message} className="border-l-2 border-slate-200 pl-4">
+                <p className="text-sm font-medium text-slate-900">{update.message}</p>
+                <p className="text-xs text-muted-foreground">{update.time}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle>Care team</CardTitle>
+            <CardDescription>Who is available now</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {careTeam.map((member) => (
+              <div
+                key={member.name}
+                className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3"
+              >
+                <div>
+                  <p className="font-medium text-slate-900">{member.name}</p>
+                  <p className="text-sm text-muted-foreground">{member.role}</p>
+                </div>
+                <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+                  <Stethoscope className="h-4 w-4 text-slate-400" />
+                  {member.availability}
+                </span>
+              </div>
+            ))}
+            <Button variant="outline" className="w-full">
+              Message team
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 };

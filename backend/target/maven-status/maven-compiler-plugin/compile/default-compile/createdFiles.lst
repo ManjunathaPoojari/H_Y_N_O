@@ -1,4 +1,5 @@
 com\hyno\service\YogaSessionService.class
+com\hyno\controller\NutritionController.class
 com\hyno\repository\VideoCallRepository.class
 com\hyno\entity\Medicine.class
 com\hyno\entity\Trainer$AvailabilityStatus.class
