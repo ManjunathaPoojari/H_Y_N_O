@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { authAPI } from './api-client';
-
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string, role: string) => Promise<User | null>;
@@ -19,6 +18,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
   const IDLE_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
+
+
   // Load user from localStorage on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -27,7 +28,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(JSON.parse(storedUser));
       resetIdleTimer();
     }
-  }, []);
+    // No activeTab enforcement – each tab can have its own session
+  }, []); // runs once on mount
 
   // Reset idle timer on user activity
   const resetIdleTimer = () => {
@@ -54,16 +56,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, [user]);
 
-  // Listen for storage changes to sync logout across tabs
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'user' && e.newValue === null) {
-        setUser(null);
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+
 
   const login = async (email: string, password: string, role: string): Promise<User | null> => {
     try {
@@ -76,8 +69,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
       const token = res.token;
       setUser(normalizedUser);
-      localStorage.setItem('user', JSON.stringify(normalizedUser));
-      localStorage.setItem('token', token);
+      sessionStorage.setItem('user', JSON.stringify(normalizedUser));
+      sessionStorage.setItem('token', token);
+      // No activeTab handling – session is per‑tab
       return normalizedUser;
     } catch (err: any) {
       console.error('Login failed:', err);
@@ -112,10 +106,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (idleTimerRef.current) {
       clearTimeout(idleTimerRef.current);
     }
+    // Force navigation to the login page
+    window.location.href = '/login';
   };
 
   const navigateToStoredPath = () => {
-    const storedPath = localStorage.getItem('storedPath');
+    const storedPath = sessionStorage.getItem('storedPath');
     if (storedPath && storedPath !== '/' && storedPath !== '/login' && storedPath !== '/register') {
       window.location.href = storedPath;
     }

@@ -4,6 +4,7 @@ com\hyno\entity\Medicine.class
 com\hyno\entity\Trainer$AvailabilityStatus.class
 com\hyno\repository\TrainerRepository.class
 com\hyno\service\FeedbackService.class
+com\hyno\controller\TestController.class
 com\hyno\entity\Appointment$VideoCallStatus.class
 com\hyno\entity\Doctor.class
 com\hyno\controller\AppointmentCreateDTO.class
@@ -35,6 +36,7 @@ com\hyno\entity\Appointment$AppointmentStatus.class
 com\hyno\controller\WebSocketVideoCallController$JoinCallRequest.class
 com\hyno\service\ChatService.class
 com\hyno\entity\YogaVideo$DifficultyLevel.class
+com\hyno\controller\DiagnosticController.class
 com\hyno\repository\ChatMessageRepository.class
 com\hyno\entity\Payment.class
 com\hyno\controller\WebSocketChatController.class
@@ -47,6 +49,7 @@ com\hyno\service\AppointmentService.class
 com\hyno\repository\HospitalRepository.class
 com\hyno\entity\Admin$AdminRole.class
 com\hyno\repository\ScheduleRepository.class
+com\hyno\controller\PrescriptionController.class
 com\hyno\service\YogaVideoService.class
 com\hyno\entity\Appointment.class
 com\hyno\entity\ScheduleSlot.class
@@ -65,6 +68,7 @@ com\hyno\config\SecurityConfig.class
 com\hyno\entity\ChatRoom$ChatRoomStatus.class
 com\hyno\entity\Schedule.class
 com\hyno\entity\ChatMessage$MessageStatus.class
+com\hyno\controller\OrderController.class
 com\hyno\service\DoctorService.class
 com\hyno\service\PrescriptionService.class
 com\hyno\controller\WebSocketVideoCallController$WebRTCAnswer.class

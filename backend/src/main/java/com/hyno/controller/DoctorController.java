@@ -70,51 +70,61 @@ public class DoctorController {
         return doctorService.createDoctor(doctor);
     }
 
-    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<Doctor> updateDoctorWithFile(
+    @PutMapping(value = "/{id}/avatar", consumes = "multipart/form-data")
+    public ResponseEntity<?> updateDoctorWithFile(
             @PathVariable String id,
             @RequestPart("doctor") Doctor doctorDetails,
             @RequestPart(value = "avatar", required = false) MultipartFile avatar) {
 
-        // Handle file upload if present
-        if (avatar != null && !avatar.isEmpty()) {
-            try {
-                // Create uploads directory if it doesn't exist
-                Path uploadDir = Paths.get("uploads/doctors");
-                if (!Files.exists(uploadDir)) {
-                    Files.createDirectories(uploadDir);
+        try {
+            // Handle file upload if present
+            if (avatar != null && !avatar.isEmpty()) {
+                try {
+                    // Create uploads directory if it doesn't exist
+                    Path uploadDir = Paths.get("uploads/doctors");
+                    if (!Files.exists(uploadDir)) {
+                        Files.createDirectories(uploadDir);
+                    }
+
+                    // Generate unique filename
+                    String originalFilename = avatar.getOriginalFilename();
+                    String fileExtension = originalFilename != null
+                            ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                            : ".jpg";
+                    String filename = UUID.randomUUID().toString() + fileExtension;
+                    Path filePath = uploadDir.resolve(filename);
+
+                    // Save file
+                    Files.copy(avatar.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                    // Set avatar URL (assuming local serving; adjust for production)
+                    doctorDetails.setAvatarUrl("/uploads/doctors/" + filename);
+
+                } catch (IOException e) {
+                    // Log error but continue without avatar update
+                    System.err.println("Error uploading avatar: " + e.getMessage());
                 }
-
-                // Generate unique filename
-                String originalFilename = avatar.getOriginalFilename();
-                String fileExtension = originalFilename != null
-                        ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                        : ".jpg";
-                String filename = UUID.randomUUID().toString() + fileExtension;
-                Path filePath = uploadDir.resolve(filename);
-
-                // Save file
-                Files.copy(avatar.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-                // Set avatar URL (assuming local serving; adjust for production)
-                doctorDetails.setAvatarUrl("/uploads/doctors/" + filename);
-
-            } catch (IOException e) {
-                // Log error but continue without avatar update
-                System.err.println("Error uploading avatar: " + e.getMessage());
             }
-        }
 
-        Doctor updatedDoctor = doctorService.updateDoctor(id, doctorDetails);
-        return updatedDoctor != null ? ResponseEntity.ok(updatedDoctor) : ResponseEntity.notFound().build();
+            Doctor updatedDoctor = doctorService.updateDoctor(id, doctorDetails);
+            return updatedDoctor != null ? ResponseEntity.ok(updatedDoctor) : ResponseEntity.notFound().build();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Error updating doctor: " + e.getMessage());
+        }
     }
 
     @PutMapping(value = "/{id}", consumes = "application/json")
-    public ResponseEntity<Doctor> updateDoctor(
+    public ResponseEntity<?> updateDoctor(
             @PathVariable String id,
             @RequestBody Doctor doctorDetails) {
-        Doctor updatedDoctor = doctorService.updateDoctor(id, doctorDetails);
-        return updatedDoctor != null ? ResponseEntity.ok(updatedDoctor) : ResponseEntity.notFound().build();
+        try {
+            Doctor updatedDoctor = doctorService.updateDoctor(id, doctorDetails);
+            return updatedDoctor != null ? ResponseEntity.ok(updatedDoctor) : ResponseEntity.notFound().build();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Error updating doctor: " + e.getMessage());
+        }
     }
 
     @PutMapping("/{id}/approve")

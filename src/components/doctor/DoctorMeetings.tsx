@@ -86,7 +86,7 @@ export const DoctorMeetings = ({ onNavigate }: DoctorMeetingsProps) => {
         scheduledTime: app.time,
         duration: 30, // Default 30 minutes
         status: app.status === 'UPCOMING' ? 'scheduled' :
-                app.status === 'COMPLETED' ? 'completed' : 'cancelled',
+          app.status === 'COMPLETED' ? 'completed' : 'cancelled',
         meetingType: 'video',
         meetingUrl: `https://meet.google.com/${app.id}`,
         notes: app.notes || '',
@@ -94,74 +94,7 @@ export const DoctorMeetings = ({ onNavigate }: DoctorMeetingsProps) => {
       }));
 
       // Add mock data if no real appointments exist (for demonstration)
-      if (meetingsData.length === 0) {
-        const today = new Date().toISOString().split('T')[0];
-        const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-        const mockMeetings: Meeting[] = [
-          {
-            id: 'mock-1',
-            appointmentId: 'mock-1',
-            patientName: 'John Smith',
-            patientId: 'patient-1',
-            scheduledDate: today,
-            scheduledTime: '10:00',
-            duration: 30,
-            status: 'scheduled',
-            meetingType: 'video',
-            meetingUrl: 'https://meet.google.com/mock-1',
-            notes: 'Follow-up consultation for hypertension',
-            recordingUrl: undefined
-          },
-          {
-            id: 'mock-2',
-            appointmentId: 'mock-2',
-            patientName: 'Sarah Johnson',
-            patientId: 'patient-2',
-            scheduledDate: today,
-            scheduledTime: '14:30',
-            duration: 45,
-            status: 'scheduled',
-            meetingType: 'video',
-            meetingUrl: 'https://meet.google.com/mock-2',
-            notes: 'Diabetes management review',
-            recordingUrl: undefined
-          },
-          {
-            id: 'mock-3',
-            appointmentId: 'mock-3',
-            patientName: 'Mike Davis',
-            patientId: 'patient-3',
-            scheduledDate: tomorrow,
-            scheduledTime: '11:00',
-            duration: 30,
-            status: 'scheduled',
-            meetingType: 'video',
-            meetingUrl: 'https://meet.google.com/mock-3',
-            notes: 'Cardiac check-up',
-            recordingUrl: undefined
-          },
-          {
-            id: 'mock-4',
-            appointmentId: 'mock-4',
-            patientName: 'Emma Wilson',
-            patientId: 'patient-4',
-            scheduledDate: yesterday,
-            scheduledTime: '09:00',
-            duration: 30,
-            status: 'completed',
-            meetingType: 'video',
-            meetingUrl: 'https://meet.google.com/mock-4',
-            notes: 'Annual physical examination',
-            recordingUrl: 'https://example.com/recording-4'
-          }
-        ];
-
-        setMeetings(mockMeetings);
-      } else {
-        setMeetings(meetingsData);
-      }
+      setMeetings(meetingsData);
     } catch (error) {
       console.error('Error loading meetings:', error);
       toast.error('Failed to load meetings');
@@ -395,7 +328,7 @@ export const DoctorMeetings = ({ onNavigate }: DoctorMeetingsProps) => {
                       <div className="flex items-center gap-2 mb-2">
                         <h4 className="text-lg">{meeting.patientName}</h4>
                         <Badge variant={meeting.status === 'scheduled' ? 'default' :
-                                       meeting.status === 'in-progress' ? 'destructive' : 'secondary'}>
+                          meeting.status === 'in-progress' ? 'destructive' : 'secondary'}>
                           {meeting.status}
                         </Badge>
                         <Badge variant="outline" className="flex items-center gap-1">
