@@ -53,7 +53,6 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 import { Card, CardContent } from './components/ui/card';
 import { Video, MessageSquare, MapPin, Building2 } from 'lucide-react';
-import WaterTracking from './components/patient/WaterTracking';
 
 function AppContent() {
   const [currentPath, setCurrentPath] = useState('/');
@@ -197,7 +196,6 @@ function AppContent() {
 >>>>>>> Stashed changes
 =======
           {currentPath === '/patient/nutrition/recipes' && <HealthyRecipes onNavigate={navigate} />}
->>>>>>> 4e65214484a86abdfbe7623e8fd6fbe48db07b60
           {currentPath === '/patient/nutrition/premium' && <PremiumPlans onNavigate={navigate} />}
           {currentPath === '/patient/nutrition/profile' && <UserProfile />}
           {currentPath === '/patient/community' && <WellnessCommunity onNavigate={navigate} />}
