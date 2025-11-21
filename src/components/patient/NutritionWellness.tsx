@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { ChefHat, Calendar, Crown, Star, ChevronLeft, ChevronRight, Mail, Phone, MapPin, Check, Clock, Award, Users, Package, Heart, Video } from 'lucide-react';
+import { ChefHat, Calendar, Crown, Star, ChevronLeft, ChevronRight, Mail, Phone, MapPin, Check, Clock, Award, Users, Package, Users2, Video } from 'lucide-react';
 import { useNotifications } from '../../lib/notification-context';
 
 interface NutritionWellnessProps {
@@ -31,7 +31,6 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [likes, setLikes] = useState<{ [key: number]: boolean }>({});
   const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
-
 
   const handleBookConsultation = () => {
     setShowBookingForm(true);
@@ -201,7 +200,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
       location: 'Ahmedabad, Gujarat',
       bio: 'Dr. Karan Malhotra specializes in cardiac nutrition and preventive cardiology. He helps patients with heart conditions and those at risk of cardiovascular disease through targeted nutritional strategies.',
       achievements: ['Cardiac Nutrition Excellence Award', 'Consultant to Apollo Hospitals', 'Author of Heart-Healthy Cookbook'],
-      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
+      photo: 'https://images.unsplash.com/photo-1507003909585-2f8a72700288?w=300&h=300&fit=crop&crop=face',
       icon: Award,
       color: 'text-red-500'
     },
@@ -510,15 +509,9 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
           },
           {
             icon: Calendar,
-<<<<<<< HEAD
             title: 'Daily Tracker',
-            description: 'Track your daily nutrition, wellness goals, and water intake',
+            description: 'Track your daily nutrition wellness goals and water intake',
             path: '/patient/nutrition/daily-tracker',
-=======
-            title: ' Track Progress',
-            description: 'Monitor your daily nutrition and wellness goals\nTrack achievements and stay motivated',
-            path: '/patient/nutrition/track-progress',
->>>>>>> 4e65214484a86abdfbe7623e8fd6fbe48db07b60
             color: 'text-purple-400'
           },
           {
@@ -666,7 +659,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
             color: 'text-purple-600'
           },
           {
-            icon: Heart,
+            icon: Users2,
             title: 'Support Groups',
             description: 'Specialized groups for specific health goals and conditions',
             color: 'text-pink-600'
@@ -687,7 +680,12 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
 
       {/* Join Community Button */}
       <div className="flex justify-center mb-12">
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold" onClick={() => onNavigate('/patient/community')}>
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold" onClick={() => addNotification({
+          type: 'system',
+          title: 'Welcome to the Community!',
+          message: 'You have successfully joined our wellness community. Start connecting with others on your health journey!',
+          unread: true
+        })}>
           Join Community
         </Button>
       </div>
@@ -738,236 +736,23 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
 
               <div>
                 <h4 className="font-semibold text-lg mb-2">Instructions</h4>
-                <p className="text-gray-600 leading-relaxed">{selectedRecipe.instructions}</p>
+                <p className="text-gray-600 whitespace-pre-line">{selectedRecipe.instructions}</p>
               </div>
 
-              <div className="flex justify-center gap-3 pt-4">
+              <div className="flex justify-between items-center pt-4">
                 <Button
-                  onClick={() => toggleLike(selectedRecipe.id)}
-                  variant={likes[selectedRecipe.id] ? "default" : "outline"}
-                  className={likes[selectedRecipe.id] ? "bg-red-500 hover:bg-red-600" : ""}
+                  variant="outline"
+                  onClick={() => {
+                    toggleLike(selectedRecipe.id);
+                  }}
                 >
-                  <Heart className={`h-4 w-4 mr-2 ${likes[selectedRecipe.id] ? 'fill-current' : ''}`} />
-                  {likes[selectedRecipe.id] ? 'Liked' : 'Like Recipe'}
+                  {likes[selectedRecipe.id] ? '❤️ Liked' : '🤍 Like'}
+                </Button>
+                <Button onClick={() => setSelectedRecipe(null)}>
+                  Close
                 </Button>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Nutritionist Detail Dialog */}
-      <Dialog open={!!selectedNutritionist} onOpenChange={() => setSelectedNutritionist(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">
-              {selectedNutritionist?.name}
-            </DialogTitle>
-          </DialogHeader>
-
-          {selectedNutritionist && (
-            <div className="space-y-6">
-              {/* Photo and Basic Info */}
-              <div className="flex flex-col items-center text-center">
-                <img
-                  src={selectedNutritionist.photo}
-                  alt={selectedNutritionist.name}
-                  className="w-32 h-32 rounded-full object-cover border-4 border-gray-100 mb-4"
-                />
-                <h3 className="text-xl font-semibold mb-2">{selectedNutritionist.specialty}</h3>
-                <div className="flex items-center gap-2 mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-5 w-5 ${
-                        i < Math.floor(selectedNutritionist.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
-                  <span className="font-medium ml-1">{selectedNutritionist.rating} rating</span>
-                  <span className="text-sm text-gray-500 ml-1">(25 reviews)</span>
-                </div>
-                <p className="text-gray-600">{selectedNutritionist.experience} experience</p>
-              </div>
-
-              {/* Contact Information */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-lg">Contact Information</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">{selectedNutritionist.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">{selectedNutritionist.phone}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">{selectedNutritionist.location}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-lg">Qualifications</h4>
-                  <p className="text-sm text-gray-600">{selectedNutritionist.qualifications}</p>
-                  <h4 className="font-semibold text-lg">Languages</h4>
-                  <p className="text-sm text-gray-600">{selectedNutritionist.languages}</p>
-                </div>
-              </div>
-
-              {/* Bio */}
-              <div>
-                <h4 className="font-semibold text-lg mb-2">About</h4>
-                <p className="text-gray-600 leading-relaxed">{selectedNutritionist.bio}</p>
-              </div>
-
-              {/* Achievements */}
-              <div>
-                <h4 className="font-semibold text-lg mb-2">Key Achievements</h4>
-                <ul className="list-disc list-inside space-y-1">
-                  {selectedNutritionist.achievements.map((achievement: string, index: number) => (
-                    <li key={index} className="text-gray-600 text-sm">{achievement}</li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-center gap-3 pt-4">
-                <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleBookConsultation}>
-                  Book Consultation
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Booking Form Dialog */}
-      <Dialog open={showBookingForm} onOpenChange={() => setShowBookingForm(false)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">
-              Book Consultation with {selectedNutritionist?.name}
-            </DialogTitle>
-          </DialogHeader>
-
-          {bookingSubmitted ? (
-            <div className="text-center py-8">
-              <Check className="h-16 w-16 text-green-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-green-600 mb-2">Booking Submitted Successfully!</h3>
-              <p className="text-gray-600">Thank you for booking a consultation. We'll contact you soon to confirm your appointment.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleBookingSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                  <Input
-                    type="text"
-                    value={bookingForm.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    required
-                    placeholder="Enter your full name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <Input
-                    type="email"
-                    value={bookingForm.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    required
-                    placeholder="Enter your email"
-                  />
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                  <Input
-                    type="tel"
-                    value={bookingForm.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    required
-                    placeholder="Enter your phone number"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Consultation Type</label>
-                  <Select value={bookingForm.consultationType} onValueChange={(value: string) => handleInputChange('consultationType', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select consultation type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="initial">Initial Consultation</SelectItem>
-                      <SelectItem value="followup">Follow-up Consultation</SelectItem>
-                      <SelectItem value="nutrition-plan">Nutrition Plan Review</SelectItem>
-                      <SelectItem value="dietary-counseling">Dietary Counseling</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Date</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      type="date"
-                      value={bookingForm.preferredDate}
-                      onChange={(e) => handleInputChange('preferredDate', e.target.value)}
-                      required
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Time</label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Select value={bookingForm.preferredTime} onValueChange={(value: string) => handleInputChange('preferredTime', value)}>
-                      <SelectTrigger className="pl-10">
-                        <SelectValue placeholder="Select time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="09:00">9:00 AM</SelectItem>
-                        <SelectItem value="10:00">10:00 AM</SelectItem>
-                        <SelectItem value="11:00">11:00 AM</SelectItem>
-                        <SelectItem value="14:00">2:00 PM</SelectItem>
-                        <SelectItem value="15:00">3:00 PM</SelectItem>
-                        <SelectItem value="16:00">4:00 PM</SelectItem>
-                        <SelectItem value="17:00">5:00 PM</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Health Goals & Concerns</label>
-                <Textarea
-                  value={bookingForm.healthGoals}
-                  onChange={(e) => handleInputChange('healthGoals', e.target.value)}
-                  required
-                  placeholder="Please describe your health goals, current dietary habits, and any specific concerns you'd like to address..."
-                  rows={4}
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => setShowBookingForm(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                  Book Consultation
-                </Button>
-              </div>
-            </form>
           )}
         </DialogContent>
       </Dialog>
