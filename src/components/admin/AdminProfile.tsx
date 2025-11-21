@@ -170,7 +170,13 @@ export const AdminProfile = () => {
               </div>
               <div className="flex items-center gap-3">
                 <Shield className="h-4 w-4 text-gray-400" />
-                <span>{profile.isVerified ? 'Verified' : 'Verification Pending'}</span>
+                <span>
+                  {profile.role === 'SUPER_ADMIN' 
+                    ? 'Super Admin (Verified)' 
+                    : profile.isVerified 
+                    ? 'Verified' 
+                    : 'Verification Pending'}
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <CalendarClock className="h-4 w-4 text-gray-400" />
@@ -220,7 +226,13 @@ export const AdminProfile = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-gray-400" />
-                <span>Account Status: {profile.isVerified ? 'Verified' : 'Pending Verification'}</span>
+                <span>
+                  Account Status: {profile.role === 'SUPER_ADMIN' 
+                    ? 'Super Admin (Verified)' 
+                    : profile.isVerified 
+                    ? 'Verified' 
+                    : 'Pending Verification'}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <CalendarClock className="h-4 w-4 text-gray-400" />

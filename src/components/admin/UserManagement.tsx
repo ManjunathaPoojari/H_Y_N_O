@@ -14,6 +14,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -50,6 +51,7 @@ interface FieldConfig {
   placeholder?: string;
   options?: { value: string; label: string }[];
   helperText?: string;
+  fullWidth?: boolean;
 }
 
 const DEFAULT_PATIENT = {
@@ -100,6 +102,7 @@ const DEFAULT_TRAINER = {
   specialties: '',
   languages: '',
   modes: 'virtual,in-person',
+  status: 'pending',
 };
 
 export const UserManagement = () => {
@@ -130,6 +133,11 @@ export const UserManagement = () => {
   const [formValues, setFormValues] = useState<Record<string, any>>(DEFAULT_PATIENT);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Hospital deletion dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [hospitalToDelete, setHospitalToDelete] = useState<any>(null);
+  const [deletionMode, setDeletionMode] = useState<'unlink' | 'deleteAll'>('unlink');
 
   const datasets = {
     patients,
@@ -174,7 +182,7 @@ export const UserManagement = () => {
         ],
       },
       { name: 'bloodGroup', label: 'Blood Group', placeholder: 'O+' },
-      { name: 'address', label: 'Address', type: 'textarea' },
+      { name: 'address', label: 'Address', type: 'textarea', fullWidth: true },
     ],
     doctors: [
       { name: 'name', label: 'Full Name' },
@@ -199,13 +207,13 @@ export const UserManagement = () => {
         label: 'Hospital ID',
         placeholder: 'Optional hospital reference',
         helperText: 'Provide a hospital ID to associate this doctor with a facility.',
+        fullWidth: true,
       },
     ],
     hospitals: [
       { name: 'name', label: 'Hospital Name' },
       { name: 'email', label: 'Email', type: 'email' },
       { name: 'phone', label: 'Phone' },
-      { name: 'address', label: 'Address', type: 'textarea' },
       { name: 'city', label: 'City' },
       { name: 'state', label: 'State' },
       { name: 'registrationNumber', label: 'Registration Number' },
@@ -219,6 +227,7 @@ export const UserManagement = () => {
           { value: 'rejected', label: 'Rejected' },
         ],
       },
+      { name: 'address', label: 'Address', type: 'textarea', fullWidth: true },
     ],
     trainers: [
       { name: 'name', label: 'Full Name' },
@@ -232,17 +241,31 @@ export const UserManagement = () => {
         name: 'specialties',
         label: 'Specialties',
         placeholder: 'Comma separated values',
+        fullWidth: true,
       },
       {
         name: 'languages',
         label: 'Languages',
         placeholder: 'Comma separated values',
+        fullWidth: true,
       },
       {
         name: 'modes',
         label: 'Modes',
         placeholder: 'virtual,in-person',
         helperText: 'Comma separated values (e.g., virtual,in-person)',
+        fullWidth: true,
+      },
+      {
+        name: 'status',
+        label: 'Status',
+        type: 'select',
+        options: [
+          { value: 'pending', label: 'Pending' },
+          { value: 'approved', label: 'Approved' },
+          { value: 'rejected', label: 'Rejected' },
+          { value: 'suspended', label: 'Suspended' },
+        ],
       },
     ],
   };
@@ -361,9 +384,9 @@ export const UserManagement = () => {
       name: formValues.name,
       email: formValues.email,
       phone: formValues.phone,
-      trainerType: formValues.trainerType,
+      trainerType: formValues.trainerType?.toUpperCase() || 'FITNESS',
       experienceYears: Number(formValues.experienceYears) || 0,
-      location: formValues.location,
+      location: formValues.location || '',
       pricePerSession: Number(formValues.pricePerSession) || 0,
       specialties: formValues.specialties
         ? formValues.specialties.split(',').map((item: string) => item.trim()).filter(Boolean)
@@ -375,6 +398,8 @@ export const UserManagement = () => {
         ? formValues.modes.split(',').map((item: string) => item.trim()).filter(Boolean)
         : ['virtual'],
       status: formValues.status ?? 'pending',
+      image: '', // Default empty image
+      rating: 0.0,
     };
   };
 
@@ -430,7 +455,8 @@ export const UserManagement = () => {
       } else if (role === 'doctors') {
         await deleteDoctor(id);
       } else if (role === 'hospitals') {
-        await deleteHospital(id);
+        // Don't delete directly, open the dialog instead
+        return;
       } else if (role === 'trainers') {
         await deleteTrainer(id);
       }
@@ -439,6 +465,27 @@ export const UserManagement = () => {
     } catch (error: any) {
       console.error(error);
       toast.error(error?.message || 'Unable to delete user');
+    }
+  };
+
+  const handleHospitalDeleteClick = (hospital: any) => {
+    setHospitalToDelete(hospital);
+    setDeletionMode('unlink');
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmHospitalDeletion = async () => {
+    if (!hospitalToDelete) return;
+
+    try {
+      await deleteHospital(hospitalToDelete.id, deletionMode);
+      await refreshData();
+      toast.success('Hospital deleted successfully');
+      setDeleteDialogOpen(false);
+      setHospitalToDelete(null);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.message || 'Failed to delete hospital');
     }
   };
 
@@ -545,6 +592,19 @@ export const UserManagement = () => {
         <TableCell>{item.phone}</TableCell>
         <TableCell>{item.trainerType}</TableCell>
         <TableCell>₹{item.pricePerSession}</TableCell>
+        <TableCell>
+          <Badge
+            variant={
+              item.status === 'approved'
+                ? 'default'
+                : item.status === 'pending'
+                  ? 'secondary'
+                  : 'destructive'
+            }
+          >
+            {item.status}
+          </Badge>
+        </TableCell>
       </>
     );
   };
@@ -590,6 +650,7 @@ export const UserManagement = () => {
         <TableHead>Phone</TableHead>
         <TableHead>Type</TableHead>
         <TableHead>Price</TableHead>
+        <TableHead>Status</TableHead>
       </>
     );
   };
@@ -696,7 +757,7 @@ export const UserManagement = () => {
                         size="icon"
                         variant="outline"
                         className="text-red-600"
-                        onClick={() => handleDelete(activeRole, item.id)}
+                        onClick={() => activeRole === 'hospitals' ? handleHospitalDeleteClick(item) : handleDelete(activeRole, item.id)}
                         title="Delete"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -714,58 +775,73 @@ export const UserManagement = () => {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="capitalize">
               {formMode === 'create' ? 'Create' : 'Edit'} {activeRole.slice(0, -1)}
             </DialogTitle>
+            <DialogDescription>
+              {formMode === 'create' ? 'Create a new' : 'Update the'} {activeRole.slice(0, -1)} record.
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
+          <div className="space-y-4">
             <p className="text-sm text-slate-500">
               Managing: <span className="font-medium capitalize">{activeRole}</span>
             </p>
-            {activeFields.map((field) => (
-              <div key={`${activeRole}-${field.name}`} className="space-y-1">
-                <label className="text-sm font-medium text-slate-600">{field.label}</label>
-                {field.type === 'textarea' ? (
-                  <textarea
-                    className="w-full rounded-md border border-slate-300 bg-transparent p-2 text-sm"
-                    rows={3}
-                    value={formValues[field.name] ?? ''}
-                    onChange={(e) =>
-                      setFormValues((prev) => ({ ...prev, [field.name]: e.target.value }))
-                    }
-                    placeholder={field.placeholder}
-                  />
-                ) : field.type === 'select' ? (
-                  <select
-                    className="w-full rounded-md border border-slate-300 bg-transparent p-2 text-sm"
-                    value={formValues[field.name] ?? field.options?.[0]?.value ?? ''}
-                    onChange={(e) =>
-                      setFormValues((prev) => ({ ...prev, [field.name]: e.target.value }))
-                    }
-                  >
-                    {field.options?.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <Input
-                    type={field.type ?? 'text'}
-                    value={formValues[field.name] ?? ''}
-                    onChange={(e) =>
-                      setFormValues((prev) => ({ ...prev, [field.name]: e.target.value }))
-                    }
-                    placeholder={field.placeholder}
-                  />
-                )}
-                {field.helperText && (
-                  <p className="text-xs text-slate-500">{field.helperText}</p>
-                )}
+            <div className="max-h-[65vh] overflow-y-auto pr-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {activeFields.map((field) => {
+                  const isTextarea = field.type === 'textarea';
+                  const shouldSpanFullWidth = field.fullWidth || isTextarea;
+
+                  return (
+                    <div
+                      key={`${activeRole}-${field.name}`}
+                      className={`space-y-1 ${shouldSpanFullWidth ? 'md:col-span-2' : ''}`}
+                    >
+                      <label className="text-sm font-medium text-slate-600">{field.label}</label>
+                      {field.type === 'textarea' ? (
+                        <textarea
+                          className="w-full rounded-md border border-slate-300 bg-transparent p-2 text-sm"
+                          rows={3}
+                          value={formValues[field.name] ?? ''}
+                          onChange={(e) =>
+                            setFormValues((prev) => ({ ...prev, [field.name]: e.target.value }))
+                          }
+                          placeholder={field.placeholder}
+                        />
+                      ) : field.type === 'select' ? (
+                        <select
+                          className="w-full rounded-md border border-slate-300 bg-transparent p-2 text-sm"
+                          value={formValues[field.name] ?? field.options?.[0]?.value ?? ''}
+                          onChange={(e) =>
+                            setFormValues((prev) => ({ ...prev, [field.name]: e.target.value }))
+                          }
+                        >
+                          {field.options?.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Input
+                          type={field.type ?? 'text'}
+                          value={formValues[field.name] ?? ''}
+                          onChange={(e) =>
+                            setFormValues((prev) => ({ ...prev, [field.name]: e.target.value }))
+                          }
+                          placeholder={field.placeholder}
+                        />
+                      )}
+                      {field.helperText && (
+                        <p className="text-xs text-slate-500">{field.helperText}</p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -773,6 +849,72 @@ export const UserManagement = () => {
             </Button>
             <Button onClick={handleSubmit} disabled={isSubmitting}>
               {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Hospital Deletion Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Delete Hospital</DialogTitle>
+            <DialogDescription>
+              Choose how you would like to delete this hospital.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600">
+              How would you like to delete "{hospitalToDelete?.name}"?
+            </p>
+
+            <div className="space-y-3">
+              <label className="flex items-start space-x-3 cursor-pointer p-3 border rounded-lg hover:bg-slate-50">
+                <input
+                  type="radio"
+                  name="deletionMode"
+                  value="unlink"
+                  checked={deletionMode === 'unlink'}
+                  onChange={() => setDeletionMode('unlink')}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="font-medium">Unlink doctors and delete hospital</div>
+                  <div className="text-sm text-slate-500 mt-1">
+                    Remove hospital-doctor associations and delete only the hospital.
+                    Doctors will remain in the system.
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-start space-x-3 cursor-pointer p-3 border border-red-200 rounded-lg hover:bg-red-50">
+                <input
+                  type="radio"
+                  name="deletionMode"
+                  value="deleteAll"
+                  checked={deletionMode === 'deleteAll'}
+                  onChange={() => setDeletionMode('deleteAll')}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="font-medium text-red-600">Delete hospital with all doctors</div>
+                  <div className="text-sm text-slate-500 mt-1">
+                    Permanently delete the hospital AND all associated doctors.
+                    This action cannot be undone.
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant={deletionMode === 'deleteAll' ? 'destructive' : 'default'}
+              onClick={confirmHospitalDeletion}
+            >
+              {deletionMode === 'deleteAll' ? 'Delete All' : 'Delete Hospital Only'}
             </Button>
           </DialogFooter>
         </DialogContent>

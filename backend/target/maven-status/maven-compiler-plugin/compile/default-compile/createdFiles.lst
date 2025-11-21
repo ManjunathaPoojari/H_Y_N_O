@@ -1,17 +1,14 @@
-com\hyno\service\YogaSessionService.class
 com\hyno\controller\NutritionController.class
 com\hyno\repository\VideoCallRepository.class
 com\hyno\entity\Medicine.class
 com\hyno\entity\Trainer$AvailabilityStatus.class
 com\hyno\repository\TrainerRepository.class
 com\hyno\service\FeedbackService.class
-com\hyno\entity\YogaSession$SessionStatus.class
 com\hyno\entity\Appointment$VideoCallStatus.class
 com\hyno\entity\Doctor.class
 com\hyno\controller\AppointmentCreateDTO.class
 com\hyno\entity\ChatRoom.class
 com\hyno\entity\HospitalDoctor.class
-com\hyno\service\YogaTrainerService.class
 com\hyno\entity\YogaVideo.class
 com\hyno\repository\PatientRepository.class
 com\hyno\service\HospitalDoctorService.class
@@ -25,7 +22,6 @@ com\hyno\controller\RootController.class
 com\hyno\entity\DoctorSchedule.class
 com\hyno\controller\WebSocketVideoCallController$LeaveCallRequest.class
 com\hyno\entity\Hospital.class
-com\hyno\repository\YogaSessionRepository.class
 com\hyno\controller\HealthController.class
 com\hyno\controller\PaymentController.class
 com\hyno\config\ScheduledTasksConfig.class
@@ -77,10 +73,8 @@ com\hyno\entity\HospitalDoctorId.class
 com\hyno\service\OrderService.class
 com\hyno\entity\Order$OrderItem.class
 com\hyno\controller\MedicineController.class
-com\hyno\controller\YogaController.class
 com\hyno\entity\VideoCall.class
 com\hyno\service\JwtService.class
-com\hyno\entity\YogaTrainer.class
 com\hyno\entity\Feedback.class
 com\hyno\repository\PaymentRepository.class
 com\hyno\repository\FeedbackRepository.class
@@ -91,12 +85,10 @@ com\hyno\config\CorsConfig.class
 com\hyno\controller\DoctorController.class
 com\hyno\controller\WebSocketVideoCallController$LeaveCallNotification.class
 com\hyno\controller\TrainerController.class
-com\hyno\entity\YogaSession$SessionMode.class
 com\hyno\entity\Payment$PaymentMethod.class
 com\hyno\controller\DoctorPatientsController.class
 com\hyno\entity\ChatMessage.class
 com\hyno\repository\MedicineRepository.class
-com\hyno\entity\YogaTrainer$AvailabilityStatus.class
 com\hyno\controller\HospitalController.class
 com\hyno\entity\Feedback$FeedbackType.class
 com\hyno\entity\Schedule$AppointmentType.class
@@ -104,7 +96,6 @@ com\hyno\repository\YogaVideoRepository.class
 com\hyno\entity\Admin.class
 com\hyno\controller\AuthController.class
 com\hyno\service\VideoCallService.class
-com\hyno\entity\YogaSession.class
 com\hyno\entity\Prescription.class
 com\hyno\repository\HospitalDoctorRepository.class
 com\hyno\config\GlobalExceptionHandler.class
@@ -117,7 +108,6 @@ com\hyno\controller\WebSocketVideoCallController$JoinCallNotification.class
 com\hyno\entity\ChatMessage$SenderRole.class
 com\hyno\service\EmailService.class
 com\hyno\repository\AppointmentRepository.class
-com\hyno\repository\YogaTrainerRepository.class
 com\hyno\controller\HospitalScheduleController.class
 com\hyno\repository\DoctorScheduleRepository.class
 com\hyno\entity\Prescription$PrescriptionMedicine.class

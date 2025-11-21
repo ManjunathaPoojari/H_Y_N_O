@@ -208,24 +208,65 @@ public class TrainerService {
             Optional<Trainer> optionalTrainer = trainerRepository.findById(id);
             if (optionalTrainer.isPresent()) {
                 Trainer trainer = optionalTrainer.get();
-                trainer.setName(trainerDetails.getName());
-                trainer.setEmail(trainerDetails.getEmail());
-                trainer.setPhone(trainerDetails.getPhone());
-                trainer.setTrainerType(trainerDetails.getTrainerType());
-                trainer.setSpecialties(trainerDetails.getSpecialties());
-                trainer.setExperienceYears(trainerDetails.getExperienceYears());
-                trainer.setRating(trainerDetails.getRating());
-                trainer.setReviewCount(trainerDetails.getReviewCount());
-                trainer.setLocation(trainerDetails.getLocation());
-                trainer.setAvailability(trainerDetails.getAvailability());
-                trainer.setModes(trainerDetails.getModes());
-                trainer.setQualifications(trainerDetails.getQualifications());
-                trainer.setLanguages(trainerDetails.getLanguages());
-                trainer.setPricePerSession(trainerDetails.getPricePerSession());
-                trainer.setBio(trainerDetails.getBio());
-                trainer.setImage(trainerDetails.getImage());
-                trainer.setStatus(trainerDetails.getStatus());
-                trainer.setVerified(trainerDetails.isVerified());
+
+                if (trainerDetails.getName() != null) {
+                    trainer.setName(trainerDetails.getName());
+                }
+                if (trainerDetails.getEmail() != null) {
+                    trainer.setEmail(trainerDetails.getEmail());
+                }
+                if (trainerDetails.getPhone() != null) {
+                    trainer.setPhone(trainerDetails.getPhone());
+                }
+                if (trainerDetails.getTrainerType() != null) {
+                    trainer.setTrainerType(trainerDetails.getTrainerType());
+                }
+                if (trainerDetails.getSpecialties() != null) {
+                    trainer.setSpecialties(trainerDetails.getSpecialties());
+                }
+                if (trainerDetails.getExperienceYears() != null) {
+                    trainer.setExperienceYears(trainerDetails.getExperienceYears());
+                }
+                if (trainerDetails.getRating() != null) {
+                    trainer.setRating(trainerDetails.getRating());
+                }
+                if (trainerDetails.getReviewCount() != null) {
+                    trainer.setReviewCount(trainerDetails.getReviewCount());
+                }
+                if (trainerDetails.getLocation() != null) {
+                    trainer.setLocation(trainerDetails.getLocation());
+                }
+                if (trainerDetails.getAvailability() != null) {
+                    trainer.setAvailability(trainerDetails.getAvailability());
+                }
+                if (trainerDetails.getModes() != null) {
+                    trainer.setModes(trainerDetails.getModes());
+                }
+                if (trainerDetails.getQualifications() != null) {
+                    trainer.setQualifications(trainerDetails.getQualifications());
+                }
+                if (trainerDetails.getLanguages() != null) {
+                    trainer.setLanguages(trainerDetails.getLanguages());
+                }
+                if (trainerDetails.getPricePerSession() != null) {
+                    trainer.setPricePerSession(trainerDetails.getPricePerSession());
+                }
+                if (trainerDetails.getBio() != null) {
+                    trainer.setBio(trainerDetails.getBio());
+                }
+                if (trainerDetails.getImage() != null) {
+                    trainer.setImage(trainerDetails.getImage());
+                }
+                if (trainerDetails.getStatus() != null) {
+                    trainer.setStatus(trainerDetails.getStatus());
+                }
+                if (trainerDetails.getPassword() != null) {
+                    trainer.setPassword(trainerDetails.getPassword());
+                }
+                if (trainer.isVerified() != trainerDetails.isVerified()) {
+                    trainer.setVerified(trainerDetails.isVerified());
+                }
+
                 Trainer updatedTrainer = trainerRepository.save(trainer);
                 logger.info("Trainer updated successfully: {}", id);
                 return updatedTrainer;

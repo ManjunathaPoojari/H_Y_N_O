@@ -1,29 +1,31 @@
-
 // API Client for Spring Boot Backend Integration
 import { API_URL } from './config';
 
-const API_BASE_URL = API_URL;
+const API_BASE_URL = 'http://localhost:8081/api';
 
 // Generic API call function
 async function apiCall<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
   const token = localStorage.getItem('token');
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
     ...options.headers,
   };
 
   const config: RequestInit = {
     ...options,
-    headers,
+    headers: {
+      ...headers,
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
   };
 
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    const response = await fetch(url, config);
 
     if (!response.ok) {
       let errorMessage = 'API Error';
@@ -34,6 +36,14 @@ async function apiCall<T>(
         errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       }
       throw new Error(errorMessage);
+    }
+
+    // Handle empty responses (like DELETE operations)
+    const contentType = response.headers.get('content-type');
+    const contentLength = response.headers.get('content-length');
+
+    if (contentLength === '0' || !contentType?.includes('application/json')) {
+      return undefined as T;
     }
 
     const data = await response.json();
@@ -68,6 +78,13 @@ export const authAPI = {
   logout: async () => {
     localStorage.removeItem('token');
     return Promise.resolve();
+  },
+
+  changePassword: async (email: string, oldPassword: string, newPassword: string) => {
+    return apiCall<{ message: string }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, oldPassword, newPassword }),
+    });
   },
 };
 
@@ -211,8 +228,8 @@ export const hospitalAPI = {
       method: 'PUT',
     }),
 
-  delete: (id: string) =>
-    apiCall<void>(`/hospitals/${id}`, {
+  delete: (id: string, mode: 'unlink' | 'deleteAll' = 'unlink') =>
+    apiCall<void>(`/hospitals/${id}?mode=${mode}`, {
       method: 'DELETE',
     }),
 
@@ -459,23 +476,7 @@ export const chatAPI = {
     }),
 };
 
-// Yoga API
-export const yogaAPI = {
-  getTrainers: () => apiCall<any[]>('/yoga/trainers'),
 
-  getTrainerById: (id: string) => apiCall<any>(`/yoga/trainers/${id}`),
-
-  bookSession: (booking: any) =>
-    apiCall<any>('/yoga/sessions', {
-      method: 'POST',
-      body: JSON.stringify(booking),
-    }),
-
-  getSessionsByPatient: (patientId: string) =>
-    apiCall<any[]>(`/yoga/sessions/patient/${patientId}`),
-
-  getVideos: () => apiCall<any[]>('/yoga/videos'),
-};
 
 // Payment API
 export const paymentAPI = {
@@ -619,8 +620,8 @@ export const adminAPI = {
     apiCall<any>(`/admin/hospitals/${id}/reject`, {
       method: 'PUT',
     }),
-  deleteHospital: (id: string) =>
-    apiCall<void>(`/admin/hospitals/${id}`, {
+  deleteHospital: (id: string, mode: 'unlink' | 'deleteAll' = 'unlink') =>
+    apiCall<void>(`/admin/hospitals/${id}?mode=${mode}`, {
       method: 'DELETE',
     }),
 
@@ -658,6 +659,20 @@ export const adminAPI = {
   // Trainer management
   getAllTrainers: () => apiCall<any[]>('/admin/trainers'),
   getTrainerById: (id: string) => apiCall<any>(`/admin/trainers/${id}`),
+  createTrainer: (trainer: any) =>
+    apiCall<any>('/admin/trainers', {
+      method: 'POST',
+      body: JSON.stringify(trainer),
+    }),
+  updateTrainer: (id: string, trainer: any) =>
+    apiCall<any>(`/admin/trainers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(trainer),
+    }),
+  deleteTrainer: (id: string) =>
+    apiCall<void>(`/admin/trainers/${id}`, {
+      method: 'DELETE',
+    }),
   approveTrainer: (id: string) =>
     apiCall<any>(`/admin/trainers/${id}/approve`, {
       method: 'PUT',
@@ -665,30 +680,6 @@ export const adminAPI = {
   rejectTrainer: (id: string) =>
     apiCall<any>(`/admin/trainers/${id}/reject`, {
       method: 'PUT',
-    }),
-};
-
-// Trainer API
-export const trainerAPI = {
-  getAll: () => apiCall<any[]>('/trainers'),
-
-  getById: (id: string) => apiCall<any>(`/trainers/${id}`),
-
-  create: (trainer: any) =>
-    apiCall<any>('/trainers', {
-      method: 'POST',
-      body: JSON.stringify(trainer),
-    }),
-
-  update: (id: string, trainer: any) =>
-    apiCall<any>(`/trainers/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(trainer),
-    }),
-
-  delete: (id: string) =>
-    apiCall<void>(`/trainers/${id}`, {
-      method: 'DELETE',
     }),
 };
 
@@ -718,6 +709,36 @@ export const pharmacyAPI = {
     }),
 };
 
+// Trainer API
+const trainerAPI = {
+  getAll: () => apiCall<any[]>('/trainers'),
+
+  getById: (id: string) => apiCall<any>(`/trainers/${id}`),
+
+  create: (trainer: any) =>
+    apiCall<any>('/trainers', {
+      method: 'POST',
+      body: JSON.stringify(trainer),
+    }),
+
+  update: (id: string, trainer: any) =>
+    apiCall<any>(`/trainers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(trainer),
+    }),
+
+  delete: (id: string) =>
+    apiCall<void>(`/trainers/${id}`, {
+      method: 'DELETE',
+    }),
+
+  getAvailable: () => apiCall<any[]>('/trainers/available'),
+
+  getByType: (type: string) => apiCall<any[]>(`/trainers/type/${type}`),
+
+  search: (query: string) => apiCall<any[]>(`/trainers/search?query=${query}`),
+};
+
 // Export all APIs
 export const api = {
   auth: authAPI,
@@ -729,7 +750,6 @@ export const api = {
   prescriptions: prescriptionAPI,
   orders: orderAPI,
   nutrition: nutritionAPI,
-  yoga: yogaAPI,
   chat: chatAPI,
   payments: paymentAPI,
   feedback: feedbackAPI,

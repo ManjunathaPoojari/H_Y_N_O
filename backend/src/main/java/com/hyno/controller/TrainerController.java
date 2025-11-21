@@ -6,10 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -85,9 +88,92 @@ public class TrainerController {
     }
 
     @PostMapping
-    public Trainer createTrainer(@RequestBody Trainer trainer) {
-        logger.info("Creating new trainer: {}", trainer.getName());
-        return trainerService.createTrainer(trainer);
+    public ResponseEntity<?> createTrainer(@RequestBody Trainer trainer) {
+        try {
+            logger.info("Creating new trainer: {}", trainer.getName());
+            
+            // Validate required fields
+            if (trainer.getName() == null || trainer.getName().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Name is required"));
+            }
+            if (trainer.getEmail() == null || trainer.getEmail().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Email is required"));
+            }
+            
+            // Normalize email
+            trainer.setEmail(trainer.getEmail().trim().toLowerCase());
+            
+            // Check if email already exists
+            if (trainerService.getTrainerByEmail(trainer.getEmail()).isPresent()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Email already exists"));
+            }
+            
+            // Set default password if not provided
+            if (trainer.getPassword() == null || trainer.getPassword().trim().isEmpty()) {
+                BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+                trainer.setPassword(passwordEncoder.encode("Trainer@123"));
+            } else {
+                // Hash the provided password
+                BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+                trainer.setPassword(passwordEncoder.encode(trainer.getPassword()));
+            }
+            
+            // Set defaults for required fields and handle trainerType conversion
+            if (trainer.getTrainerType() == null) {
+                trainer.setTrainerType(Trainer.TrainerType.FITNESS);
+            } else {
+                // Ensure trainerType is uppercase enum value
+                try {
+                    String trainerTypeStr = trainer.getTrainerType().toString().toUpperCase();
+                    trainer.setTrainerType(Trainer.TrainerType.valueOf(trainerTypeStr));
+                } catch (IllegalArgumentException e) {
+                    // If invalid, default to FITNESS
+                    trainer.setTrainerType(Trainer.TrainerType.FITNESS);
+                }
+            }
+            if (trainer.getExperienceYears() == null) {
+                trainer.setExperienceYears(0);
+            }
+            if (trainer.getLocation() == null || trainer.getLocation().trim().isEmpty()) {
+                trainer.setLocation("");
+            }
+            if (trainer.getPricePerSession() == null) {
+                trainer.setPricePerSession(BigDecimal.ZERO);
+            }
+            if (trainer.getImage() == null || trainer.getImage().trim().isEmpty()) {
+                trainer.setImage("");
+            }
+            if (trainer.getStatus() == null || trainer.getStatus().trim().isEmpty()) {
+                trainer.setStatus("pending");
+            }
+            if (trainer.getRating() == null) {
+                trainer.setRating(0.0);
+            }
+            if (trainer.getAvailability() == null) {
+                trainer.setAvailability(Trainer.AvailabilityStatus.AVAILABLE);
+            }
+            if (trainer.getSpecialties() == null) {
+                trainer.setSpecialties(new ArrayList<>());
+            }
+            if (trainer.getLanguages() == null) {
+                trainer.setLanguages(new ArrayList<>());
+            }
+            if (trainer.getModes() == null || trainer.getModes().isEmpty()) {
+                trainer.setModes(List.of("virtual"));
+            }
+            if (trainer.getQualifications() == null) {
+                trainer.setQualifications(new ArrayList<>());
+            }
+            
+            trainer.setVerified(false);
+            
+            Trainer createdTrainer = trainerService.createTrainer(trainer);
+            return ResponseEntity.ok(createdTrainer);
+        } catch (Exception e) {
+            logger.error("Error creating trainer: {}", e.getMessage(), e);
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(Map.of("message", "Failed to create trainer: " + e.getMessage()));
+        }
     }
 
     @PutMapping("/{id}")

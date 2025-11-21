@@ -7,6 +7,7 @@ import com.hyno.repository.PatientRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +26,13 @@ public class HospitalService {
 
     @Autowired
     private PatientRepository patientRepository;
+
+    @Autowired
+    private HospitalDoctorService hospitalDoctorService;
+
+    @Lazy
+    @Autowired
+    private DoctorService doctorService;
 
     public List<Hospital> getAllHospitals() {
         logger.info("Fetching all hospitals");
@@ -162,20 +170,34 @@ public class HospitalService {
             Optional<Hospital> optionalHospital = hospitalRepository.findById(id);
             if (optionalHospital.isPresent()) {
                 Hospital hospital = optionalHospital.get();
-                if (hospitalDetails.getName() != null) hospital.setName(hospitalDetails.getName());
-                if (hospitalDetails.getEmail() != null) hospital.setEmail(hospitalDetails.getEmail());
-                if (hospitalDetails.getPhone() != null) hospital.setPhone(hospitalDetails.getPhone());
-                if (hospitalDetails.getAddress() != null) hospital.setAddress(hospitalDetails.getAddress());
-                if (hospitalDetails.getCity() != null) hospital.setCity(hospitalDetails.getCity());
-                if (hospitalDetails.getState() != null) hospital.setState(hospitalDetails.getState());
-                if (hospitalDetails.getPincode() != null) hospital.setPincode(hospitalDetails.getPincode());
-                if (hospitalDetails.getRegistrationNumber() != null) hospital.setRegistrationNumber(hospitalDetails.getRegistrationNumber());
-                if (hospitalDetails.getTotalDoctors() != null) hospital.setTotalDoctors(hospitalDetails.getTotalDoctors());
-                if (hospitalDetails.getStatus() != null) hospital.setStatus(hospitalDetails.getStatus());
-                if (hospitalDetails.getEstablishedYear() != null) hospital.setEstablishedYear(hospitalDetails.getEstablishedYear());
-                if (hospitalDetails.getBedCount() != null) hospital.setBedCount(hospitalDetails.getBedCount());
-                if (hospitalDetails.getRating() != null) hospital.setRating(hospitalDetails.getRating());
-                if (hospitalDetails.getDescription() != null) hospital.setDescription(hospitalDetails.getDescription());
+                if (hospitalDetails.getName() != null)
+                    hospital.setName(hospitalDetails.getName());
+                if (hospitalDetails.getEmail() != null)
+                    hospital.setEmail(hospitalDetails.getEmail());
+                if (hospitalDetails.getPhone() != null)
+                    hospital.setPhone(hospitalDetails.getPhone());
+                if (hospitalDetails.getAddress() != null)
+                    hospital.setAddress(hospitalDetails.getAddress());
+                if (hospitalDetails.getCity() != null)
+                    hospital.setCity(hospitalDetails.getCity());
+                if (hospitalDetails.getState() != null)
+                    hospital.setState(hospitalDetails.getState());
+                if (hospitalDetails.getPincode() != null)
+                    hospital.setPincode(hospitalDetails.getPincode());
+                if (hospitalDetails.getRegistrationNumber() != null)
+                    hospital.setRegistrationNumber(hospitalDetails.getRegistrationNumber());
+                if (hospitalDetails.getTotalDoctors() != null)
+                    hospital.setTotalDoctors(hospitalDetails.getTotalDoctors());
+                if (hospitalDetails.getStatus() != null)
+                    hospital.setStatus(hospitalDetails.getStatus());
+                if (hospitalDetails.getEstablishedYear() != null)
+                    hospital.setEstablishedYear(hospitalDetails.getEstablishedYear());
+                if (hospitalDetails.getBedCount() != null)
+                    hospital.setBedCount(hospitalDetails.getBedCount());
+                if (hospitalDetails.getRating() != null)
+                    hospital.setRating(hospitalDetails.getRating());
+                if (hospitalDetails.getDescription() != null)
+                    hospital.setDescription(hospitalDetails.getDescription());
                 if (hospitalDetails.getFacilities() != null) {
                     hospital.setFacilities(hospitalDetails.getFacilities());
                 }
@@ -192,15 +214,88 @@ public class HospitalService {
         }
     }
 
-    public void deleteHospital(String id) {
-        logger.info("Deleting hospital: {}", id);
+    // Delete hospital only (unlink doctors)
+    public void deleteHospitalOnly(String id) {
+        logger.info("Deleting hospital (unlink mode): {}", id);
         try {
+            // Check if hospital exists
+            Optional<Hospital> hospital = hospitalRepository.findById(id);
+            if (!hospital.isPresent()) {
+                logger.warn("Hospital not found for deletion: {}", id);
+                throw new RuntimeException("Hospital not found with id: " + id);
+            }
+
+            // Delete all hospital-doctor associations
+            logger.info("Removing hospital-doctor associations for hospital: {}", id);
+            hospitalDoctorService.deleteByHospitalId(id);
+
+            // Delete the hospital
             hospitalRepository.deleteById(id);
-            logger.info("Hospital deleted successfully: {}", id);
+
+            // Verify deletion was successful
+            Optional<Hospital> deletedCheck = hospitalRepository.findById(id);
+            if (deletedCheck.isPresent()) {
+                logger.error("Hospital deletion failed - record still exists: {}", id);
+                throw new RuntimeException("Failed to delete hospital");
+            }
+
+            logger.info("Hospital deleted successfully (doctors unlinked): {}", id);
         } catch (Exception e) {
             logger.error("Error deleting hospital: {}", id, e);
-            throw e;
+            throw new RuntimeException("Failed to delete hospital: " + e.getMessage(), e);
         }
+    }
+
+    // Delete hospital with all associated doctors
+    public void deleteHospitalWithDoctors(String id) {
+        logger.info("Deleting hospital with all doctors: {}", id);
+        try {
+            // Check if hospital exists
+            Optional<Hospital> hospital = hospitalRepository.findById(id);
+            if (!hospital.isPresent()) {
+                logger.warn("Hospital not found for deletion: {}", id);
+                throw new RuntimeException("Hospital not found with id: " + id);
+            }
+
+            // Get all associated doctor IDs
+            List<String> doctorIds = hospitalDoctorService.getDoctorIdsByHospitalId(id);
+            logger.info("Found {} doctors to delete with hospital: {}", doctorIds.size(), id);
+
+            // Delete all associated doctors (this will also delete their associations)
+            for (String doctorId : doctorIds) {
+                try {
+                    doctorService.deleteDoctor(doctorId);
+                } catch (Exception e) {
+                    logger.warn("Failed to delete doctor {}: {}", doctorId, e.getMessage());
+                    // Continue with other doctors
+                }
+            }
+
+            // Delete remaining associations (if any)
+            hospitalDoctorService.deleteByHospitalId(id);
+
+            // Delete the hospital
+            hospitalRepository.deleteById(id);
+
+            // Verify deletion was successful
+            Optional<Hospital> deletedCheck = hospitalRepository.findById(id);
+            if (deletedCheck.isPresent()) {
+                logger.error("Hospital deletion failed - record still exists: {}", id);
+                throw new RuntimeException("Failed to delete hospital");
+            }
+
+            logger.info("Hospital and {} doctors deleted successfully: {}", doctorIds.size(), id);
+        } catch (Exception e) {
+            logger.error("Error deleting hospital with doctors: {}", id, e);
+            throw new RuntimeException("Failed to delete hospital: " + e.getMessage(), e);
+        }
+    }
+
+    // Deprecated: Use deleteHospitalOnly or deleteHospitalWithDoctors instead
+    @Deprecated
+    public void deleteHospital(String id) {
+        // Default to unlink mode for backward compatibility
+        deleteHospitalOnly(id);
     }
 
     public Hospital approveHospital(String id) {
@@ -294,11 +389,16 @@ public class HospitalService {
 
             for (Patient patient : patients) {
                 int age = patient.getAge() != null ? patient.getAge() : 0;
-                if (age <= 18) ageGroups.put("0-18", ageGroups.get("0-18") + 1);
-                else if (age <= 35) ageGroups.put("19-35", ageGroups.get("19-35") + 1);
-                else if (age <= 50) ageGroups.put("36-50", ageGroups.get("36-50") + 1);
-                else if (age <= 65) ageGroups.put("51-65", ageGroups.get("51-65") + 1);
-                else ageGroups.put("65+", ageGroups.get("65+") + 1);
+                if (age <= 18)
+                    ageGroups.put("0-18", ageGroups.get("0-18") + 1);
+                else if (age <= 35)
+                    ageGroups.put("19-35", ageGroups.get("19-35") + 1);
+                else if (age <= 50)
+                    ageGroups.put("36-50", ageGroups.get("36-50") + 1);
+                else if (age <= 65)
+                    ageGroups.put("51-65", ageGroups.get("51-65") + 1);
+                else
+                    ageGroups.put("65+", ageGroups.get("65+") + 1);
             }
 
             report.put("hospitalId", hospitalId);
@@ -314,7 +414,8 @@ public class HospitalService {
     }
 
     public Map<String, Object> generateDoctorPerformanceReport(String hospitalId, String startDate, String endDate) {
-        logger.info("Generating doctor performance report for hospital: {} from {} to {}", hospitalId, startDate, endDate);
+        logger.info("Generating doctor performance report for hospital: {} from {} to {}", hospitalId, startDate,
+                endDate);
         Map<String, Object> report = new HashMap<>();
         try {
             List<Patient> patients = getHospitalPatients(hospitalId);
@@ -335,7 +436,8 @@ public class HospitalService {
     }
 
     public Map<String, Object> generateHospitalOverviewReport(String hospitalId, String startDate, String endDate) {
-        logger.info("Generating hospital overview report for hospital: {} from {} to {}", hospitalId, startDate, endDate);
+        logger.info("Generating hospital overview report for hospital: {} from {} to {}", hospitalId, startDate,
+                endDate);
         Map<String, Object> report = new HashMap<>();
         try {
             List<Patient> patients = getHospitalPatients(hospitalId);

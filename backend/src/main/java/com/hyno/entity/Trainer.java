@@ -13,6 +13,7 @@ import java.util.ArrayList;
 public class Trainer {
 
     @Id
+    @Column(name = "id", columnDefinition = "VARCHAR(50)")
     private String id;
 
     @Column(nullable = false)
@@ -29,7 +30,7 @@ public class Trainer {
     private TrainerType trainerType; // FITNESS or YOGA
 
     @ElementCollection
-    @CollectionTable(name = "trainer_specialties", joinColumns = @JoinColumn(name = "trainer_id"))
+    @CollectionTable(name = "trainer_specialties", joinColumns = @JoinColumn(name = "trainer_id", columnDefinition = "VARCHAR(50)"))
     @Column(name = "specialty")
     private List<String> specialties = new ArrayList<>();
 
@@ -49,17 +50,17 @@ public class Trainer {
     private AvailabilityStatus availability = AvailabilityStatus.AVAILABLE;
 
     @ElementCollection
-    @CollectionTable(name = "trainer_modes", joinColumns = @JoinColumn(name = "trainer_id"))
+    @CollectionTable(name = "trainer_modes", joinColumns = @JoinColumn(name = "trainer_id", columnDefinition = "VARCHAR(50)"))
     @Column(name = "mode")
     private List<String> modes = new ArrayList<>(); // "virtual", "in-person"
 
     @ElementCollection
-    @CollectionTable(name = "trainer_qualifications", joinColumns = @JoinColumn(name = "trainer_id"))
+    @CollectionTable(name = "trainer_qualifications", joinColumns = @JoinColumn(name = "trainer_id", columnDefinition = "VARCHAR(50)"))
     @Column(name = "qualification")
     private List<String> qualifications = new ArrayList<>();
 
     @ElementCollection
-    @CollectionTable(name = "trainer_languages", joinColumns = @JoinColumn(name = "trainer_id"))
+    @CollectionTable(name = "trainer_languages", joinColumns = @JoinColumn(name = "trainer_id", columnDefinition = "VARCHAR(50)"))
     @Column(name = "language")
     private List<String> languages = new ArrayList<>();
 

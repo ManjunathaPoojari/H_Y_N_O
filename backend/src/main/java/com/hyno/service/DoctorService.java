@@ -180,18 +180,44 @@ public class DoctorService {
             Optional<Doctor> optionalDoctor = doctorRepository.findById(id);
             if (optionalDoctor.isPresent()) {
                 Doctor doctor = optionalDoctor.get();
-                doctor.setName(doctorDetails.getName());
-                doctor.setEmail(doctorDetails.getEmail());
-                doctor.setPhone(doctorDetails.getPhone());
-                doctor.setSpecialization(doctorDetails.getSpecialization());
-                doctor.setQualification(doctorDetails.getQualification());
-                doctor.setExperience(doctorDetails.getExperience());
-                doctor.setRating(doctorDetails.getRating());
-                doctor.setAvailable(doctorDetails.getAvailable());
-                doctor.setHospitalId(doctorDetails.getHospitalId());
-                doctor.setConsultationFee(doctorDetails.getConsultationFee());
-                doctor.setStatus(doctorDetails.getStatus());
-                doctor.setAvatarUrl(doctorDetails.getAvatarUrl());
+
+                if (doctorDetails.getName() != null) {
+                    doctor.setName(doctorDetails.getName());
+                }
+                if (doctorDetails.getEmail() != null) {
+                    doctor.setEmail(doctorDetails.getEmail());
+                }
+                if (doctorDetails.getPhone() != null) {
+                    doctor.setPhone(doctorDetails.getPhone());
+                }
+                if (doctorDetails.getSpecialization() != null) {
+                    doctor.setSpecialization(doctorDetails.getSpecialization());
+                }
+                if (doctorDetails.getQualification() != null) {
+                    doctor.setQualification(doctorDetails.getQualification());
+                }
+                if (doctorDetails.getExperience() != null) {
+                    doctor.setExperience(doctorDetails.getExperience());
+                }
+                if (doctorDetails.getRating() != null) {
+                    doctor.setRating(doctorDetails.getRating());
+                }
+                if (doctorDetails.getAvailable() != null) {
+                    doctor.setAvailable(doctorDetails.getAvailable());
+                }
+                if (doctorDetails.getHospitalId() != null) {
+                    doctor.setHospitalId(doctorDetails.getHospitalId());
+                }
+                if (doctorDetails.getConsultationFee() != null) {
+                    doctor.setConsultationFee(doctorDetails.getConsultationFee());
+                }
+                if (doctorDetails.getStatus() != null) {
+                    doctor.setStatus(doctorDetails.getStatus());
+                }
+                if (doctorDetails.getAvatarUrl() != null) {
+                    doctor.setAvatarUrl(doctorDetails.getAvatarUrl());
+                }
+
                 Doctor updatedDoctor = doctorRepository.save(doctor);
                 logger.info("Doctor updated successfully: {}", id);
                 return updatedDoctor;
@@ -208,11 +234,31 @@ public class DoctorService {
     public void deleteDoctor(String id) {
         logger.info("Deleting doctor: {}", id);
         try {
+            // Check if doctor exists
+            Optional<Doctor> doctor = doctorRepository.findById(id);
+            if (!doctor.isPresent()) {
+                logger.warn("Doctor not found for deletion: {}", id);
+                throw new RuntimeException("Doctor not found with id: " + id);
+            }
+
+            // Delete all hospital associations first
+            logger.info("Removing hospital-doctor associations for doctor: {}", id);
+            hospitalDoctorService.deleteByDoctorId(id);
+
+            // Delete the doctor
             doctorRepository.deleteById(id);
+
+            // Verify deletion was successful
+            Optional<Doctor> deletedCheck = doctorRepository.findById(id);
+            if (deletedCheck.isPresent()) {
+                logger.error("Doctor deletion failed - record still exists: {}", id);
+                throw new RuntimeException("Failed to delete doctor");
+            }
+
             logger.info("Doctor deleted successfully: {}", id);
         } catch (Exception e) {
             logger.error("Error deleting doctor: {}", id, e);
-            throw e;
+            throw new RuntimeException("Failed to delete doctor: " + e.getMessage(), e);
         }
     }
 

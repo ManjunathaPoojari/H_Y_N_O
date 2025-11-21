@@ -218,7 +218,7 @@ public class AuthController {
             }
 
             // Check trainers
-            Optional<Trainer> trainer = trainerService.getTrainerByEmail(email);
+            Optional<Trainer> trainer = trainerService.getTrainerByEmail(normalizedEmail);
             if (trainer.isPresent() && passwordEncoder.matches(password, trainer.get().getPassword())) {
                 // Check if trainer is approved
                 String status = trainer.get().getStatus();
@@ -287,14 +287,15 @@ public class AuthController {
 
         Map<String, Object> response = new HashMap<>();
         String storedPassword = passwordEncoder.encode(password);
+        String normalizedEmail = email.trim().toLowerCase();
 
         try {
             // Check if email already exists
-            if (adminService.findByEmail(email).isPresent() ||
-                patientService.findByEmail(email).isPresent() ||
-                doctorService.getDoctorByEmail(email) != null ||
-                hospitalService.getHospitalByEmail(email) != null ||
-                trainerService.getTrainerByEmail(email).isPresent()) {
+            if (adminService.findByEmail(normalizedEmail).isPresent() ||
+                patientService.findByEmail(normalizedEmail).isPresent() ||
+                doctorService.getDoctorByEmail(normalizedEmail) != null ||
+                hospitalService.getHospitalByEmail(normalizedEmail) != null ||
+                trainerService.getTrainerByEmail(normalizedEmail).isPresent()) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Email already exists"));
             }
 
@@ -442,12 +443,13 @@ public class AuthController {
         }
 
         try {
+            String normalizedEmail = email.trim().toLowerCase();
             // Check if user exists
-            boolean userExists = adminService.findByEmail(email).isPresent() ||
-                               patientService.findByEmail(email).isPresent() ||
-                               doctorService.getDoctorByEmail(email) != null ||
-                               hospitalService.getHospitalByEmail(email) != null ||
-                               trainerService.getTrainerByEmail(email).isPresent();
+            boolean userExists = adminService.findByEmail(normalizedEmail).isPresent() ||
+                               patientService.findByEmail(normalizedEmail).isPresent() ||
+                               doctorService.getDoctorByEmail(normalizedEmail) != null ||
+                               hospitalService.getHospitalByEmail(normalizedEmail) != null ||
+                               trainerService.getTrainerByEmail(normalizedEmail).isPresent();
 
             if (!userExists) {
                 // Don't reveal if email exists or not for security
@@ -458,14 +460,14 @@ public class AuthController {
             String token = UUID.randomUUID().toString();
             PasswordResetToken resetToken = new PasswordResetToken();
             resetToken.setToken(token);
-            resetToken.setEmail(email);
+            resetToken.setEmail(normalizedEmail);
             resetToken.setExpiryDate(java.time.LocalDateTime.now().plusHours(1)); // 1 hour expiry
 
             passwordResetTokenRepository.save(resetToken);
 
             // Send email
             String resetLink = "http://localhost:3000/reset-password?token=" + token;
-            emailService.sendPasswordResetEmail(email, resetLink);
+            emailService.sendPasswordResetEmail(normalizedEmail, resetLink);
 
             logger.info("Password reset email sent to: {}", email);
             return ResponseEntity.ok(Map.of("message", "If an account with this email exists, a password reset link has been sent."));
@@ -510,32 +512,33 @@ public class AuthController {
             }
 
             String email = resetToken.getEmail();
+            String normalizedEmail = email != null ? email.trim().toLowerCase() : null;
             String hashedPassword = passwordEncoder.encode(password);
 
             // Update password based on user type
             boolean updated = false;
-            if (adminService.findByEmail(email).isPresent()) {
-                Admin admin = adminService.findByEmail(email).get();
+            if (normalizedEmail != null && adminService.findByEmail(normalizedEmail).isPresent()) {
+                Admin admin = adminService.findByEmail(normalizedEmail).get();
                 admin.setPassword(hashedPassword);
                 adminService.save(admin);
                 updated = true;
-            } else if (patientService.findByEmail(email).isPresent()) {
-                Patient patient = patientService.findByEmail(email).get();
+            } else if (normalizedEmail != null && patientService.findByEmail(normalizedEmail).isPresent()) {
+                Patient patient = patientService.findByEmail(normalizedEmail).get();
                 patient.setPassword(hashedPassword);
                 patientService.save(patient);
                 updated = true;
-            } else if (doctorService.getDoctorByEmail(email) != null) {
-                Doctor doctor = doctorService.getDoctorByEmail(email);
+            } else if (normalizedEmail != null && doctorService.getDoctorByEmail(normalizedEmail) != null) {
+                Doctor doctor = doctorService.getDoctorByEmail(normalizedEmail);
                 doctor.setPassword(hashedPassword);
                 doctorService.updateDoctor(doctor.getId(), doctor);
                 updated = true;
-            } else if (hospitalService.getHospitalByEmail(email) != null) {
-                Hospital hospital = hospitalService.getHospitalByEmail(email);
+            } else if (normalizedEmail != null && hospitalService.getHospitalByEmail(normalizedEmail) != null) {
+                Hospital hospital = hospitalService.getHospitalByEmail(normalizedEmail);
                 hospital.setPassword(hashedPassword);
                 hospitalService.updateHospital(hospital.getId(), hospital);
                 updated = true;
-            } else if (trainerService.getTrainerByEmail(email).isPresent()) {
-                Trainer trainer = trainerService.getTrainerByEmail(email).get();
+            } else if (normalizedEmail != null && trainerService.getTrainerByEmail(normalizedEmail).isPresent()) {
+                Trainer trainer = trainerService.getTrainerByEmail(normalizedEmail).get();
                 trainer.setPassword(hashedPassword);
                 trainerService.updateTrainer(trainer.getId(), trainer);
                 updated = true;
@@ -625,6 +628,109 @@ public class AuthController {
         } catch (Exception e) {
             logger.error("Error verifying email with token: {}", token, e);
             return ResponseEntity.internalServerError().body(Map.of("message", "Failed to verify email"));
+        }
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String oldPassword = request.get("oldPassword");
+        String newPassword = request.get("newPassword");
+
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email is required"));
+        }
+        if (oldPassword == null || oldPassword.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Current password is required"));
+        }
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "New password is required"));
+        }
+        if (!PASSWORD_PATTERN.matcher(newPassword).matches()) {
+            return ResponseEntity.badRequest().body(Map.of("message",
+                "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@#$%^&+=!)"));
+        }
+
+        try {
+            String normalizedEmail = email.trim().toLowerCase();
+            String hashedNewPassword = passwordEncoder.encode(newPassword);
+
+            // Check for admin
+            Optional<Admin> admin = adminService.findByEmail(normalizedEmail);
+            if (admin.isPresent()) {
+                String storedPassword = admin.get().getPassword();
+                // Verify old password
+                if (oldPassword.equals(storedPassword) || passwordEncoder.matches(oldPassword, storedPassword)) {
+                    admin.get().setPassword(hashedNewPassword);
+                    adminService.save(admin.get());
+                    logger.info("Admin password changed successfully for: {}", email);
+                    return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+                } else {
+                    return ResponseEntity.status(401).body(Map.of("message", "Current password is incorrect"));
+                }
+            }
+
+            // Check for patient
+            Optional<Patient> patient = patientService.findByEmail(normalizedEmail);
+            if (patient.isPresent()) {
+                String storedPassword = patient.get().getPassword();
+                if (oldPassword.equals(storedPassword) || passwordEncoder.matches(oldPassword, storedPassword)) {
+                    patient.get().setPassword(hashedNewPassword);
+                    patientService.save(patient.get());
+                    logger.info("Patient password changed successfully for: {}", email);
+                    return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+                } else {
+                    return ResponseEntity.status(401).body(Map.of("message", "Current password is incorrect"));
+                }
+            }
+
+            // Check for doctor
+            Doctor doctor = doctorService.getDoctorByEmail(normalizedEmail);
+            if (doctor != null) {
+                if (passwordEncoder.matches(oldPassword, doctor.getPassword())) {
+                    doctor.setPassword(hashedNewPassword);
+                    doctorService.updateDoctor(doctor.getId(), doctor);
+                    logger.info("Doctor password changed successfully for: {}", email);
+                    return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+                } else {
+                    return ResponseEntity.status(401).body(Map.of("message", "Current password is incorrect"));
+                }
+            }
+
+            // Check for hospital
+            Hospital hospital = hospitalService.getHospitalByEmail(normalizedEmail);
+            if (hospital != null) {
+                String storedPassword = hospital.getPassword();
+                if (oldPassword.equals(storedPassword) || passwordEncoder.matches(oldPassword, storedPassword)) {
+                    hospital.setPassword(hashedNewPassword);
+                    hospitalService.updateHospital(hospital.getId(), hospital);
+                    logger.info("Hospital password changed successfully for: {}", email);
+                    return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+                } else {
+                    return ResponseEntity.status(401).body(Map.of("message", "Current password is incorrect"));
+                }
+            }
+
+            // Check for trainer
+            Optional<Trainer> trainer = trainerService.getTrainerByEmail(normalizedEmail);
+            if (trainer.isPresent()) {
+                if (passwordEncoder.matches(oldPassword, trainer.get().getPassword())) {
+                    trainer.get().setPassword(hashedNewPassword);
+                    trainerService.updateTrainer(trainer.get().getId(), trainer.get());
+                    logger.info("Trainer password changed successfully for: {}", email);
+                    return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+                } else {
+                    return ResponseEntity.status(401).body(Map.of("message", "Current password is incorrect"));
+                }
+            }
+
+            // User not found
+            return ResponseEntity.status(404).body(Map.of("message", "User not found"));
+
+        } catch (Exception e) {
+            logger.error("Error changing password for email: {}", email, e);
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(Map.of("message", "Failed to change password. Please try again."));
         }
     }
 }

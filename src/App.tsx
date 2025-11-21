@@ -47,6 +47,7 @@ import { AdminPharmacy } from './components/admin/AdminPharmacy';
 import { PendingApprovals } from './components/admin/PendingApprovals';
 import { UserManagement } from './components/admin/UserManagement';
 import { AdminProfile } from './components/admin/AdminProfile';
+import { ChangePassword } from './components/admin/ChangePassword';
 import { TrainerDashboard } from './components/trainer/TrainerDashboard';
 import { ConfigStatus } from './components/ConfigStatus';
 import { AboutUs } from './components/AboutUs';
@@ -308,6 +309,7 @@ function AppContent() {
           {currentPath === '/admin/hospitals' && <HospitalManagement />}
           {currentPath === '/admin/doctors' && <DoctorManagement />}
           {currentPath === '/admin/profile' && <AdminProfile />}
+          {currentPath === '/admin/change-password' && <ChangePassword onNavigate={navigate} />}
           {currentPath === '/admin/users' && <UserManagement />}
           {currentPath === '/admin/patients' && <AdminPatients />}
           {currentPath === '/admin/appointments' && <AdminAppointments />}

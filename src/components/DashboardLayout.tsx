@@ -5,7 +5,7 @@ import {
   Activity, Bell, Search, LogOut, Menu,
   LayoutDashboard, Users, Calendar, MessageSquare, Video,
   FileText, Building2, UserCog, AlertCircle,
-  Pill, User, Hospital, Stethoscope, Apple, Dumbbell, ShieldCheck
+  Pill, User, Hospital, Stethoscope, Apple, Dumbbell, ShieldCheck, Key
 } from 'lucide-react';
 import { Input } from './ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
@@ -14,6 +14,7 @@ import { useAuth } from '../lib/auth-context';
 import { useSearch } from '../lib/search-context';
 import { useNotifications } from '../lib/notification-context';
 import api from '../lib/api-client';
+import { useAppStore } from '../lib/app-store';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -31,6 +32,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { user, logout } = useAuth();
   const { searchQuery, setSearchQuery } = useSearch();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { refreshTrigger } = useAppStore();
   const [pendingCount, setPendingCount] = useState(0);
 
   // Fetch pending approvals count for admin
@@ -51,7 +53,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       };
       fetchPendingCount();
     }
-  }, [role]);
+  }, [role, refreshTrigger]);
 
   const handleLogout = () => {
     logout();
@@ -339,6 +341,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   {settingsPath && (
                     <DropdownMenuItem onClick={() => onNavigate(settingsPath)}>
                       Settings
+                    </DropdownMenuItem>
+                  )}
+                  {role === 'admin' && (
+                    <DropdownMenuItem onClick={() => onNavigate('/admin/change-password')}>
+                      <Key className="h-4 w-4 mr-2" />
+                      Change Password
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />

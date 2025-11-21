@@ -4,14 +4,18 @@ import com.hyno.entity.HospitalDoctor;
 import com.hyno.entity.HospitalDoctorId;
 import com.hyno.repository.HospitalDoctorRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class HospitalDoctorService {
 
+    private static final Logger logger = LoggerFactory.getLogger(HospitalDoctorService.class);
     private final HospitalDoctorRepository hospitalDoctorRepository;
 
     public List<HospitalDoctor> getDoctorsByHospitalId(String hospitalId) {
@@ -60,5 +64,42 @@ public class HospitalDoctorService {
 
         hospitalDoctor.setStatus("rejected");
         hospitalDoctorRepository.save(hospitalDoctor);
+    }
+
+    @Transactional
+    public void deleteByDoctorId(String doctorId) {
+        logger.info("Deleting hospital-doctor associations for doctor: {}", doctorId);
+        try {
+            List<HospitalDoctor> associations = hospitalDoctorRepository.findByDoctorId(doctorId);
+            if (!associations.isEmpty()) {
+                hospitalDoctorRepository.deleteAll(associations);
+                logger.info("Deleted {} associations for doctor: {}", associations.size(), doctorId);
+            }
+        } catch (Exception e) {
+            logger.error("Error deleting associations for doctor: {}", doctorId, e);
+            throw e;
+        }
+    }
+
+    @Transactional
+    public void deleteByHospitalId(String hospitalId) {
+        logger.info("Deleting hospital-doctor associations for hospital: {}", hospitalId);
+        try {
+            List<HospitalDoctor> associations = hospitalDoctorRepository.findByHospitalId(hospitalId);
+            if (!associations.isEmpty()) {
+                hospitalDoctorRepository.deleteAll(associations);
+                logger.info("Deleted {} associations for hospital: {}", associations.size(), hospitalId);
+            }
+        } catch (Exception e) {
+            logger.error("Error deleting associations for hospital: {}", hospitalId, e);
+            throw e;
+        }
+    }
+
+    public List<String> getDoctorIdsByHospitalId(String hospitalId) {
+        return hospitalDoctorRepository.findByHospitalId(hospitalId)
+                .stream()
+                .map(hd -> hd.getDoctor().getId())
+                .collect(Collectors.toList());
     }
 }

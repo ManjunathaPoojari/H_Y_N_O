@@ -135,19 +135,47 @@ public class PatientService {
             Optional<Patient> optionalPatient = patientRepository.findById(id);
             if (optionalPatient.isPresent()) {
                 Patient patient = optionalPatient.get();
-                patient.setName(patientDetails.getName());
-                patient.setEmail(patientDetails.getEmail());
-                patient.setPhone(patientDetails.getPhone());
-                patient.setAge(patientDetails.getAge());
-                patient.setGender(patientDetails.getGender());
-                patient.setBloodGroup(patientDetails.getBloodGroup());
-                patient.setDateOfBirth(patientDetails.getDateOfBirth());
-                patient.setAllergies(patientDetails.getAllergies());
-                patient.setMedicalHistory(patientDetails.getMedicalHistory());
-                patient.setCurrentMedications(patientDetails.getCurrentMedications());
-                patient.setAddress(patientDetails.getAddress());
-                patient.setEmergencyContact(patientDetails.getEmergencyContact());
-                patient.setNotes(patientDetails.getNotes());
+
+                if (patientDetails.getName() != null) {
+                    patient.setName(patientDetails.getName());
+                }
+                if (patientDetails.getEmail() != null) {
+                    patient.setEmail(patientDetails.getEmail());
+                }
+                if (patientDetails.getPhone() != null) {
+                    patient.setPhone(patientDetails.getPhone());
+                }
+                if (patientDetails.getAge() != null) {
+                    patient.setAge(patientDetails.getAge());
+                }
+                if (patientDetails.getGender() != null) {
+                    patient.setGender(patientDetails.getGender());
+                }
+                if (patientDetails.getBloodGroup() != null) {
+                    patient.setBloodGroup(patientDetails.getBloodGroup());
+                }
+                if (patientDetails.getDateOfBirth() != null) {
+                    patient.setDateOfBirth(patientDetails.getDateOfBirth());
+                }
+                if (patientDetails.getAllergies() != null) {
+                    patient.setAllergies(patientDetails.getAllergies());
+                }
+                if (patientDetails.getMedicalHistory() != null) {
+                    patient.setMedicalHistory(patientDetails.getMedicalHistory());
+                }
+                if (patientDetails.getCurrentMedications() != null) {
+                    patient.setCurrentMedications(patientDetails.getCurrentMedications());
+                }
+                if (patientDetails.getAddress() != null) {
+                    patient.setAddress(patientDetails.getAddress());
+                }
+                if (patientDetails.getEmergencyContact() != null) {
+                    patient.setEmergencyContact(patientDetails.getEmergencyContact());
+                }
+                if (patientDetails.getNotes() != null) {
+                    patient.setNotes(patientDetails.getNotes());
+                }
+
                 Patient updatedPatient = patientRepository.save(patient);
                 logger.info("Patient updated successfully: {}", id);
                 return updatedPatient;

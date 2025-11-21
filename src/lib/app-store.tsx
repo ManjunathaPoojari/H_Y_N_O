@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Patient, Doctor, Hospital, Appointment, Medicine, Prescription, NutritionPlan, Meal, YogaTrainer, Trainer } from '../types';
+import { Patient, Doctor, Hospital, Appointment, Medicine, Prescription, NutritionPlan, Meal, Trainer } from '../types';
 
 import api from './api-client';
 import { toast } from 'sonner';
@@ -14,7 +14,7 @@ interface AppStoreContextType {
   medicines: Medicine[];
   prescriptions: Prescription[];
   nutritionPlans: NutritionPlan[];
-  yogaTrainers: YogaTrainer[];
+
   trainers: Trainer[];
 
   // Data loading functions
@@ -35,7 +35,7 @@ interface AppStoreContextType {
   // Hospital Actions
   addHospital: (hospital: Hospital) => void;
   updateHospital: (id: string, hospital: Partial<Hospital>) => void;
-  deleteHospital: (id: string) => void;
+  deleteHospital: (id: string, mode?: 'unlink' | 'deleteAll') => void;
   approveHospital: (id: string) => void;
   rejectHospital: (id: string) => void;
 
@@ -60,16 +60,16 @@ interface AppStoreContextType {
   updateNutritionPlan: (id: string, plan: Partial<NutritionPlan>) => void;
   getNutritionPlanByPatient: (patientId: string) => NutritionPlan | undefined;
 
-  // Yoga Actions
-  addYogaTrainer: (trainer: YogaTrainer) => void;
-  updateYogaTrainer: (id: string, trainer: Partial<YogaTrainer>) => void;
+
 
   // Trainer Actions
   addTrainer: (trainer: Trainer) => void;
   updateTrainer: (id: string, trainer: Partial<Trainer>) => void;
-  deleteTrainer: (id: string) => void;
   approveTrainer: (trainerId: string) => void;
   rejectTrainer: (trainerId: string) => void;
+  deleteTrainer: (id: string) => void;
+  // UI State
+  refreshTrigger: number;
 }
 
 const AppStoreContext = createContext<AppStoreContextType | undefined>(undefined);
@@ -87,9 +87,10 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [nutritionPlans, setNutritionPlans] = useState<NutritionPlan[]>([]);
-  const [yogaTrainers, setYogaTrainers] = useState<YogaTrainer[]>([]);
+
 
   const [trainers, setTrainers] = useState<Trainer[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Load data from backend on mount (if enabled)
   useEffect(() => {
@@ -97,6 +98,11 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       loadDataFromBackend();
     }
   }, []);
+
+  const getUserRole = () => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('userRole');
+  };
 
   const normalizeList = <T,>(data: any): T[] => {
     if (!data) return [];
@@ -122,7 +128,7 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       let appointmentsData: any[] = [];
       let medicinesData: any[] = [];
       let trainerData: any[] = [];
-      let yogaTrainerData: any[] = [];
+
       let nutritionPlansData: any[] = [];
 
       if (userRole === 'admin') {
@@ -370,12 +376,13 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
 
       try {
-        yogaTrainerData = await api.yoga.getTrainers();
+        // Also fetch pending counts if needed, or just rely on the components to fetch them
+        setRefreshTrigger(prev => prev + 1);
       } catch (error) {
-        console.warn('Failed to load yoga trainers from backend:', error);
-        yogaTrainerData = [];
-        failedLoads++;
+        console.error('Error loading data from backend:', error);
+        toast.error('Failed to load data from backend');
       }
+
 
       try {
         nutritionPlansData = await api.nutrition.getPlans();
@@ -387,7 +394,7 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       const normalizedMedicines = normalizeList<Medicine>(medicinesData);
       const normalizedTrainers = normalizeList<Trainer>(trainerData);
-      const normalizedYoga = normalizeList<YogaTrainer>(yogaTrainerData);
+
       const normalizedNutrition = normalizeList<NutritionPlan>(nutritionPlansData);
 
       setPatients(normalizedPatients);
@@ -404,7 +411,7 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       );
       setMedicines(normalizedMedicines);
       setTrainers(normalizedTrainers);
-      setYogaTrainers(normalizedYoga);
+
       setNutritionPlans(normalizedNutrition);
 
       // Show single toast if any loads failed
@@ -456,7 +463,12 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const updatePatient = async (id: string, updatedData: Partial<Patient>) => {
     if (USE_BACKEND) {
       try {
-        await api.patients.update(id, updatedData);
+        const userRole = getUserRole();
+        if (userRole === 'admin') {
+          await api.admin.updatePatient(id, updatedData);
+        } else {
+          await api.patients.update(id, updatedData);
+        }
         setPatients(patients.map(p => p.id === id ? { ...p, ...updatedData } : p));
         toast.success('Patient updated successfully');
       } catch (error) {
@@ -471,7 +483,12 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const deletePatient = async (id: string) => {
     if (USE_BACKEND) {
       try {
-        await api.patients.delete(id);
+        const userRole = getUserRole();
+        if (userRole === 'admin') {
+          await api.admin.deletePatient(id);
+        } else {
+          await api.patients.delete(id);
+        }
         setPatients(patients.filter(p => p.id !== id));
         toast.success('Patient deleted successfully');
       } catch (error) {
@@ -487,7 +504,9 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const addDoctor = async (doctor: Doctor) => {
     if (USE_BACKEND) {
       try {
-        const newDoctor = await api.doctors.create(doctor);
+        const userRole = getUserRole();
+        const newDoctor =
+          userRole === 'admin' ? await api.admin.createDoctor(doctor) : await api.doctors.create(doctor);
         setDoctors([...doctors, newDoctor]);
         toast.success('Doctor added successfully');
       } catch (error) {
@@ -502,7 +521,12 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const updateDoctor = async (id: string, updatedData: Partial<Doctor>) => {
     if (USE_BACKEND) {
       try {
-        await api.doctors.update(id, updatedData);
+        const userRole = getUserRole();
+        if (userRole === 'admin') {
+          await api.admin.updateDoctor(id, updatedData);
+        } else {
+          await api.doctors.update(id, updatedData);
+        }
         setDoctors(doctors.map(d => d.id === id ? { ...d, ...updatedData } : d));
         toast.success('Doctor updated successfully');
       } catch (error) {
@@ -517,7 +541,12 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const deleteDoctor = async (id: string) => {
     if (USE_BACKEND) {
       try {
-        await api.doctors.delete(id);
+        const userRole = getUserRole();
+        if (userRole === 'admin') {
+          await api.admin.deleteDoctor(id);
+        } else {
+          await api.doctors.delete(id);
+        }
         setDoctors(doctors.filter(d => d.id !== id));
         toast.success('Doctor removed successfully');
       } catch (error) {
@@ -532,7 +561,12 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const approveDoctor = async (id: string) => {
     if (USE_BACKEND) {
       try {
-        await api.doctors.approve(id);
+        const userRole = getUserRole();
+        if (userRole === 'admin') {
+          await api.admin.approveDoctor(id);
+        } else {
+          await api.doctors.approve(id);
+        }
         setDoctors(doctors.map(d => d.id === id ? { ...d, status: 'approved' } : d));
         toast.success('Doctor approved successfully');
       } catch (error) {
@@ -547,7 +581,12 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const suspendDoctor = async (id: string) => {
     if (USE_BACKEND) {
       try {
-        await api.doctors.suspend(id);
+        const userRole = getUserRole();
+        if (userRole === 'admin') {
+          await api.admin.suspendDoctor(id);
+        } else {
+          await api.doctors.suspend(id);
+        }
         setDoctors(doctors.map(d => d.id === id ? { ...d, status: 'suspended' } : d));
         toast.success('Doctor suspended');
       } catch (error) {
@@ -578,7 +617,12 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const updateHospital = async (id: string, updatedData: Partial<Hospital>) => {
     if (USE_BACKEND) {
       try {
-        await api.hospitals.update(id, updatedData);
+        const userRole = getUserRole();
+        if (userRole === 'admin') {
+          await api.admin.updateHospital(id, updatedData);
+        } else {
+          await api.hospitals.update(id, updatedData);
+        }
         setHospitals(hospitals.map(h => h.id === id ? { ...h, ...updatedData } : h));
         toast.success('Hospital updated successfully');
       } catch (error) {
@@ -590,14 +634,20 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  const deleteHospital = async (id: string) => {
+  const deleteHospital = async (id: string, mode: 'unlink' | 'deleteAll' = 'unlink') => {
     if (USE_BACKEND) {
       try {
-        await api.hospitals.delete(id);
+        const userRole = getUserRole();
+        if (userRole === 'admin') {
+          await api.admin.deleteHospital(id, mode);
+        } else {
+          await api.hospitals.delete(id, mode);
+        }
         setHospitals(hospitals.filter(h => h.id !== id));
         toast.success('Hospital removed successfully');
       } catch (error) {
         toast.error('Failed to remove hospital');
+        throw error;
       }
     } else {
       setHospitals(hospitals.filter(h => h.id !== id));
@@ -608,7 +658,12 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const approveHospital = async (id: string) => {
     if (USE_BACKEND) {
       try {
-        await api.hospitals.approve(id);
+        const userRole = getUserRole();
+        if (userRole === 'admin') {
+          await api.admin.approveHospital(id);
+        } else {
+          await api.hospitals.approve(id);
+        }
         setHospitals(hospitals.map(h => h.id === id ? { ...h, status: 'approved' } : h));
         toast.success('Hospital approved successfully');
       } catch (error) {
@@ -623,7 +678,12 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const rejectHospital = async (id: string) => {
     if (USE_BACKEND) {
       try {
-        await api.hospitals.reject(id);
+        const userRole = getUserRole();
+        if (userRole === 'admin') {
+          await api.admin.rejectHospital(id);
+        } else {
+          await api.hospitals.reject(id);
+        }
         setHospitals(hospitals.map(h => h.id === id ? { ...h, status: 'rejected' } : h));
         toast.success('Hospital rejected');
       } catch (error) {
@@ -787,26 +847,26 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     return nutritionPlans.find(n => n.patientId === patientId);
   };
 
-  // Yoga Actions
-  const addYogaTrainer = (trainer: YogaTrainer) => {
-    setYogaTrainers([...yogaTrainers, trainer]);
-    toast.success('Yoga trainer added');
-  };
 
-  const updateYogaTrainer = (id: string, updatedData: Partial<YogaTrainer>) => {
-    setYogaTrainers(yogaTrainers.map(t => t.id === id ? { ...t, ...updatedData } : t));
-    toast.success('Trainer updated');
-  };
 
   // Trainer Actions
   const addTrainer = async (trainer: Trainer) => {
     if (USE_BACKEND) {
       try {
-        const newTrainer = await api.trainers.create(trainer);
+        const userRole = getUserRole();
+        let newTrainer;
+        if (userRole === 'admin' && api.admin.createTrainer) {
+          newTrainer = await api.admin.createTrainer(trainer);
+        } else {
+          newTrainer = await api.trainers.create(trainer);
+        }
         setTrainers([...trainers, newTrainer]);
         toast.success('Trainer added successfully');
-      } catch (error) {
-        toast.error('Failed to add trainer');
+      } catch (error: any) {
+        console.error('Failed to add trainer:', error);
+        const errorMessage = error?.message || 'Failed to add trainer';
+        toast.error(errorMessage);
+        throw error; // Re-throw to let the caller handle it
       }
     } else {
       setTrainers([...trainers, trainer]);
@@ -817,7 +877,16 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const updateTrainer = async (id: string, updatedData: Partial<Trainer>) => {
     if (USE_BACKEND) {
       try {
-        await api.trainers.update(id, updatedData);
+        const userRole = getUserRole();
+        if (userRole === 'admin') {
+          if (api.admin.updateTrainer) {
+            await api.admin.updateTrainer(id, updatedData);
+          } else {
+            await api.trainers.update(id, updatedData);
+          }
+        } else {
+          await api.trainers.update(id, updatedData);
+        }
         setTrainers(trainers.map(t => t.id === id ? { ...t, ...updatedData } : t));
         toast.success('Trainer updated successfully');
       } catch (error) {
@@ -832,7 +901,12 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   const deleteTrainer = async (id: string) => {
     if (USE_BACKEND) {
       try {
-        await api.trainers.delete(id);
+        const userRole = getUserRole();
+        if (userRole === 'admin') {
+          await api.admin.deleteTrainer(id);
+        } else {
+          await api.trainers.delete(id);
+        }
         setTrainers(trainers.filter(t => t.id !== id));
         toast.success('Trainer removed successfully');
       } catch (error) {
@@ -882,7 +956,7 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     medicines,
     prescriptions,
     nutritionPlans,
-    yogaTrainers,
+
     trainers,
     refreshData: loadDataFromBackend,
     addPatient,
@@ -911,13 +985,12 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     addNutritionPlan,
     updateNutritionPlan,
     getNutritionPlanByPatient,
-    addYogaTrainer,
-    updateYogaTrainer,
     addTrainer,
     updateTrainer,
     deleteTrainer,
     approveTrainer,
     rejectTrainer,
+    refreshTrigger,
   };
 
   return (

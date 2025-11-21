@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/hospitals")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:5173"})
+@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:3001", "http://localhost:5173" })
 public class HospitalController {
 
     @Autowired
@@ -47,6 +47,17 @@ public class HospitalController {
             }
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping
+    public ResponseEntity<com.hyno.entity.Hospital> createHospital(
+            @RequestBody com.hyno.entity.Hospital hospitalRequest) {
+        try {
+            com.hyno.entity.Hospital createdHospital = hospitalService.createHospital(hospitalRequest);
+            return ResponseEntity.ok(createdHospital);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 
@@ -85,7 +96,8 @@ public class HospitalController {
 
     // Hospital Schedule
     @PutMapping("/{hospitalId}")
-    public ResponseEntity<com.hyno.entity.Hospital> updateHospital(@PathVariable String hospitalId, @RequestBody com.hyno.entity.Hospital hospitalDetails) {
+    public ResponseEntity<com.hyno.entity.Hospital> updateHospital(@PathVariable String hospitalId,
+            @RequestBody com.hyno.entity.Hospital hospitalDetails) {
         try {
             com.hyno.entity.Hospital updatedHospital = hospitalService.updateHospital(hospitalId, hospitalDetails);
             if (updatedHospital != null) {
@@ -94,6 +106,22 @@ public class HospitalController {
                 return ResponseEntity.notFound().build();
             }
         } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @DeleteMapping("/{hospitalId}")
+    public ResponseEntity<Void> deleteHospital(
+            @PathVariable String hospitalId,
+            @RequestParam(required = false, defaultValue = "unlink") String mode) {
+        try {
+            if ("deleteAll".equals(mode)) {
+                hospitalService.deleteHospitalWithDoctors(hospitalId);
+            } else {
+                hospitalService.deleteHospitalOnly(hospitalId);
+            }
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -130,31 +158,29 @@ public class HospitalController {
 
             // Convert to the expected format
             List<Map<String, Object>> slotsData = availableSlots.stream()
-                .map(slot -> Map.<String, Object>of(
-                    "id", slot.getId().toString(),
-                    "date", slot.getSlotDate().toString(),
-                    "startTime", slot.getStartTime().toString(),
-                    "endTime", slot.getEndTime().toString(),
-                    "isAvailable", slot.isAvailable(),
-                    "maxAppointments", slot.getMaxAppointments(),
-                    "appointmentType", slot.getSchedule().getAppointmentType().toString().toLowerCase(),
-                    "notes", slot.getNotes(),
-                    "availableSpots", slot.getAvailableSpots()
-                ))
-                .collect(Collectors.toList());
+                    .map(slot -> Map.<String, Object>of(
+                            "id", slot.getId().toString(),
+                            "date", slot.getSlotDate().toString(),
+                            "startTime", slot.getStartTime().toString(),
+                            "endTime", slot.getEndTime().toString(),
+                            "isAvailable", slot.isAvailable(),
+                            "maxAppointments", slot.getMaxAppointments(),
+                            "appointmentType", slot.getSchedule().getAppointmentType().toString().toLowerCase(),
+                            "notes", slot.getNotes(),
+                            "availableSpots", slot.getAvailableSpots()))
+                    .collect(Collectors.toList());
 
             scheduleData.put("availableSlots", slotsData);
 
             // Get weekly schedule pattern (mock for now, could be derived from schedules)
             scheduleData.put("weeklySchedule", Map.of(
-                "monday", List.of("08:00-18:00"),
-                "tuesday", List.of("08:00-18:00"),
-                "wednesday", List.of("08:00-18:00"),
-                "thursday", List.of("08:00-18:00"),
-                "friday", List.of("08:00-18:00"),
-                "saturday", List.of("09:00-14:00"),
-                "sunday", List.of("10:00-16:00")
-            ));
+                    "monday", List.of("08:00-18:00"),
+                    "tuesday", List.of("08:00-18:00"),
+                    "wednesday", List.of("08:00-18:00"),
+                    "thursday", List.of("08:00-18:00"),
+                    "friday", List.of("08:00-18:00"),
+                    "saturday", List.of("09:00-14:00"),
+                    "sunday", List.of("10:00-16:00")));
 
             return ResponseEntity.ok(scheduleData);
         } catch (Exception e) {

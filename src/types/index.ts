@@ -116,16 +116,7 @@ export interface Meal {
   image?: string;
 }
 
-export interface YogaTrainer {
-  id: string;
-  name: string;
-  specialization: string[];
-  experience: number;
-  rating: number;
-  availability: string[];
-  sessionFee: number;
-  mode: ('virtual' | 'inperson')[];
-}
+
 
 export interface Trainer {
   id: string;
