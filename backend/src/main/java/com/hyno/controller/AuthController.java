@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:5173"})
+@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:3001", "http://localhost:5173" })
 public class AuthController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
@@ -70,13 +70,11 @@ public class AuthController {
 
     // Email validation pattern
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
-        "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$"
-    );
+            "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
 
     // Password strength requirements
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
-        "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$"
-    );
+            "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$");
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
@@ -97,7 +95,8 @@ public class AuthController {
         if (attempts != null && attempts >= MAX_LOGIN_ATTEMPTS) {
             if (lastAttempt != null && (currentTime - lastAttempt) < LOCKOUT_DURATION_MS) {
                 long remainingTime = (LOCKOUT_DURATION_MS - (currentTime - lastAttempt)) / 1000 / 60;
-                return ResponseEntity.status(429).body(Map.of("message", "Too many failed login attempts. Please try again in " + remainingTime + " minutes."));
+                return ResponseEntity.status(429).body(Map.of("message",
+                        "Too many failed login attempts. Please try again in " + remainingTime + " minutes."));
             } else {
                 // Reset attempts after lockout period
                 loginAttempts.remove(email);
@@ -165,9 +164,9 @@ public class AuthController {
                 if (status == null || (!status.equalsIgnoreCase("approved"))) {
                     logger.warn("Doctor login denied - not approved. Status: {}", status);
                     return ResponseEntity.status(403).body(Map.of(
-                        "message", "Your account is waiting for admin approval. Please contact support if you have any questions.",
-                        "code", "PENDING_APPROVAL"
-                    ));
+                            "message",
+                            "Your account is waiting for admin approval. Please contact support if you have any questions.",
+                            "code", "PENDING_APPROVAL"));
                 }
                 logger.info("Doctor login successful for: {}", email);
                 // Reset login attempts on successful login
@@ -198,9 +197,9 @@ public class AuthController {
                     if (status == null || (!status.equalsIgnoreCase("approved"))) {
                         logger.warn("Hospital login denied - not approved. Status: {}", status);
                         return ResponseEntity.status(403).body(Map.of(
-                            "message", "Your account is waiting for admin approval. Please contact support if you have any questions.",
-                            "code", "PENDING_APPROVAL"
-                        ));
+                                "message",
+                                "Your account is waiting for admin approval. Please contact support if you have any questions.",
+                                "code", "PENDING_APPROVAL"));
                     }
                     logger.info("Hospital login successful for: {}", email);
                     // Reset login attempts on successful login
@@ -225,9 +224,9 @@ public class AuthController {
                 if (status == null || (!status.equalsIgnoreCase("approved"))) {
                     logger.warn("Trainer login denied - not approved. Status: {}", status);
                     return ResponseEntity.status(403).body(Map.of(
-                        "message", "Your account is waiting for admin approval. Please contact support if you have any questions.",
-                        "code", "PENDING_APPROVAL"
-                    ));
+                            "message",
+                            "Your account is waiting for admin approval. Please contact support if you have any questions.",
+                            "code", "PENDING_APPROVAL"));
                 }
                 logger.info("Trainer login successful for: {}", email);
                 // Reset login attempts on successful login
@@ -279,7 +278,7 @@ public class AuthController {
         }
         if (!PASSWORD_PATTERN.matcher(password).matches()) {
             return ResponseEntity.badRequest().body(Map.of("message",
-                "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@#$%^&+=!)"));
+                    "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@#$%^&+=!)"));
         }
         if (role == null || role.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Role is required"));
@@ -292,10 +291,10 @@ public class AuthController {
         try {
             // Check if email already exists
             if (adminService.findByEmail(normalizedEmail).isPresent() ||
-                patientService.findByEmail(normalizedEmail).isPresent() ||
-                doctorService.getDoctorByEmail(normalizedEmail) != null ||
-                hospitalService.getHospitalByEmail(normalizedEmail) != null ||
-                trainerService.getTrainerByEmail(normalizedEmail).isPresent()) {
+                    patientService.findByEmail(normalizedEmail).isPresent() ||
+                    doctorService.getDoctorByEmail(normalizedEmail) != null ||
+                    hospitalService.getHospitalByEmail(normalizedEmail) != null ||
+                    trainerService.getTrainerByEmail(normalizedEmail).isPresent()) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Email already exists"));
             }
 
@@ -336,6 +335,25 @@ public class AuthController {
                 patient.setAddress(address != null ? address.trim() : "");
                 patient.setEmergencyContact(emergencyContact != null ? emergencyContact.trim() : "");
 
+                // Optional fields
+                @SuppressWarnings("unchecked")
+                java.util.List<String> allergies = (java.util.List<String>) registerRequest.get("allergies");
+                @SuppressWarnings("unchecked")
+                java.util.List<String> medicalHistory = (java.util.List<String>) registerRequest.get("medicalHistory");
+                @SuppressWarnings("unchecked")
+                java.util.List<String> currentMedications = (java.util.List<String>) registerRequest
+                        .get("currentMedications");
+
+                if (allergies != null && !allergies.isEmpty()) {
+                    patient.setAllergies(allergies);
+                }
+                if (medicalHistory != null && !medicalHistory.isEmpty()) {
+                    patient.setMedicalHistory(medicalHistory);
+                }
+                if (currentMedications != null && !currentMedications.isEmpty()) {
+                    patient.setCurrentMedications(currentMedications);
+                }
+
                 patient.setVerified(true); // No email verification required for patients
                 Patient savedPatient = patientService.createPatient(patient);
 
@@ -357,7 +375,8 @@ public class AuthController {
                 doctor.setSpecialization(specialization != null ? specialization.trim() : "General Medicine");
                 doctor.setQualification(qualification != null ? qualification.trim() : "");
                 doctor.setExperience(experienceStr != null ? Integer.parseInt(experienceStr) : 0);
-                doctor.setConsultationFee(consultationFeeStr != null ? new BigDecimal(consultationFeeStr) : BigDecimal.ZERO);
+                doctor.setConsultationFee(
+                        consultationFeeStr != null ? new BigDecimal(consultationFeeStr) : BigDecimal.ZERO);
 
                 // Set hospital relationship if hospitalId is provided
                 if (hospitalId != null && !hospitalId.trim().isEmpty()) {
@@ -388,6 +407,21 @@ public class AuthController {
                 hospital.setPincode(pincode != null ? pincode.trim() : "");
                 hospital.setRegistrationNumber(registrationNumber != null ? registrationNumber.trim() : "");
 
+                // Optional fields
+                Object establishedYearObj = registerRequest.get("establishedYear");
+                Object bedCountObj = registerRequest.get("bedCount");
+                String description = (String) registerRequest.get("description");
+
+                if (establishedYearObj != null) {
+                    hospital.setEstablishedYear(((Number) establishedYearObj).intValue());
+                }
+                if (bedCountObj != null) {
+                    hospital.setBedCount(((Number) bedCountObj).intValue());
+                }
+                if (description != null && !description.trim().isEmpty()) {
+                    hospital.setDescription(description.trim());
+                }
+
                 hospital.setStatus("PENDING"); // Needs approval
                 hospital.setVerified(true); // No email verification required
                 Hospital savedHospital = hospitalService.createHospital(hospital);
@@ -401,20 +435,35 @@ public class AuthController {
 
                 // Get trainer-specific fields from request
                 String trainerType = (String) registerRequest.get("trainerType");
-                Integer experienceYears = registerRequest.get("experienceYears") != null ?
-                    ((Number) registerRequest.get("experienceYears")).intValue() : 0;
+                Integer experienceYears = registerRequest.get("experienceYears") != null
+                        ? ((Number) registerRequest.get("experienceYears")).intValue()
+                        : 0;
                 String location = (String) registerRequest.get("location");
-                BigDecimal pricePerSession = registerRequest.get("pricePerSession") != null ?
-                    new BigDecimal(registerRequest.get("pricePerSession").toString()) : BigDecimal.ZERO;
+                BigDecimal pricePerSession = registerRequest.get("pricePerSession") != null
+                        ? new BigDecimal(registerRequest.get("pricePerSession").toString())
+                        : BigDecimal.ZERO;
                 String bio = (String) registerRequest.get("bio");
 
-                trainer.setTrainerType(trainerType != null ?
-                    Trainer.TrainerType.valueOf(trainerType.toUpperCase()) : Trainer.TrainerType.FITNESS);
+                trainer.setTrainerType(trainerType != null ? Trainer.TrainerType.valueOf(trainerType.toUpperCase())
+                        : Trainer.TrainerType.FITNESS);
                 trainer.setExperienceYears(experienceYears);
                 trainer.setLocation(location != null ? location.trim() : "");
                 trainer.setPricePerSession(pricePerSession);
                 trainer.setBio(bio != null ? bio.trim() : "");
                 trainer.setImage(""); // Default image, can be updated later
+
+                // Optional fields
+                @SuppressWarnings("unchecked")
+                java.util.List<String> specialties = (java.util.List<String>) registerRequest.get("specialties");
+                @SuppressWarnings("unchecked")
+                java.util.List<String> modes = (java.util.List<String>) registerRequest.get("modes");
+
+                if (specialties != null && !specialties.isEmpty()) {
+                    trainer.setSpecialties(specialties);
+                }
+                if (modes != null && !modes.isEmpty()) {
+                    trainer.setModes(modes);
+                }
 
                 trainer.setStatus("pending"); // Needs approval
                 trainer.setVerified(true); // No email verification required
@@ -430,7 +479,8 @@ public class AuthController {
 
         } catch (Exception e) {
             logger.error("Registration failed for email: {}", email, e);
-            return ResponseEntity.internalServerError().body(Map.of("message", "Registration failed. Please try again."));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("message", "Registration failed. Please try again."));
         }
     }
 
@@ -446,14 +496,15 @@ public class AuthController {
             String normalizedEmail = email.trim().toLowerCase();
             // Check if user exists
             boolean userExists = adminService.findByEmail(normalizedEmail).isPresent() ||
-                               patientService.findByEmail(normalizedEmail).isPresent() ||
-                               doctorService.getDoctorByEmail(normalizedEmail) != null ||
-                               hospitalService.getHospitalByEmail(normalizedEmail) != null ||
-                               trainerService.getTrainerByEmail(normalizedEmail).isPresent();
+                    patientService.findByEmail(normalizedEmail).isPresent() ||
+                    doctorService.getDoctorByEmail(normalizedEmail) != null ||
+                    hospitalService.getHospitalByEmail(normalizedEmail) != null ||
+                    trainerService.getTrainerByEmail(normalizedEmail).isPresent();
 
             if (!userExists) {
                 // Don't reveal if email exists or not for security
-                return ResponseEntity.ok(Map.of("message", "If an account with this email exists, a password reset link has been sent."));
+                return ResponseEntity.ok(Map.of("message",
+                        "If an account with this email exists, a password reset link has been sent."));
             }
 
             // Generate reset token
@@ -470,11 +521,13 @@ public class AuthController {
             emailService.sendPasswordResetEmail(normalizedEmail, resetLink);
 
             logger.info("Password reset email sent to: {}", email);
-            return ResponseEntity.ok(Map.of("message", "If an account with this email exists, a password reset link has been sent."));
+            return ResponseEntity.ok(
+                    Map.of("message", "If an account with this email exists, a password reset link has been sent."));
 
         } catch (Exception e) {
             logger.error("Error sending password reset email for: {}", email, e);
-            return ResponseEntity.internalServerError().body(Map.of("message", "Failed to send password reset email. Please try again."));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("message", "Failed to send password reset email. Please try again."));
         }
     }
 
@@ -493,7 +546,7 @@ public class AuthController {
 
         if (!PASSWORD_PATTERN.matcher(password).matches()) {
             return ResponseEntity.badRequest().body(Map.of("message",
-                "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@#$%^&+=!)"));
+                    "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@#$%^&+=!)"));
         }
 
         try {
@@ -555,7 +608,8 @@ public class AuthController {
 
         } catch (Exception e) {
             logger.error("Error resetting password with token: {}", token, e);
-            return ResponseEntity.internalServerError().body(Map.of("message", "Failed to reset password. Please try again."));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("message", "Failed to reset password. Please try again."));
         }
     }
 
@@ -602,17 +656,21 @@ public class AuthController {
         try {
             // TODO: Find verification token from repository
             // For now, since repository is not implemented, we'll simulate verification
-            // Optional<EmailVerificationToken> verificationTokenOpt = emailVerificationTokenRepository.findByToken(token);
+            // Optional<EmailVerificationToken> verificationTokenOpt =
+            // emailVerificationTokenRepository.findByToken(token);
             // if (!verificationTokenOpt.isPresent()) {
-            //     return ResponseEntity.badRequest().body(Map.of("message", "Invalid verification token"));
+            // return ResponseEntity.badRequest().body(Map.of("message", "Invalid
+            // verification token"));
             // }
 
             // EmailVerificationToken verificationToken = verificationTokenOpt.get();
 
             // Check if token is expired
-            // if (verificationToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
-            //     emailVerificationTokenRepository.delete(verificationToken);
-            //     return ResponseEntity.badRequest().body(Map.of("message", "Verification token has expired"));
+            // if
+            // (verificationToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
+            // emailVerificationTokenRepository.delete(verificationToken);
+            // return ResponseEntity.badRequest().body(Map.of("message", "Verification token
+            // has expired"));
             // }
 
             // String email = verificationToken.getEmail();
@@ -648,7 +706,7 @@ public class AuthController {
         }
         if (!PASSWORD_PATTERN.matcher(newPassword).matches()) {
             return ResponseEntity.badRequest().body(Map.of("message",
-                "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@#$%^&+=!)"));
+                    "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@#$%^&+=!)"));
         }
 
         try {
@@ -730,7 +788,8 @@ public class AuthController {
         } catch (Exception e) {
             logger.error("Error changing password for email: {}", email, e);
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body(Map.of("message", "Failed to change password. Please try again."));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("message", "Failed to change password. Please try again."));
         }
     }
 }

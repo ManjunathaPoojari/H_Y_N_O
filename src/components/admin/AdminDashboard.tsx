@@ -86,6 +86,11 @@ export const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Auto-refresh every 1 second
+    const intervalId = setInterval(fetchDashboardData, 1000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   if (loading) {
@@ -145,24 +150,28 @@ export const AdminDashboard = () => {
       value: stats.networkStats.hospitalsLive.toString(),
       helper: `${stats.networkStats.hospitalsPending} pending onboarding`,
       icon: Building2,
+      badge: stats.networkStats.hospitalsPending,
     },
     {
       label: 'Doctors verified',
       value: stats.networkStats.doctorsVerified.toString(),
       helper: `+${stats.networkStats.doctorsThisWeek} this week`,
       icon: Users,
+      badge: stats.networkStats.doctorsPending,
     },
     {
       label: 'Critical alerts',
       value: stats.networkStats.criticalAlerts.toString(),
       helper: 'Escalated to emergency',
       icon: AlertTriangle,
+      badge: stats.networkStats.criticalAlerts,
     },
     {
       label: 'Compliance score',
       value: `${stats.networkStats.complianceScore}%`,
       helper: 'ISO 27001, HIPAA',
       icon: ShieldCheck,
+      badge: 0,
     },
   ];
 
@@ -203,9 +212,16 @@ export const AdminDashboard = () => {
           <Card key={stat.label} className="border-slate-200 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-500">{stat.label}</CardTitle>
-              <span className="rounded-full bg-slate-100 p-2 text-slate-600">
-                <stat.icon className="h-4 w-4" />
-              </span>
+              <div className="flex flex-col items-end gap-2">
+                <span className="rounded-full bg-slate-100 p-2 text-slate-600">
+                  <stat.icon className="h-4 w-4" />
+                </span>
+                {stat.badge > 0 && (
+                  <Badge variant="destructive" className="text-xs">
+                    {stat.badge}
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-semibold text-slate-900">{stat.value}</p>

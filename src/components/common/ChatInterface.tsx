@@ -66,18 +66,13 @@ export const ChatInterface = ({ onNavigate }: ChatInterfaceProps) => {
   }, [user?.id]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const loadChatRoomsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isLoadingChatRooms = useRef<boolean>(false);
 
   // Get appointment ID from URL params
   const urlParams = new URLSearchParams(window.location.search);
   const appointmentIdFromUrl = urlParams.get('appointmentId');
-
-  // Reload chat rooms when URL changes (e.g., direct navigation to chat with appointmentId)
-  useEffect(() => {
-    if (user?.id && appointmentIdFromUrl) {
-      loadChatRooms();
-    }
-  }, [appointmentIdFromUrl, user?.id]);
 
   // Helper function to format timestamp safely
   const formatTimestamp = (timestamp?: string | Date | null): string => {
@@ -106,29 +101,50 @@ export const ChatInterface = ({ onNavigate }: ChatInterfaceProps) => {
     scrollToBottom();
   }, [messages, selectedChatRoomId]);
 
-  // Load data and chat rooms when component mounts
-  useEffect(() => {
-    const initializeChat = async () => {
-      if (refreshData) {
-        await refreshData(); // Wait for data to be refreshed
-      }
-      // Small delay to ensure state updates
-      setTimeout(() => {
-        loadChatRooms();
-      }, 100);
-    };
+  // Debounced loadChatRooms to prevent spam
+  const debouncedLoadChatRooms = useCallback(() => {
+    // Clear any pending load
+    if (loadChatRoomsTimeoutRef.current) {
+      clearTimeout(loadChatRoomsTimeoutRef.current);
+    }
 
+    // Prevent concurrent loads
+    if (isLoadingChatRooms.current) {
+      return;
+    }
+
+    // Debounce by 500ms
+    loadChatRoomsTimeoutRef.current = setTimeout(() => {
+      loadChatRooms();
+    }, 500);
+  }, [user?.id, user?.role]);
+
+  // Single unified effect for loading chat rooms
+  useEffect(() => {
     if (user?.id) {
+      const initializeChat = async () => {
+        if (refreshData) {
+          await refreshData();
+        }
+        // Load chat rooms with debounce
+        debouncedLoadChatRooms();
+      };
       initializeChat();
     }
-  }, [user?.id, appointmentIdFromUrl, refreshData]); // Include appointmentIdFromUrl to reload when URL changes
 
-  // Reload chat rooms when appointments or doctors change
+    return () => {
+      if (loadChatRoomsTimeoutRef.current) {
+        clearTimeout(loadChatRoomsTimeoutRef.current);
+      }
+    };
+  }, [user?.id, appointmentIdFromUrl]);
+
+  // Reload chat rooms when appointments or doctors change (but debounced)
   useEffect(() => {
     if (user?.id && appointments.length > 0 && doctors.length > 0) {
-      loadChatRooms();
+      debouncedLoadChatRooms();
     }
-  }, [appointments, doctors, user?.id, appointmentIdFromUrl]);
+  }, [appointments.length, doctors.length]);
 
   // WebSocket connection management
   useEffect(() => {
@@ -166,7 +182,9 @@ export const ChatInterface = ({ onNavigate }: ChatInterfaceProps) => {
 
   const loadChatRooms = async () => {
     try {
-      if (!user?.id) return;
+      if (!user?.id || isLoadingChatRooms.current) return;
+
+      isLoadingChatRooms.current = true;
 
       // Get user-specific appointments
       const userAppointments = user.role === 'patient'
@@ -294,6 +312,7 @@ export const ChatInterface = ({ onNavigate }: ChatInterfaceProps) => {
       toast.error('Failed to load chat rooms');
     } finally {
       setLoading(false);
+      isLoadingChatRooms.current = false;
     }
   };
 
@@ -527,9 +546,8 @@ export const ChatInterface = ({ onNavigate }: ChatInterfaceProps) => {
               chatRooms.map((room) => (
                 <div
                   key={room.id}
-                  className={`border rounded-lg p-3 cursor-pointer hover:bg-gray-50 ${
-                    selectedChatRoomId === room.id ? 'bg-blue-50 border-blue-200' : ''
-                  }`}
+                  className={`border rounded-lg p-3 cursor-pointer hover:bg-gray-50 ${selectedChatRoomId === room.id ? 'bg-blue-50 border-blue-200' : ''
+                    }`}
                   onClick={() => setSelectedChatRoomId(room.id)}
                 >
                   <div className="flex items-center gap-2 mb-1">
@@ -656,17 +674,15 @@ export const ChatInterface = ({ onNavigate }: ChatInterfaceProps) => {
                         <p className="text-xs text-gray-500 mb-1">{msg.sender}</p>
                       )}
                       <div
-                        className={`rounded-lg p-3 ${
-                          msg.senderRole === user?.role
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-900'
-                        }`}
+                        className={`rounded-lg p-3 ${msg.senderRole === user?.role
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-900'
+                          }`}
                       >
                         <p className="text-sm">{msg.message}</p>
                         <p
-                          className={`text-xs mt-1 ${
-                            msg.senderRole === user?.role ? 'text-blue-100' : 'text-gray-500'
-                          }`}
+                          className={`text-xs mt-1 ${msg.senderRole === user?.role ? 'text-blue-100' : 'text-gray-500'
+                            }`}
                         >
                           {msg.timestamp}
                         </p>

@@ -187,3 +187,36 @@
 html {
   font-size: var(--font-size);
 }
+
+/**
+ * Fix for button visibility - Tailwind base layer resets buttons to transparent background
+ * and inherit color. This restores proper utility class behavior for buttons.
+ */
+@layer utilities {
+  button[class*="bg-"] {
+    background-color: revert-layer;
+  }
+
+  button[class*="text-"] {
+    color: revert-layer;
+  }
+}
+
+/* Explicit data-slot button styling to ensure UI Button component works */
+[data-slot="button"] {
+  /* Override base layer reset to ensure buttons have proper defaults */
+  background-color: unset;
+  color: unset;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+/* Scale + color change hover effect */
+[data-slot="button"]:hover {
+  transform: scale(1.03);
+  filter: brightness(1.1);
+}
+
+[data-slot="button"]:active {
+  transform: scale(0.98);
+  filter: brightness(0.95);
+}

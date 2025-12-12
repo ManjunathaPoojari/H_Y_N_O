@@ -6,7 +6,6 @@ import { Progress } from '../ui/progress';
 import {
   ArrowRight,
   Calendar,
-  CheckCircle2,
   Clock,
   FileText,
   Stethoscope,
@@ -16,7 +15,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
 import api from '../../lib/api-client';
-import { format } from 'date-fns';
+import { motion } from 'framer-motion';
+import { AnimationWrapper, StaggerItem, HoverScale } from '../common/AnimationWrapper';
 
 export const DoctorDashboard = () => {
   const { user } = useAuth();
@@ -126,27 +126,40 @@ export const DoctorDashboard = () => {
         </p>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[
-          { title: 'Active patients', value: stats.activePatients.toString(), helper: 'Total assigned patients', icon: Users },
-          { title: 'Today’s visits', value: stats.todaysVisits.toString(), helper: 'Scheduled for today', icon: Calendar },
-          { title: 'Reports pending', value: stats.reportsPending.toString(), helper: 'Review before 5 PM', icon: FileText },
-          { title: 'Average wait', value: stats.averageWait, helper: '↓ 2 min vs last week', icon: Clock },
-        ].map((stat) => (
-          <Card key={stat.title} className="border-slate-200 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-500">{stat.title}</CardTitle>
-              <span className="rounded-full bg-slate-100 p-2 text-slate-600">
-                <stat.icon className="h-4 w-4" />
-              </span>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-semibold text-slate-900">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.helper}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </section>
+      <AnimationWrapper variant="stagger">
+        <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[
+            { title: 'Active patients', value: stats.activePatients.toString(), helper: 'Total assigned patients', icon: Users, badge: 0 },
+            { title: 'Today&apos;s visits', value: stats.todaysVisits.toString(), helper: 'Scheduled for today', icon: Calendar, badge: 0 },
+            { title: 'Reports pending', value: stats.reportsPending.toString(), helper: 'Review before 5 PM', icon: FileText, badge: stats.reportsPending },
+            { title: 'Average wait', value: stats.averageWait, helper: '↓ 2 min vs last week', icon: Clock, badge: 0 },
+          ].map((stat, index) => (
+            <StaggerItem key={stat.title}>
+              <HoverScale className="h-full">
+                <Card className="border-slate-200 shadow-sm transition-shadow hover:shadow-md h-full">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-500">{stat.title}</CardTitle>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className="rounded-full bg-slate-100 p-2 text-slate-600 transition-transform hover:rotate-12">
+                        <stat.icon className="h-4 w-4" />
+                      </span>
+                      {stat.badge > 0 && (
+                        <Badge variant="destructive" className="text-xs">
+                          {stat.badge}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-semibold text-slate-900">{stat.value}</p>
+                    <p className="text-xs text-muted-foreground">{stat.helper}</p>
+                  </CardContent>
+                </Card>
+              </HoverScale>
+            </StaggerItem>
+          ))}
+        </section>
+      </AnimationWrapper>
 
       <section className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2 border-slate-200 shadow-sm">

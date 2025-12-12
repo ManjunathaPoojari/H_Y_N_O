@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -13,32 +13,65 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
+import { useAuth } from '../../lib/auth-context';
+import { api } from '../../lib/api-client';
 
 interface HospitalDashboardProps {
   onNavigate: (path: string) => void;
 }
 
 export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate }) => {
-  const departments = [
-    { name: 'Cardiology', load: 78, state: 'Busy' },
-    { name: 'Neurology', load: 54, state: 'Stable' },
-    { name: 'Pediatrics', load: 61, state: 'Stable' },
-    { name: 'Orthopedics', load: 83, state: 'Busy' },
-    { name: 'Emergency', load: 92, state: 'Critical' },
-  ];
+  const { user } = useAuth();
+  const [stats, setStats] = useState({
+    bedOccupancy: 0,
+    doctors: 0,
+    nurses: 0,
+    patients: 0,
+    emergencyAlerts: 0,
+    totalBeds: 100 // Default or fetched
+  });
+  const [admissions, setAdmissions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const admissions = [
-    { name: 'James Wilson', dept: 'Cardiology', time: '10 min ago' },
-    { name: 'Linda Martinez', dept: 'Emergency', time: '25 min ago' },
-    { name: 'Robert Taylor', dept: 'Neurology', time: '1 hr ago' },
-    { name: 'Susan Anderson', dept: 'Pediatrics', time: '2 hr ago' },
-  ];
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!user?.id) return;
 
-  const infra = [
-    { label: 'ICU beds', used: 26, total: 30 },
-    { label: 'Ventilators', used: 14, total: 20 },
-    { label: 'Operating rooms', used: 6, total: 8 },
-  ];
+      try {
+        setLoading(true);
+        const [doctorsData, patientsData] = await Promise.all([
+          api.hospitals.getDoctors(user.id).catch(() => []),
+          api.hospitals.getPatients(user.id).catch(() => [])
+        ]);
+
+        setStats(prev => ({
+          ...prev,
+          doctors: doctorsData ? doctorsData.length : 0,
+          patients: patientsData ? patientsData.length : 0,
+          // Placeholder for nurses as we don't have an API for them yet
+          nurses: 0
+        }));
+
+        // Use patients data for recent admissions (mock logic: take last 5 added)
+        if (patientsData && Array.isArray(patientsData)) {
+          const recent = patientsData.slice(-5).map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            dept: 'General', // No dept data in patient object yet
+            time: 'Recently'
+          }));
+          setAdmissions(recent);
+        }
+
+      } catch (error) {
+        console.error("Failed to fetch hospital dashboard data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [user?.id]);
 
   return (
     <div className="space-y-8">
@@ -58,17 +91,24 @@ export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { title: 'Bed occupancy', value: '85%', helper: '142 / 167 beds', icon: Bed },
-          { title: 'Clinical staff on duty', value: '64', helper: '12 doctors • 52 nurses', icon: Stethoscope },
-          { title: 'Patients admitted', value: '1,893', helper: '+124 this week', icon: Users },
-          { title: 'Financial outlook', value: '+12.5%', helper: 'Month over month', icon: TrendingUp },
+          { title: 'Bed occupancy', value: `${stats.bedOccupancy}%`, helper: `${Math.round(stats.totalBeds * (stats.bedOccupancy / 100))} / ${stats.totalBeds} beds`, icon: Bed, badge: 0 },
+          { title: 'Clinical staff on duty', value: `${stats.doctors + stats.nurses}`, helper: `${stats.doctors} doctors • ${stats.nurses} nurses`, icon: Stethoscope, badge: 0 },
+          { title: 'Patients admitted', value: stats.patients.toString(), helper: 'Total active patients', icon: Users, badge: 0 },
+          { title: 'Emergency alerts', value: stats.emergencyAlerts.toString(), helper: 'Critical situations', icon: AlertCircle, badge: stats.emergencyAlerts },
         ].map((stat) => (
           <Card key={stat.title} className="border-slate-200 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-500">{stat.title}</CardTitle>
-              <span className="rounded-full bg-slate-100 p-2 text-slate-600">
-                <stat.icon className="h-4 w-4" />
-              </span>
+              <div className="flex flex-col items-end gap-2">
+                <span className="rounded-full bg-slate-100 p-2 text-slate-600">
+                  <stat.icon className="h-4 w-4" />
+                </span>
+                {stat.badge > 0 && (
+                  <Badge variant="destructive" className="text-xs">
+                    {stat.badge}
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-semibold text-slate-900">{stat.value}</p>
@@ -90,40 +130,21 @@ export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
-            {departments.map((dept) => (
-              <div key={dept.name} className="rounded-xl border border-slate-200 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-slate-900">{dept.name}</p>
-                    <p className="text-sm text-muted-foreground">{dept.load}% capacity</p>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={
-                      dept.state === 'Critical'
-                        ? 'border-red-200 text-red-600'
-                        : dept.state === 'Busy'
-                          ? 'border-amber-200 text-amber-600'
-                          : 'border-emerald-200 text-emerald-600'
-                    }
-                  >
-                    {dept.state}
-                  </Badge>
-                </div>
-                <Progress value={dept.load} className="mt-4 bg-slate-100" />
-              </div>
-            ))}
+            {/* Removed Demo Data */}
+            <div className="text-center py-8 text-slate-500">
+              No department data available.
+            </div>
           </CardContent>
         </Card>
 
         <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <CardTitle>Recent admissions</CardTitle>
-            <CardDescription>Last 2 hours</CardDescription>
+            <CardDescription>Latest patient activity</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {admissions.map((patient) => (
-              <div key={patient.name} className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3">
+            {admissions.length > 0 ? admissions.map((patient) => (
+              <div key={patient.id} className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3">
                 <span className="rounded-full bg-slate-100 px-3 py-2 text-sm font-medium text-slate-600">
                   {patient.name.charAt(0)}
                 </span>
@@ -133,7 +154,11 @@ export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate
                 </div>
                 <span className="text-xs text-slate-500">{patient.time}</span>
               </div>
-            ))}
+            )) : (
+              <div className="text-center py-4 text-slate-500">
+                No recent admissions.
+              </div>
+            )}
             <Button variant="outline" className="w-full" onClick={() => onNavigate('/hospital/patients')}>
               View all patients
             </Button>
@@ -148,27 +173,10 @@ export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate
             <CardDescription>Live vitals from critical units</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {[
-              { label: 'Resuscitation bays', status: 'Available', icon: Activity },
-              { label: 'Surge triage', status: 'High traffic', icon: Building2 },
-              { label: 'Helipad', status: 'Operational', icon: Landmark },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="rounded-full bg-slate-100 p-2 text-slate-600">
-                    <item.icon className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <p className="font-medium text-slate-900">{item.label}</p>
-                    <p className="text-sm text-muted-foreground">{item.status}</p>
-                  </div>
-                </div>
-                <Badge variant="outline">Live</Badge>
-              </div>
-            ))}
+            {/* Removed Demo Data */}
+            <div className="text-center py-8 text-slate-500">
+              System online. No active emergency status data.
+            </div>
             <Button variant="outline" className="w-full" onClick={() => onNavigate('/hospital/emergency')}>
               Open emergency board
             </Button>
@@ -181,20 +189,10 @@ export const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ onNavigate
             <CardDescription>Key life-support resources</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {infra.map((item) => {
-              const percent = Math.round((item.used / item.total) * 100);
-              return (
-                <div key={item.label} className="rounded-lg border border-slate-200 p-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <p className="font-medium text-slate-900">{item.label}</p>
-                    <span className="text-slate-500">
-                      {item.used}/{item.total}
-                    </span>
-                  </div>
-                  <Progress value={percent} className="mt-3 bg-slate-100" />
-                </div>
-              );
-            })}
+            {/* Removed Demo Data */}
+            <div className="text-center py-8 text-slate-500">
+              No infrastructure data available.
+            </div>
           </CardContent>
         </Card>
       </section>

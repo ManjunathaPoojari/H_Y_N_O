@@ -5,16 +5,18 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent } from './ui/card';
-import { Activity, Eye, EyeOff, User, Stethoscope, Building2, Dumbbell } from 'lucide-react';
+import { Activity, Eye, EyeOff, User, Stethoscope, Building2, Dumbbell, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { useAuth } from '../lib/auth-context';
 import { toast } from 'sonner';
 import { PasswordStrengthIndicator } from './ui/password-strength-indicator';
+import { MinimalistHealthBackground } from './common/MinimalistHealthBackground';
 
 interface RegisterPageProps {
   onNavigate: (path: string) => void;
 }
 
 const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,7 +25,7 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
     password: '',
     confirmPassword: '',
     role: 'PATIENT' as 'PATIENT' | 'DOCTOR' | 'HOSPITAL' | 'TRAINER',
-    // Patient
+    // Patient fields
     age: '',
     gender: '',
     bloodGroup: '',
@@ -31,36 +33,43 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
     address: '',
     emergencyContact: '',
     emergencyCountryCode: '+1',
-    // Doctor
+    allergies: '',
+    medicalHistory: '',
+    currentMedications: '',
+    // Doctor fields
     specialization: '',
     qualification: '',
     experience: '',
     hospitalId: '',
-    // Hospital
+    consultationFee: '',
+    // Hospital fields
     hospitalAddress: '',
     city: '',
     state: '',
     pincode: '',
     registrationNumber: '',
-    facilities: [] as string[],
-    // Trainer
+    establishedYear: '',
+    bedCount: '',
+    description: '',
+    // Trainer fields
     trainerType: '',
-    specialties: [] as string[],
     experienceYears: '',
     location: '',
-    modes: [] as string[],
-    qualifications: [] as string[],
-    languages: [] as string[],
     pricePerSession: '',
     bio: '',
+    specialties: '',
+    modes: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isNextHovered, setIsNextHovered] = useState(false);
 
   const { register } = useAuth();
+
+  const totalSteps = 4;
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -72,78 +81,73 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
     }
   };
 
-  const validateForm = () => {
+  const validateStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Common fields
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
-      newErrors.email = 'Please enter a valid email address';
-
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-
-    if (!formData.password) newErrors.password = 'Password is required';
-    else if (formData.password.length < 8)
-      newErrors.password = 'Password must be at least 8 characters long';
-    else if (
-      !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(
-        formData.password
-      )
-    )
-      newErrors.password =
-        'Password must contain uppercase, lowercase, number, and special character';
-
-    if (!formData.confirmPassword)
-      newErrors.confirmPassword = 'Please confirm your password';
-    else if (formData.password !== formData.confirmPassword)
-      newErrors.confirmPassword = 'Passwords do not match';
-
-    // Role-specific validation
-    if (formData.role === 'PATIENT') {
-      if (!formData.age) newErrors.age = 'Age is required';
-      if (!formData.gender) newErrors.gender = 'Gender is required';
-      if (!formData.bloodGroup) newErrors.bloodGroup = 'Blood group is required';
-      if (!formData.dateOfBirth)
-        newErrors.dateOfBirth = 'Date of birth is required';
-      if (!formData.address) newErrors.address = 'Address is required';
-      if (!formData.emergencyContact)
-        newErrors.emergencyContact = 'Emergency contact is required';
+    if (step === 2) {
+      if (!formData.name.trim()) newErrors.name = 'Name is required';
+      if (!formData.email.trim()) newErrors.email = 'Email is required';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
+        newErrors.email = 'Invalid email';
+      if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
     }
 
-    if (formData.role === 'DOCTOR') {
-      if (!formData.specialization)
-        newErrors.specialization = 'Specialization is required';
-      if (!formData.qualification)
-        newErrors.qualification = 'Qualification is required';
-      if (!formData.experience)
-        newErrors.experience = 'Experience is required';
+    if (step === 3) {
+      if (formData.role === 'PATIENT') {
+        if (!formData.age) newErrors.age = 'Required';
+        if (!formData.gender) newErrors.gender = 'Required';
+        if (!formData.bloodGroup) newErrors.bloodGroup = 'Required';
+        if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Required';
+        if (!formData.address) newErrors.address = 'Required';
+        if (!formData.emergencyContact) newErrors.emergencyContact = 'Required';
+      }
+      if (formData.role === 'DOCTOR') {
+        if (!formData.specialization) newErrors.specialization = 'Required';
+        if (!formData.qualification) newErrors.qualification = 'Required';
+        if (!formData.experience) newErrors.experience = 'Required';
+      }
+      if (formData.role === 'HOSPITAL') {
+        if (!formData.hospitalAddress) newErrors.hospitalAddress = 'Required';
+        if (!formData.city) newErrors.city = 'Required';
+        if (!formData.state) newErrors.state = 'Required';
+        if (!formData.pincode) newErrors.pincode = 'Required';
+        if (!formData.registrationNumber) newErrors.registrationNumber = 'Required';
+      }
+      if (formData.role === 'TRAINER') {
+        if (!formData.trainerType) newErrors.trainerType = 'Required';
+        if (!formData.experienceYears) newErrors.experienceYears = 'Required';
+        if (!formData.location) newErrors.location = 'Required';
+        if (!formData.pricePerSession) newErrors.pricePerSession = 'Required';
+      }
     }
 
-    if (formData.role === 'HOSPITAL') {
-      if (!formData.hospitalAddress)
-        newErrors.hospitalAddress = 'Address is required';
-      if (!formData.city) newErrors.city = 'City is required';
-      if (!formData.state) newErrors.state = 'State is required';
-      if (!formData.pincode) newErrors.pincode = 'Pincode is required';
-      if (!formData.registrationNumber)
-        newErrors.registrationNumber = 'Registration number is required';
-    }
-
-    if (formData.role === 'TRAINER') {
-      if (!formData.trainerType) newErrors.trainerType = 'Trainer type is required';
-      if (!formData.experienceYears) newErrors.experienceYears = 'Experience years is required';
-      if (!formData.location) newErrors.location = 'Location is required';
-      if (!formData.pricePerSession) newErrors.pricePerSession = 'Price per session is required';
+    if (step === 4) {
+      if (!formData.password) newErrors.password = 'Password is required';
+      else if (formData.password.length < 8) newErrors.password = 'Min 8 characters';
+      else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(formData.password))
+        newErrors.password = 'Must contain uppercase, lowercase, number & special char';
+      if (!formData.confirmPassword) newErrors.confirmPassword = 'Confirm password';
+      else if (formData.password !== formData.confirmPassword)
+        newErrors.confirmPassword = 'Passwords do not match';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateStep(4)) return;
 
     setIsLoading(true);
     try {
@@ -156,711 +160,491 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
         role: formData.role,
       };
 
-      // Add role-specific data
       if (formData.role === 'PATIENT') {
         registerData.age = formData.age;
         registerData.gender = formData.gender;
         registerData.bloodGroup = formData.bloodGroup;
         registerData.dateOfBirth = formData.dateOfBirth;
         registerData.address = formData.address.trim();
-        const fullEmergencyContact = `${formData.emergencyCountryCode}${formData.emergencyContact.trim()}`;
-        registerData.emergencyContact = fullEmergencyContact;
+        registerData.emergencyContact = `${formData.emergencyCountryCode}${formData.emergencyContact.trim()}`;
+        // Optional fields
+        if (formData.allergies?.trim()) registerData.allergies = formData.allergies.split(',').map((a: string) => a.trim()).filter(Boolean);
+        if (formData.medicalHistory?.trim()) registerData.medicalHistory = formData.medicalHistory.split(',').map((m: string) => m.trim()).filter(Boolean);
+        if (formData.currentMedications?.trim()) registerData.currentMedications = formData.currentMedications.split(',').map((m: string) => m.trim()).filter(Boolean);
       } else if (formData.role === 'DOCTOR') {
         registerData.specialization = formData.specialization.trim();
         registerData.qualification = formData.qualification.trim();
         registerData.experience = formData.experience;
-        if (formData.hospitalId && formData.hospitalId.trim()) {
-          registerData.hospitalId = formData.hospitalId.trim();
-        }
+        if (formData.hospitalId?.trim()) registerData.hospitalId = formData.hospitalId.trim();
+        if (formData.consultationFee?.trim()) registerData.consultationFee = formData.consultationFee;
       } else if (formData.role === 'HOSPITAL') {
         registerData.hospitalAddress = formData.hospitalAddress.trim();
         registerData.city = formData.city.trim();
         registerData.state = formData.state.trim();
         registerData.pincode = formData.pincode.trim();
         registerData.registrationNumber = formData.registrationNumber.trim();
+        // Optional fields
+        if (formData.establishedYear?.trim()) registerData.establishedYear = parseInt(formData.establishedYear);
+        if (formData.bedCount?.trim()) registerData.bedCount = parseInt(formData.bedCount);
+        if (formData.description?.trim()) registerData.description = formData.description.trim();
       } else if (formData.role === 'TRAINER') {
         registerData.trainerType = formData.trainerType;
         registerData.experienceYears = parseInt(formData.experienceYears);
         registerData.location = formData.location.trim();
         registerData.pricePerSession = parseFloat(formData.pricePerSession);
         registerData.bio = formData.bio?.trim() || '';
+        // Optional fields
+        if (formData.specialties?.trim()) registerData.specialties = formData.specialties.split(',').map((s: string) => s.trim()).filter(Boolean);
+        if (formData.modes?.trim()) registerData.modes = formData.modes.split(',').map((m: string) => m.trim()).filter(Boolean);
       }
 
       const result = await register(registerData);
 
       if (result.success) {
-        toast.success(
-          'Account created successfully! Please check your email to verify your account before logging in.'
-        );
+        toast.success('Account created! Please check your email to verify.');
         onNavigate('/');
       } else {
-        toast.error(result.error || 'Registration failed. Please try again.');
+        toast.error(result.error || 'Registration failed.');
       }
-    } catch (error) {
-      toast.error('Registration failed. Please try again.');
+    } catch {
+      toast.error('Registration failed.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const renderStepIndicator = () => (
+    <div className="flex items-center justify-center mb-6">
+      {[1, 2, 3, 4].map((step) => (
+        <div key={step} className="flex items-center">
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 14,
+              fontWeight: 700,
+              opacity: 1,
+              backgroundColor: currentStep >= step ? '#059669' : '#e5e7eb',
+              color: currentStep >= step ? '#ffffff' : '#4b5563',
+            }}
+          >
+            {currentStep > step ? <Check className="h-4 w-4" /> : step}
+          </div>
+          {step < 4 && (
+            <div
+              style={{
+                width: 32,
+                height: 4,
+                marginLeft: 4,
+                marginRight: 4,
+                backgroundColor: currentStep > step ? '#059669' : '#e5e7eb',
+              }}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+
+
+
+  const renderStep1 = () => (
+    <div className="space-y-4">
+      <p className="text-center text-sm text-gray-600 mb-4">Select your role</p>
+      <div className="grid grid-cols-2 gap-2">
+        {(['PATIENT', 'DOCTOR', 'HOSPITAL', 'TRAINER'] as const).map((role) => (
+          <button
+            key={role}
+            type="button"
+            onClick={() => setFormData((prev) => ({ ...prev, role }))}
+            className={`p-3 rounded-lg border transition-all ${formData.role === role
+              ? 'border-emerald-500 bg-emerald-50'
+              : 'border-gray-200 hover:border-emerald-300'
+              }`}
+          >
+            <div className="flex flex-col items-center gap-1.5">
+              <div className={`p-2 rounded-lg ${formData.role === role ? 'bg-emerald-100' : 'bg-gray-50'}`}>
+                {role === 'PATIENT' && <User className={`h-4 w-4 ${formData.role === role ? 'text-emerald-600' : 'text-gray-400'}`} />}
+                {role === 'DOCTOR' && <Stethoscope className={`h-4 w-4 ${formData.role === role ? 'text-emerald-600' : 'text-gray-400'}`} />}
+                {role === 'HOSPITAL' && <Building2 className={`h-4 w-4 ${formData.role === role ? 'text-emerald-600' : 'text-gray-400'}`} />}
+                {role === 'TRAINER' && <Dumbbell className={`h-4 w-4 ${formData.role === role ? 'text-emerald-600' : 'text-gray-400'}`} />}
+              </div>
+              <span className={`text-xs font-medium ${formData.role === role ? 'text-emerald-700' : 'text-gray-600'}`}>
+                {role.charAt(0) + role.slice(1).toLowerCase()}
+              </span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderStep2 = () => (
+    <div className="space-y-3">
+      <div>
+        <Label className="text-xs">Full Name</Label>
+        <Input name="name" value={formData.name} onChange={handleInputChange} placeholder="John Doe" className={`h-9 text-sm ${errors.name ? 'border-red-400' : ''}`} />
+        {errors.name && <p className="text-xs text-red-500 mt-0.5">{errors.name}</p>}
+      </div>
+      <div>
+        <Label className="text-xs">Email</Label>
+        <Input name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="john@example.com" className={`h-9 text-sm ${errors.email ? 'border-red-400' : ''}`} />
+        {errors.email && <p className="text-xs text-red-500 mt-0.5">{errors.email}</p>}
+      </div>
+      <div>
+        <Label className="text-xs">Phone</Label>
+        <div className="flex gap-1.5">
+          <select name="countryCode" value={formData.countryCode} onChange={handleInputChange} className="w-16 h-9 text-xs border border-gray-200 rounded-lg bg-white">
+            <option value="+1">+1</option>
+            <option value="+91">+91</option>
+            <option value="+44">+44</option>
+          </select>
+          <Input name="phone" type="tel" value={formData.phone} onChange={handleInputChange} placeholder="555-1234" className={`flex-1 h-9 text-sm ${errors.phone ? 'border-red-400' : ''}`} />
+        </div>
+        {errors.phone && <p className="text-xs text-red-500 mt-0.5">{errors.phone}</p>}
+      </div>
+    </div>
+  );
+
+  const renderStep3 = () => (
+    <div className="space-y-3">
+      {formData.role === 'PATIENT' && (
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Age</Label>
+              <Input name="age" type="number" value={formData.age} onChange={handleInputChange} placeholder="25" className={`h-9 text-sm ${errors.age ? 'border-red-400' : ''}`} />
+            </div>
+            <div>
+              <Label className="text-xs">Gender</Label>
+              <select name="gender" value={formData.gender} onChange={handleInputChange} className={`w-full h-9 text-sm border rounded-lg bg-white ${errors.gender ? 'border-red-400' : 'border-gray-200'}`}>
+                <option value="">Select</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Blood Group</Label>
+              <select name="bloodGroup" value={formData.bloodGroup} onChange={handleInputChange} className={`w-full h-9 text-sm border rounded-lg bg-white ${errors.bloodGroup ? 'border-red-400' : 'border-gray-200'}`}>
+                <option value="">Select</option>
+                {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((bg) => <option key={bg} value={bg}>{bg}</option>)}
+              </select>
+            </div>
+            <div>
+              <Label className="text-xs">Date of Birth</Label>
+              <Input name="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={handleInputChange} className={`h-9 text-sm ${errors.dateOfBirth ? 'border-red-400' : ''}`} />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Address</Label>
+            <Input name="address" value={formData.address} onChange={handleInputChange} placeholder="123 Main St" className={`h-9 text-sm ${errors.address ? 'border-red-400' : ''}`} />
+          </div>
+          <div>
+            <Label className="text-xs">Emergency Contact</Label>
+            <div className="flex gap-1.5">
+              <select name="emergencyCountryCode" value={formData.emergencyCountryCode} onChange={handleInputChange} className="w-16 h-9 text-xs border border-gray-200 rounded-lg bg-white">
+                <option value="+1">+1</option>
+                <option value="+91">+91</option>
+              </select>
+              <Input name="emergencyContact" type="tel" value={formData.emergencyContact} onChange={handleInputChange} className={`flex-1 h-9 text-sm ${errors.emergencyContact ? 'border-red-400' : ''}`} />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500">Allergies (Optional, comma separated)</Label>
+            <Input name="allergies" value={formData.allergies} onChange={handleInputChange} placeholder="Peanuts, Penicillin" className="h-9 text-sm" />
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500">Medical History (Optional, comma separated)</Label>
+            <Input name="medicalHistory" value={formData.medicalHistory} onChange={handleInputChange} placeholder="Diabetes, Hypertension" className="h-9 text-sm" />
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500">Current Medications (Optional, comma separated)</Label>
+            <Input name="currentMedications" value={formData.currentMedications} onChange={handleInputChange} placeholder="Metformin, Aspirin" className="h-9 text-sm" />
+          </div>
+        </>
+      )}
+
+      {formData.role === 'DOCTOR' && (
+        <>
+          <div>
+            <Label className="text-xs">Specialization</Label>
+            <Input name="specialization" value={formData.specialization} onChange={handleInputChange} placeholder="Cardiology" className={`h-9 text-sm ${errors.specialization ? 'border-red-400' : ''}`} />
+          </div>
+          <div>
+            <Label className="text-xs">Qualification</Label>
+            <Input name="qualification" value={formData.qualification} onChange={handleInputChange} placeholder="MD, MBBS" className={`h-9 text-sm ${errors.qualification ? 'border-red-400' : ''}`} />
+          </div>
+          <div>
+            <Label className="text-xs">Experience (years)</Label>
+            <Input name="experience" type="number" value={formData.experience} onChange={handleInputChange} placeholder="5" className={`h-9 text-sm ${errors.experience ? 'border-red-400' : ''}`} />
+          </div>
+          <div>
+            <Label className="text-xs">Hospital ID (Optional)</Label>
+            <Input name="hospitalId" value={formData.hospitalId} onChange={handleInputChange} placeholder="H001" className="h-9 text-sm" />
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500">Consultation Fee (Optional)</Label>
+            <Input name="consultationFee" type="number" value={formData.consultationFee} onChange={handleInputChange} placeholder="500" className="h-9 text-sm" />
+          </div>
+        </>
+      )}
+
+      {formData.role === 'HOSPITAL' && (
+        <>
+          <div>
+            <Label className="text-xs">Address</Label>
+            <Input name="hospitalAddress" value={formData.hospitalAddress} onChange={handleInputChange} className={`h-9 text-sm ${errors.hospitalAddress ? 'border-red-400' : ''}`} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">City</Label>
+              <Input name="city" value={formData.city} onChange={handleInputChange} className={`h-9 text-sm ${errors.city ? 'border-red-400' : ''}`} />
+            </div>
+            <div>
+              <Label className="text-xs">State</Label>
+              <Input name="state" value={formData.state} onChange={handleInputChange} className={`h-9 text-sm ${errors.state ? 'border-red-400' : ''}`} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Pincode</Label>
+              <Input name="pincode" value={formData.pincode} onChange={handleInputChange} className={`h-9 text-sm ${errors.pincode ? 'border-red-400' : ''}`} />
+            </div>
+            <div>
+              <Label className="text-xs">Reg. No.</Label>
+              <Input name="registrationNumber" value={formData.registrationNumber} onChange={handleInputChange} className={`h-9 text-sm ${errors.registrationNumber ? 'border-red-400' : ''}`} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs text-gray-500">Est. Year (Optional)</Label>
+              <Input name="establishedYear" type="number" value={formData.establishedYear} onChange={handleInputChange} placeholder="1990" className="h-9 text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500">Bed Count (Optional)</Label>
+              <Input name="bedCount" type="number" value={formData.bedCount} onChange={handleInputChange} placeholder="100" className="h-9 text-sm" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500">Description (Optional)</Label>
+            <textarea name="description" value={formData.description} onChange={handleInputChange} className="w-full h-16 px-3 py-2 text-sm border border-gray-200 rounded-lg resize-none" placeholder="About your hospital..." />
+          </div>
+        </>
+      )}
+
+      {formData.role === 'TRAINER' && (
+        <>
+          <div>
+            <Label className="text-xs">Trainer Type</Label>
+            <div className="grid grid-cols-2 gap-2 mt-1">
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, trainerType: 'FITNESS' }))}
+                className={`p-3 rounded-lg border transition-all flex items-center justify-center gap-2 ${formData.trainerType === 'FITNESS'
+                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                  : 'border-gray-200 hover:border-emerald-300 text-gray-600'
+                  } ${errors.trainerType ? 'border-red-400' : ''}`}
+              >
+                <Dumbbell className={`h-4 w-4 ${formData.trainerType === 'FITNESS' ? 'text-emerald-600' : 'text-gray-400'}`} />
+                <span className="text-sm font-medium">Fitness</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, trainerType: 'YOGA' }))}
+                className={`p-3 rounded-lg border transition-all flex items-center justify-center gap-2 ${formData.trainerType === 'YOGA'
+                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                  : 'border-gray-200 hover:border-emerald-300 text-gray-600'
+                  } ${errors.trainerType ? 'border-red-400' : ''}`}
+              >
+                <svg className={`h-4 w-4 ${formData.trainerType === 'YOGA' ? 'text-emerald-600' : 'text-gray-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="5" r="2" />
+                  <path d="M12 7v4m0 4v2m-4-2l4-4 4 4M4 19h16" />
+                </svg>
+                <span className="text-sm font-medium">Yoga</span>
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Experience</Label>
+              <Input name="experienceYears" type="number" value={formData.experienceYears} onChange={handleInputChange} placeholder="5" className={`h-9 text-sm ${errors.experienceYears ? 'border-red-400' : ''}`} />
+            </div>
+            <div>
+              <Label className="text-xs">Price/Session</Label>
+              <Input name="pricePerSession" type="number" value={formData.pricePerSession} onChange={handleInputChange} placeholder="50" className={`h-9 text-sm ${errors.pricePerSession ? 'border-red-400' : ''}`} />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Location</Label>
+            <Input name="location" value={formData.location} onChange={handleInputChange} className={`h-9 text-sm ${errors.location ? 'border-red-400' : ''}`} />
+          </div>
+          <div>
+            <Label className="text-xs">Bio (Optional)</Label>
+            <textarea name="bio" value={formData.bio} onChange={handleInputChange} className="w-full h-16 px-3 py-2 text-sm border border-gray-200 rounded-lg resize-none" />
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500">Specialties (Optional, comma separated)</Label>
+            <Input name="specialties" value={formData.specialties} onChange={handleInputChange} placeholder="Weight Loss, Strength Training" className="h-9 text-sm" />
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500">Training Modes (Optional, comma separated)</Label>
+            <Input name="modes" value={formData.modes} onChange={handleInputChange} placeholder="virtual, in-person" className="h-9 text-sm" />
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  const renderStep4 = () => (
+    <div className="space-y-3">
+      <div>
+        <Label className="text-xs">Password</Label>
+        <div className="relative">
+          <Input
+            name="password"
+            type={showPassword ? 'text' : 'password'}
+            value={formData.password}
+            onChange={handleInputChange}
+            placeholder="••••••••"
+            className={`h-9 text-sm pr-9 ${errors.password ? 'border-red-400' : ''}`}
+          />
+          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-2">
+            {showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+          </button>
+        </div>
+        <PasswordStrengthIndicator password={formData.password} />
+        {errors.password && <p className="text-xs text-red-500 mt-0.5">{errors.password}</p>}
+      </div>
+
+      <div>
+        <Label className="text-xs">Confirm Password</Label>
+        <div className="relative">
+          <Input
+            name="confirmPassword"
+            type={showConfirmPassword ? 'text' : 'password'}
+            value={formData.confirmPassword}
+            onChange={handleInputChange}
+            placeholder="••••••••"
+            className={`h-9 text-sm pr-9 ${errors.confirmPassword ? 'border-red-400' : ''}`}
+          />
+          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-2">
+            {showConfirmPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+          </button>
+        </div>
+        {errors.confirmPassword && <p className="text-xs text-red-500 mt-0.5">{errors.confirmPassword}</p>}
+      </div>
+
+      <div className="bg-gray-50 rounded-lg p-3 mt-2">
+        <p className="text-xs font-medium text-gray-700 mb-2">Password must have:</p>
+        <div className="grid grid-cols-2 gap-1 text-xs text-gray-500">
+          <span className={formData.password.length >= 8 ? 'text-emerald-600' : ''}>✓ 8+ characters</span>
+          <span className={/[A-Z]/.test(formData.password) ? 'text-emerald-600' : ''}>✓ Uppercase</span>
+          <span className={/[a-z]/.test(formData.password) ? 'text-emerald-600' : ''}>✓ Lowercase</span>
+          <span className={/\d/.test(formData.password) ? 'text-emerald-600' : ''}>✓ Number</span>
+          <span className={/[@$!%*?&]/.test(formData.password) ? 'text-emerald-600' : ''}>✓ Special char</span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 p-4">
-      <Card className="w-full max-w-md shadow-xl border border-gray-100 rounded-3xl bg-white/90 backdrop-blur-sm">
-        <CardContent className="p-8 space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative">
+      <MinimalistHealthBackground />
+      <Card className="w-full max-w-md shadow-lg border border-gray-200/50 rounded-xl bg-white/90 backdrop-blur-md relative z-10">
+        <CardContent className="p-6">
           {/* Header */}
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => onNavigate('/')}
-              className="flex items-center justify-center gap-2 mb-4 hover:scale-105 transition-all duration-200 mx-auto"
-            >
-              <Activity className="h-8 w-8 text-emerald-600" />
-              <span className="text-2xl text-emerald-600 font-bold">HYNO</span>
+          <div className="text-center mb-5">
+            <button type="button" onClick={() => onNavigate('/')} className="flex items-center justify-center gap-1.5 mx-auto mb-3">
+              <Activity className="h-6 w-6 text-emerald-600" />
+              <span className="text-xl text-emerald-600 font-bold">HYNO</span>
             </button>
-            <h1 className="text-3xl font-bold text-gray-800">Create Account</h1>
-            <p className="text-gray-500 text-sm mt-2">
-              Trusted Healthcare • 24/7 Support
-            </p>
+            <h1 className="text-2xl font-bold text-gray-800">Create Account</h1>
+            <p className="text-sm text-gray-500 mt-1">Step {currentStep} of {totalSteps}</p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleRegister} className="space-y-4">
-            {/* Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Enter your full name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className={errors.name ? 'border-red-500' : ''}
-                required
-              />
-              {errors.name && (
-                <p className="text-sm text-red-500">{errors.name}</p>
-              )}
-            </div>
+          {renderStepIndicator()}
 
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="your@email.com"
-                value={formData.email}
-                onChange={handleInputChange}
-                className={errors.email ? 'border-red-500' : ''}
-                required
-              />
-              {errors.email && (
-                <p className="text-sm text-red-500">{errors.email}</p>
-              )}
-            </div>
+          <form onSubmit={handleRegister}>
+            {currentStep === 1 && renderStep1()}
+            {currentStep === 2 && renderStep2()}
+            {currentStep === 3 && renderStep3()}
+            {currentStep === 4 && renderStep4()}
 
-            {/* Phone */}
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <div className="flex gap-2">
-                <select
-                  id="countryCode"
-                  name="countryCode"
-                  value={formData.countryCode}
-                  onChange={handleInputChange}
-                  className="w-24 h-10 px-2 py-2 border border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 bg-white"
-                >
-                  <option value="+1">+1</option>
-                  <option value="+91">+91</option>
-                  <option value="+44">+44</option>
-                  <option value="+61">+61</option>
-                  <option value="+81">+81</option>
-                  <option value="+86">+86</option>
-                  <option value="+49">+49</option>
-                  <option value="+33">+33</option>
-                  <option value="+39">+39</option>
-                  <option value="+7">+7</option>
-                </select>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="(555) 123-4567"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className={`flex-1 ${errors.phone ? 'border-red-500' : ''}`}
-                  required
-                />
-              </div>
-              {errors.phone && (
-                <p className="text-sm text-red-500">{errors.phone}</p>
-              )}
-            </div>
-
-            {/* Role Selection */}
-            <div className="space-y-3">
-              <Label className="text-base font-semibold text-gray-800">I am a</Label>
-              <div className="grid grid-cols-2 gap-3">
-                {(['PATIENT', 'DOCTOR', 'HOSPITAL', 'TRAINER'] as const).map((role) => (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({ ...prev, role }))
-                    }
-                    className={`group relative p-5 rounded-lg border-2 transition-all duration-300 ${formData.role === role
-                      ? 'border-emerald-500 bg-emerald-50 shadow-md'
-                      : 'border-gray-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30'
-                      }`}
-                  >
-                    <div className="flex flex-col items-center justify-center space-y-2.5">
-                      <div className={`p-2.5 rounded-lg transition-colors ${formData.role === role
-                        ? 'bg-emerald-100'
-                        : 'bg-gray-50 group-hover:bg-emerald-50'
-                        }`}>
-                        {role === 'PATIENT' ? (
-                          <User className={`h-5 w-5 ${formData.role === role ? 'text-emerald-600' : 'text-gray-500'
-                            }`} />
-                        ) : role === 'DOCTOR' ? (
-                          <Stethoscope className={`h-5 w-5 ${formData.role === role ? 'text-emerald-600' : 'text-gray-500'
-                            }`} />
-                        ) : role === 'HOSPITAL' ? (
-                          <Building2 className={`h-5 w-5 ${formData.role === role ? 'text-emerald-600' : 'text-gray-500'
-                            }`} />
-                        ) : (
-                          <Dumbbell className={`h-5 w-5 ${formData.role === role ? 'text-emerald-600' : 'text-gray-500'
-                            }`} />
-                        )}
-                      </div>
-                      <div className={`text-sm font-semibold ${formData.role === role
-                        ? 'text-emerald-700'
-                        : 'text-gray-700 group-hover:text-emerald-700'
-                        }`}>
-                        {role === 'PATIENT'
-                          ? 'Patient'
-                          : role === 'DOCTOR'
-                            ? 'Doctor'
-                            : role === 'HOSPITAL'
-                              ? 'Hospital'
-                              : 'Trainer'}
-                      </div>
-                    </div>
-                    {formData.role === role && (
-                      <div className="absolute top-2 right-2">
-                        <div className="h-2 w-2 bg-emerald-500 rounded-full"></div>
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Patient Fields */}
-            {formData.role === 'PATIENT' && (
-              <>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="age">Age</Label>
-                    <Input
-                      id="age"
-                      name="age"
-                      type="number"
-                      placeholder="25"
-                      value={formData.age}
-                      onChange={handleInputChange}
-                      className={errors.age ? 'border-red-500' : ''}
-                    />
-                    {errors.age && (
-                      <p className="text-sm text-red-500">{errors.age}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="gender">Gender</Label>
-                    <select
-                      id="gender"
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleInputChange}
-                      className="w-full h-10 px-3 py-2 border border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 bg-white"
-                    >
-                      <option value="">Select</option>
-                      <option value="MALE">Male</option>
-                      <option value="FEMALE">Female</option>
-                      <option value="OTHER">Other</option>
-                    </select>
-                    {errors.gender && (
-                      <p className="text-sm text-red-500">{errors.gender}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bloodGroup">Blood Group</Label>
-                  <select
-                    id="bloodGroup"
-                    name="bloodGroup"
-                    value={formData.bloodGroup}
-                    onChange={handleInputChange}
-                    className="w-full h-10 px-3 py-2 border border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 bg-white"
-                  >
-                    <option value="">Select</option>
-                    {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(
-                      (bg) => (
-                        <option key={bg} value={bg}>
-                          {bg}
-                        </option>
-                      )
-                    )}
-                  </select>
-                  {errors.bloodGroup && (
-                    <p className="text-sm text-red-500">
-                      {errors.bloodGroup}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Input
-                    id="dateOfBirth"
-                    name="dateOfBirth"
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={handleInputChange}
-                    className={errors.dateOfBirth ? 'border-red-500' : ''}
-                  />
-                  {errors.dateOfBirth && (
-                    <p className="text-sm text-red-500">
-                      {errors.dateOfBirth}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    name="address"
-                    type="text"
-                    placeholder="123 Main St"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    className={errors.address ? 'border-red-500' : ''}
-                  />
-                  {errors.address && (
-                    <p className="text-sm text-red-500">{errors.address}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="emergencyContact">Emergency Contact</Label>
-                  <div className="flex gap-2">
-                    <select
-                      id="emergencyCountryCode"
-                      name="emergencyCountryCode"
-                      value={formData.emergencyCountryCode}
-                      onChange={handleInputChange}
-                      className="w-24 h-10 px-2 py-2 border border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 bg-white"
-                    >
-                      <option value="+1">+1</option>
-                      <option value="+91">+91</option>
-                      <option value="+44">+44</option>
-                      <option value="+61">+61</option>
-                      <option value="+81">+81</option>
-                      <option value="+86">+86</option>
-                      <option value="+49">+49</option>
-                      <option value="+33">+33</option>
-                      <option value="+39">+39</option>
-                      <option value="+7">+7</option>
-                    </select>
-                    <Input
-                      id="emergencyContact"
-                      name="emergencyContact"
-                      type="tel"
-                      placeholder="(555) 123-4567"
-                      value={formData.emergencyContact}
-                      onChange={handleInputChange}
-                      className={`flex-1 ${errors.emergencyContact ? 'border-red-500' : ''
-                        }`}
-                    />
-                  </div>
-                  {errors.emergencyContact && (
-                    <p className="text-sm text-red-500">
-                      {errors.emergencyContact}
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Doctor Fields */}
-            {formData.role === 'DOCTOR' && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="specialization">Specialization</Label>
-                  <Input
-                    id="specialization"
-                    name="specialization"
-                    type="text"
-                    placeholder="e.g., Cardiology"
-                    value={formData.specialization}
-                    onChange={handleInputChange}
-                    className={errors.specialization ? 'border-red-500' : ''}
-                  />
-                  {errors.specialization && (
-                    <p className="text-sm text-red-500">
-                      {errors.specialization}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="qualification">Qualification</Label>
-                  <Input
-                    id="qualification"
-                    name="qualification"
-                    type="text"
-                    placeholder="e.g., MD, MBBS"
-                    value={formData.qualification}
-                    onChange={handleInputChange}
-                    className={errors.qualification ? 'border-red-500' : ''}
-                  />
-                  {errors.qualification && (
-                    <p className="text-sm text-red-500">
-                      {errors.qualification}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="experience">Years of Experience</Label>
-                  <Input
-                    id="experience"
-                    name="experience"
-                    type="number"
-                    placeholder="5"
-                    value={formData.experience}
-                    onChange={handleInputChange}
-                    className={errors.experience ? 'border-red-500' : ''}
-                  />
-                  {errors.experience && (
-                    <p className="text-sm text-red-500">
-                      {errors.experience}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="hospitalId">Hospital ID (Optional)</Label>
-                  <Input
-                    id="hospitalId"
-                    name="hospitalId"
-                    type="text"
-                    placeholder="H001"
-                    value={formData.hospitalId}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Hospital Fields */}
-            {formData.role === 'HOSPITAL' && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="hospitalAddress">Address</Label>
-                  <Input
-                    id="hospitalAddress"
-                    name="hospitalAddress"
-                    type="text"
-                    placeholder="Hospital full address"
-                    value={formData.hospitalAddress}
-                    onChange={handleInputChange}
-                    className={
-                      errors.hospitalAddress ? 'border-red-500' : ''
-                    }
-                  />
-                  {errors.hospitalAddress && (
-                    <p className="text-sm text-red-500">
-                      {errors.hospitalAddress}
-                    </p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      name="city"
-                      type="text"
-                      placeholder="New York"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      className={errors.city ? 'border-red-500' : ''}
-                    />
-                    {errors.city && (
-                      <p className="text-sm text-red-500">{errors.city}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
-                    <Input
-                      id="state"
-                      name="state"
-                      type="text"
-                      placeholder="NY"
-                      value={formData.state}
-                      onChange={handleInputChange}
-                      className={errors.state ? 'border-red-500' : ''}
-                    />
-                    {errors.state && (
-                      <p className="text-sm text-red-500">{errors.state}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="pincode">Pincode</Label>
-                  <Input
-                    id="pincode"
-                    name="pincode"
-                    type="text"
-                    placeholder="10001"
-                    value={formData.pincode}
-                    onChange={handleInputChange}
-                    className={errors.pincode ? 'border-red-500' : ''}
-                  />
-                  {errors.pincode && (
-                    <p className="text-sm text-red-500">{errors.pincode}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="registrationNumber">Registration Number</Label>
-                  <Input
-                    id="registrationNumber"
-                    name="registrationNumber"
-                    type="text"
-                    placeholder="HOSP-2024-001"
-                    value={formData.registrationNumber}
-                    onChange={handleInputChange}
-                    className={
-                      errors.registrationNumber ? 'border-red-500' : ''
-                    }
-                  />
-                  {errors.registrationNumber && (
-                    <p className="text-sm text-red-500">
-                      {errors.registrationNumber}
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Trainer Fields */}
-            {formData.role === 'TRAINER' && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="trainerType">Trainer Type</Label>
-                  <select
-                    id="trainerType"
-                    name="trainerType"
-                    value={formData.trainerType}
-                    onChange={handleInputChange}
-                    className="w-full h-10 px-3 py-2 border border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 bg-white"
-                  >
-                    <option value="">Select</option>
-                    <option value="FITNESS">Fitness</option>
-                    <option value="YOGA">Yoga</option>
-                  </select>
-                  {errors.trainerType && (
-                    <p className="text-sm text-red-500">{errors.trainerType}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="experienceYears">Years of Experience</Label>
-                  <Input
-                    id="experienceYears"
-                    name="experienceYears"
-                    type="number"
-                    placeholder="5"
-                    value={formData.experienceYears}
-                    onChange={handleInputChange}
-                    className={errors.experienceYears ? 'border-red-500' : ''}
-                  />
-                  {errors.experienceYears && (
-                    <p className="text-sm text-red-500">
-                      {errors.experienceYears}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    name="location"
-                    type="text"
-                    placeholder="City, State"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    className={errors.location ? 'border-red-500' : ''}
-                  />
-                  {errors.location && (
-                    <p className="text-sm text-red-500">{errors.location}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="pricePerSession">Price per Session ($)</Label>
-                  <Input
-                    id="pricePerSession"
-                    name="pricePerSession"
-                    type="number"
-                    step="0.01"
-                    placeholder="50.00"
-                    value={formData.pricePerSession}
-                    onChange={handleInputChange}
-                    className={errors.pricePerSession ? 'border-red-500' : ''}
-                  />
-                  {errors.pricePerSession && (
-                    <p className="text-sm text-red-500">
-                      {errors.pricePerSession}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio (Optional)</Label>
-                  <textarea
-                    id="bio"
-                    name="bio"
-                    placeholder="Tell us about yourself..."
-                    value={formData.bio}
-                    onChange={handleInputChange}
-                    className="w-full h-20 px-3 py-2 border border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 bg-white resize-none"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Password */}
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className={`pr-10 ${errors.password ? 'border-red-500' : ''}`}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-gray-50 rounded-r-md transition-all"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
-                </button>
-              </div>
-              <PasswordStrengthIndicator password={formData.password} />
-              {errors.password && (
-                <p className="text-sm text-red-500">{errors.password}</p>
-              )}
-            </div>
-
-            {/* Confirm Password */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  className={`pr-10 ${errors.confirmPassword ? 'border-red-500' : ''
-                    }`}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-gray-50 rounded-r-md transition-all"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <p className="text-sm text-red-500">
-                  {errors.confirmPassword}
-                </p>
-              )}
-            </div>
-
-            {/* Submit */}
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 hover:scale-105 text-blac font-semibold transition-all duration-200"
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Creating Account...
-                </div>
+            <div className="flex justify-between items-center mt-6">
+              {currentStep > 1 ? (
+                <Button type="button" variant="outline" onClick={handleBack} className="h-10 px-5">
+                  <ChevronLeft className="h-4 w-4 mr-1" /> Back
+                </Button>
               ) : (
-                'Create Account'
+                <div className="flex-1" />
               )}
-            </Button>
+
+              {currentStep < totalSteps ? (
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  onMouseEnter={() => setIsNextHovered(true)}
+                  onMouseLeave={() => setIsNextHovered(false)}
+                  style={{
+                    height: 48,
+                    paddingLeft: 24,
+                    paddingRight: 24,
+                    backgroundColor: 'transparent',
+                    color: '#059669',
+                    borderRadius: 12,
+                    fontWeight: 600,
+                    marginLeft: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    transition: 'all 0.2s',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Next
+                  <span
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      backgroundColor: isNextHovered ? '#059669' : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s',
+                      transform: isNextHovered ? 'scale(1)' : 'scale(0)',
+                    }}
+                  >
+                    <ChevronRight
+                      style={{
+                        width: 16,
+                        height: 16,
+                        color: 'white',
+                        opacity: isNextHovered ? 1 : 0,
+                        transition: 'opacity 0.2s',
+                      }}
+                    />
+                  </span>
+                </button>
+              ) : (
+                <Button type="submit" disabled={isLoading} className="h-10 px-5 bg-emerald-600 hover:bg-emerald-700 ml-auto">
+                  {isLoading ? 'Creating...' : 'Create Account'}
+                </Button>
+              )}
+            </div>
           </form>
 
-          {/* Login Link */}
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-gray-500 mt-5">
             Already have an account?{' '}
-            <button
-              type="button"
-              onClick={() => onNavigate('/login')}
-              className="text-emerald-600 hover:text-emerald-700 hover:scale-105 font-semibold transition-all duration-200"
-            >
-              Sign in
-            </button>
-          </p>
-
-          {/* Footer */}
-          <p className="text-center text-xs text-gray-400">
-            By creating an account, you agree to our{' '}
-            <button
-              type="button"
-              onClick={() => onNavigate('/terms')}
-              className="text-emerald-600 hover:text-emerald-700 hover:scale-105 transition-all duration-200"
-            >
-              Terms
-            </button>{' '}
-            and{' '}
-            <button
-              type="button"
-              onClick={() => onNavigate('/privacy')}
-              className="text-emerald-600 hover:text-emerald-700 hover:scale-105 transition-all duration-200"
-            >
-              Privacy Policy
-            </button>
+            <button type="button" onClick={() => onNavigate('/login')} className="text-emerald-600 font-medium hover:underline">Sign in</button>
           </p>
         </CardContent>
       </Card>

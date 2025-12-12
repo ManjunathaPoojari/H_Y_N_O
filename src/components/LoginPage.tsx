@@ -3,9 +3,10 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent } from './ui/card';
-import { Activity, Eye, EyeOff } from 'lucide-react';
+import { Activity, Eye, EyeOff, ChevronRight } from 'lucide-react';
 import { useAuth } from '../lib/auth-context';
 import { toast } from 'sonner';
+import { WellnessBackground } from './common/WellnessBackground';
 
 interface LoginPageProps {
   onNavigate: (path: string) => void;
@@ -18,6 +19,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [isSignInHovered, setIsSignInHovered] = useState(false);
   const { login } = useAuth();
 
   const validateForm = () => {
@@ -40,12 +42,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
           user.role === 'admin'
             ? '/admin-dashboard'
             : user.role === 'doctor'
-            ? '/doctor-dashboard'
-            : user.role === 'hospital'
-            ? '/hospital-dashboard'
-            : user.role === 'trainer'
-            ? '/trainer-dashboard'
-            : '/patient/dashboard';
+              ? '/doctor-dashboard'
+              : user.role === 'hospital'
+                ? '/hospital-dashboard'
+                : user.role === 'trainer'
+                  ? '/trainer-dashboard'
+                  : '/patient/dashboard';
         onNavigate(path);
       } else toast.error('Invalid credentials');
     } catch (err: any) {
@@ -58,8 +60,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 p-4">
-      <Card className="w-full max-w-md shadow-xl border border-gray-100 rounded-3xl bg-white/90 backdrop-blur-sm">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative">
+      <WellnessBackground />
+      <Card className="w-full max-w-md shadow-xl border border-gray-200/50 rounded-3xl bg-white/80 backdrop-blur-md relative z-10">
         <CardContent className="p-8 space-y-4">
           {/* Header */}
           <div className="text-center">
@@ -89,9 +92,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
                   setEmail(e.target.value);
                   errors.email && setErrors((s) => ({ ...s, email: undefined }));
                 }}
-                className={`h-12 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500/20 ${
-                  errors.email ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''
-                }`}
+                className={`h-12 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500/20 ${errors.email ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''
+                  }`}
               />
               {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
             </div>
@@ -119,9 +121,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
                     setPassword(e.target.value);
                     errors.password && setErrors((s) => ({ ...s, password: undefined }));
                   }}
-                  className={`h-12 pr-12 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500/20 ${
-                    errors.password ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''
-                  }`}
+                  className={`h-12 pr-12 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500/20 ${errors.password ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''
+                    }`}
                 />
                 <button
                   type="button"
@@ -135,20 +136,74 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
             </div>
 
             {/* Sign In Button */}
-            <Button
+            <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 hover:scale-105 text-black font-semibold transition-all duration-200"
+              onMouseEnter={() => setIsSignInHovered(true)}
+              onMouseLeave={() => setIsSignInHovered(false)}
+              style={{
+                width: 'auto',
+                paddingLeft: 24,
+                paddingRight: 24,
+                height: 48,
+                borderRadius: 12,
+                backgroundColor: 'transparent',
+                color: '#059669',
+                fontWeight: 600,
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                opacity: isLoading ? 0.7 : 1,
+                transition: 'all 0.2s',
+                margin: '0 auto',
+              }}
             >
               {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div
+                    style={{
+                      width: 16,
+                      height: 16,
+                      border: '2px solid #d1d5db',
+                      borderTopColor: '#1f2937',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                    }}
+                  />
                   Signing in...
                 </div>
               ) : (
-                'Sign In'
+                <>
+                  Sign In
+                  <span
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      backgroundColor: isSignInHovered ? '#059669' : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s',
+                      transform: isSignInHovered ? 'scale(1)' : 'scale(0)',
+                    }}
+                  >
+                    <ChevronRight
+                      style={{
+                        width: 16,
+                        height: 16,
+                        color: 'white',
+                        opacity: isSignInHovered ? 1 : 0,
+                        transition: 'opacity 0.2s',
+                      }}
+                    />
+                  </span>
+                </>
               )}
-            </Button>
+            </button>
 
             {/* Divider */}
             <div className="relative -mt-2">
@@ -163,8 +218,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
             {/* Google Sign-in */}
             <Button
               type="button"
+              variant="outline"
               onClick={() => toast.info('Google sign-in coming soon!')}
-              className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 hover:scale-105 text-black font-semibold transition-all duration-200 -mt-2"
+              className="w-full h-12 rounded-xl hover:scale-105 font-semibold transition-all duration-200 -mt-2"
             >
               <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" className="w-5 h-5" />
               Google

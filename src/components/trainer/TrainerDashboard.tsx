@@ -10,6 +10,22 @@ interface TrainerDashboardProps {
 }
 
 export const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ onNavigate }) => {
+  const [unreadMessages, setUnreadMessages] = React.useState(2);
+  const [upcomingSessions, setUpcomingSessions] = React.useState(3);
+
+  // Auto-refresh every 1 second
+  React.useEffect(() => {
+    const fetchMetrics = () => {
+      setUnreadMessages(Math.floor(Math.random() * 5));
+      setUpcomingSessions(Math.floor(Math.random() * 6));
+    };
+
+    fetchMetrics();
+    const intervalId = setInterval(fetchMetrics, 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   const sessions = [
     { client: 'Nina Patel', time: '08:00 AM', focus: 'Yoga flow', status: 'Completed' },
     { client: 'Marcus Lee', time: '10:30 AM', focus: 'Strength circuit', status: 'Upcoming' },
@@ -47,17 +63,24 @@ export const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ onNavigate }
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: 'Active clients', value: '32', helper: '+3 in onboarding', icon: Users },
-          { label: 'Sessions today', value: '6', helper: '2 virtual • 4 onsite', icon: Calendar },
-          { label: 'Programs updated', value: '9', helper: 'This week', icon: Activity },
-          { label: 'Avg. engagement', value: '92%', helper: 'Last 30 days', icon: Dumbbell },
+          { label: 'Active clients', value: '32', helper: '+3 in onboarding', icon: Users, badge: 0 },
+          { label: 'Sessions today', value: upcomingSessions.toString(), helper: '2 virtual • 4 onsite', icon: Calendar, badge: upcomingSessions },
+          { label: 'Unread messages', value: unreadMessages.toString(), helper: 'Client inquiries', icon: MessageSquare, badge: unreadMessages },
+          { label: 'Avg. engagement', value: '92%', helper: 'Last 30 days', icon: Dumbbell, badge: 0 },
         ].map((stat) => (
           <Card key={stat.label} className="border-slate-200 shadow-sm">
             <CardHeader className="flex items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-500">{stat.label}</CardTitle>
-              <span className="rounded-full bg-slate-100 p-2 text-slate-600">
-                <stat.icon className="h-4 w-4" />
-              </span>
+              <div className="flex flex-col items-end gap-2">
+                <span className="rounded-full bg-slate-100 p-2 text-slate-600">
+                  <stat.icon className="h-4 w-4" />
+                </span>
+                {stat.badge > 0 && (
+                  <Badge variant="destructive" className="text-xs">
+                    {stat.badge}
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-semibold text-slate-900">{stat.value}</p>

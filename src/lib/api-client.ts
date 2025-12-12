@@ -260,6 +260,38 @@ export const hospitalAPI = {
     apiCall<any>(`/hospitals/${hospitalId}/schedule/slots/${slotId}`, {
       method: 'DELETE',
     }),
+
+  // Bed Management
+  getBeds: (hospitalId: string) => apiCall<any[]>(`/hospital/beds?hospitalId=${hospitalId}`),
+  updateBed: (bed: any) =>
+    apiCall<any>('/hospital/beds', {
+      method: 'POST',
+      body: JSON.stringify(bed),
+    }),
+  deleteBed: (id: string) =>
+    apiCall<void>(`/hospital/beds/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // Inventory Management
+  getInventory: (hospitalId: string) => apiCall<any[]>(`/hospital/inventory?hospitalId=${hospitalId}`),
+  saveInventoryItem: (item: any) =>
+    apiCall<any>('/hospital/inventory', {
+      method: 'POST',
+      body: JSON.stringify(item),
+    }),
+  deleteInventoryItem: (id: string) =>
+    apiCall<void>(`/hospital/inventory/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // Billing Management
+  getBills: (hospitalId: string) => apiCall<any[]>(`/hospital/bills?hospitalId=${hospitalId}`),
+  createBill: (bill: any) =>
+    apiCall<any>('/hospital/bills', {
+      method: 'POST',
+      body: JSON.stringify(bill),
+    }),
 };
 
 // Appointment API

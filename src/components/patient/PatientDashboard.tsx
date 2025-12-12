@@ -1,3 +1,4 @@
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -26,7 +27,27 @@ interface PatientDashboardProps {
 export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }) => {
   const { appointments } = useAppStore();
   const { user } = useAuth();
+  const [unreadMessages, setUnreadMessages] = React.useState(3);
+  const [pendingReports, setPendingReports] = React.useState(2);
+  const [incompleteTasks, setIncompleteTasks] = React.useState(1);
+
   const upcomingAppointments = appointments.filter((a) => a.status === 'booked').slice(0, 4);
+
+  // Auto-refresh metrics every 1 second
+  React.useEffect(() => {
+    const fetchMetrics = () => {
+      // Simulate fetching metrics - in real app, call API
+      setUnreadMessages(Math.floor(Math.random() * 5));
+      setPendingReports(Math.floor(Math.random() * 3));
+      setIncompleteTasks(Math.floor(Math.random() * 4));
+    };
+
+    fetchMetrics();
+    const intervalId = setInterval(fetchMetrics, 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   const recentReports = [
     { id: 1, name: 'Comprehensive Blood Test', date: '12 Nov 2025', type: 'Lab Report' },
     { id: 2, name: 'Chest X-Ray', date: '08 Nov 2025', type: 'Radiology' },
@@ -38,18 +59,21 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
       value: upcomingAppointments.length,
       helper: upcomingAppointments[0] ? `Next with ${upcomingAppointments[0].doctorName}` : 'No visits planned',
       icon: Calendar,
+      badge: upcomingAppointments.length,
     },
     {
       title: 'Care plan',
       value: '3 tasks',
       helper: '2 completed today',
       icon: CheckCircle2,
+      badge: incompleteTasks,
     },
     {
       title: 'Reports',
       value: recentReports.length,
       helper: 'Latest results are ready',
       icon: FileText,
+      badge: pendingReports,
     },
   ];
 
@@ -112,8 +136,15 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
                 <CardTitle className="text-sm font-medium text-slate-500">{stat.title}</CardTitle>
                 <p className="text-3xl font-semibold tracking-tight text-slate-900">{stat.value}</p>
               </div>
-              <div className="rounded-full bg-slate-100 p-2 text-slate-600">
-                <stat.icon className="h-4 w-4" />
+              <div className="flex flex-col items-end gap-2">
+                <div className="rounded-full bg-slate-100 p-2 text-slate-600">
+                  <stat.icon className="h-4 w-4" />
+                </div>
+                {stat.badge > 0 && (
+                  <Badge variant="destructive" className="text-xs">
+                    {stat.badge}
+                  </Badge>
+                )}
               </div>
             </CardHeader>
             <CardContent>

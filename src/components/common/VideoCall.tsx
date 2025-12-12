@@ -7,7 +7,6 @@ import { VideoCall as VideoCallType, VideoCallState } from '../../types';
 import { websocketClient } from '../../lib/websocket-client';
 import { toast } from 'sonner';
 import { ChatInterface } from './ChatInterface';
-import { api } from '../../lib/api';
 
 interface VideoCallProps {
   callId?: string;
@@ -57,8 +56,8 @@ const VideoCall: React.FC<VideoCallProps> = ({
 
   // UI state
   const [isDoctor, setIsDoctor] = useState(false);
-  const [waitingPatient, setWaitingPatient] = useState<{id: string, name: string} | null>(null);
-  const [admittedPatient, setAdmittedPatient] = useState<{id: string, name: string} | null>(null);
+  const [waitingPatient, setWaitingPatient] = useState<{ id: string, name: string } | null>(null);
+  const [admittedPatient, setAdmittedPatient] = useState<{ id: string, name: string } | null>(null);
   const [waitingForAdmission, setWaitingForAdmission] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [isPictureInPicture, setIsPictureInPicture] = useState(false);
@@ -534,14 +533,13 @@ const VideoCall: React.FC<VideoCallProps> = ({
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto h-full relative bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-lg overflow-hidden shadow-2xl">
+    <div className="w-full max-w-6xl mx-auto h-full relative bg-gradient-to-br from-emerald-50 via-white to-teal-50 rounded-lg overflow-hidden shadow-2xl">
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 flex justify-between items-center shadow-lg">
+      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-3 flex justify-between items-center shadow-lg">
         <div className="flex items-center gap-3">
-          <div className={`w-2 h-2 rounded-full ${
-            connectionState === 'connected' ? 'bg-green-400' :
+          <div className={`w-2 h-2 rounded-full ${connectionState === 'connected' ? 'bg-green-400' :
             connectionState === 'connecting' ? 'bg-yellow-400' : 'bg-red-400'
-          } animate-pulse`}></div>
+            } animate-pulse`}></div>
           <h3 className="text-lg font-semibold">Live Consultation</h3>
         </div>
         <div className="flex items-center gap-4">
@@ -570,12 +568,12 @@ const VideoCall: React.FC<VideoCallProps> = ({
             <div className="text-center text-gray-800 max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl border border-gray-200">
               {waitingPatient ? (
                 <>
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                  <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                     <Monitor className="h-10 w-10 text-white" />
                   </div>
                   <h4 className="text-2xl font-bold mb-3 text-gray-900">{waitingPatient.name} is ready</h4>
                   <p className="text-gray-600 mb-6 text-lg">Ready for your consultation. Start the video call now.</p>
-                  <Button onClick={admitPatient} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                  <Button onClick={admitPatient} className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white">
                     Start Consultation
                   </Button>
                 </>
@@ -650,11 +648,10 @@ const VideoCall: React.FC<VideoCallProps> = ({
             variant="ghost"
             size="lg"
             onClick={toggleMute}
-            className={`rounded-full w-16 h-16 p-0 transition-all duration-200 transform hover:scale-110 ${
-              callState.isMuted
-                ? 'bg-red-500/20 text-red-400 border-2 border-red-400/50 hover:bg-red-500/30'
-                : 'bg-white/20 text-white border-2 border-white/30 hover:bg-white/30'
-            }`}
+            className={`rounded-full w-16 h-16 p-0 transition-all duration-200 transform hover:scale-110 ${callState.isMuted
+              ? 'bg-red-500/20 text-red-400 border-2 border-red-400/50 hover:bg-red-500/30'
+              : 'bg-white/20 text-white border-2 border-white/30 hover:bg-white/30'
+              }`}
           >
             {callState.isMuted ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
           </Button>
@@ -663,11 +660,10 @@ const VideoCall: React.FC<VideoCallProps> = ({
             variant="ghost"
             size="lg"
             onClick={toggleVideo}
-            className={`rounded-full w-16 h-16 p-0 transition-all duration-200 transform hover:scale-110 ${
-              !callState.isVideoEnabled
-                ? 'bg-red-500/20 text-red-400 border-2 border-red-400/50 hover:bg-red-500/30'
-                : 'bg-white/20 text-white border-2 border-white/30 hover:bg-white/30'
-            }`}
+            className={`rounded-full w-16 h-16 p-0 transition-all duration-200 transform hover:scale-110 ${!callState.isVideoEnabled
+              ? 'bg-red-500/20 text-red-400 border-2 border-red-400/50 hover:bg-red-500/30'
+              : 'bg-white/20 text-white border-2 border-white/30 hover:bg-white/30'
+              }`}
           >
             {callState.isVideoEnabled ? <Video className="h-6 w-6" /> : <VideoOff className="h-6 w-6" />}
           </Button>
@@ -698,7 +694,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
           <div className="p-4 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <h4 className="text-gray-900 font-semibold flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-blue-600" />
+                <MessageCircle className="h-5 w-5 text-emerald-600" />
                 Live Chat
               </h4>
               <Button variant="ghost" onClick={() => setShowChat(false)} className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700">
@@ -714,30 +710,26 @@ const VideoCall: React.FC<VideoCallProps> = ({
 
       {/* Connection status */}
       <div className="absolute top-4 right-4 space-y-2">
-        <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-full font-medium ${
-          connectionState === 'connected'
-            ? 'bg-green-100 text-green-800'
-            : connectionState === 'connecting'
+        <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-full font-medium ${connectionState === 'connected'
+          ? 'bg-green-100 text-green-800'
+          : connectionState === 'connecting'
             ? 'bg-yellow-100 text-yellow-800'
             : 'bg-red-100 text-red-800'
-        }`}>
-          <div className={`w-2 h-2 rounded-full ${
-            connectionState === 'connected' ? 'bg-green-500' :
+          }`}>
+          <div className={`w-2 h-2 rounded-full ${connectionState === 'connected' ? 'bg-green-500' :
             connectionState === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'
-          }`}></div>
+            }`}></div>
           {connectionState}
         </div>
-        <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-full font-medium ${
-          callState.connectionQuality === 'good'
-            ? 'bg-green-100 text-green-800'
-            : callState.connectionQuality === 'fair'
+        <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-full font-medium ${callState.connectionQuality === 'good'
+          ? 'bg-green-100 text-green-800'
+          : callState.connectionQuality === 'fair'
             ? 'bg-yellow-100 text-yellow-800'
             : 'bg-red-100 text-red-800'
-        }`}>
-          <div className={`w-2 h-2 rounded-full ${
-            callState.connectionQuality === 'good' ? 'bg-green-500' :
+          }`}>
+          <div className={`w-2 h-2 rounded-full ${callState.connectionQuality === 'good' ? 'bg-green-500' :
             callState.connectionQuality === 'fair' ? 'bg-yellow-500' : 'bg-red-500'
-          }`}></div>
+            }`}></div>
           {callState.connectionQuality}
         </div>
       </div>

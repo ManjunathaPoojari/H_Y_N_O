@@ -5,7 +5,7 @@ import {
   Activity, Bell, Search, LogOut, Menu,
   LayoutDashboard, Users, Calendar, MessageSquare, Video,
   FileText, Building2, UserCog, AlertCircle,
-  Pill, User, Hospital, Stethoscope, Apple, Dumbbell, ShieldCheck, Key
+  Pill, User, Hospital, Stethoscope, Apple, Dumbbell, ShieldCheck, Key, Bed
 } from 'lucide-react';
 import { Input } from './ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
@@ -15,6 +15,7 @@ import { useSearch } from '../lib/search-context';
 import { useNotifications } from '../lib/notification-context';
 import api from '../lib/api-client';
 import { useAppStore } from '../lib/app-store';
+import { AnimatedBackground } from './common/AnimatedBackground';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -35,8 +36,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { refreshTrigger } = useAppStore();
   const [pendingCount, setPendingCount] = useState(0);
 
-  // Fetch pending approvals count for admin
+  // Fetch pending approvals count for admin with auto-refresh
   useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
     if (role === 'admin') {
       const fetchPendingCount = async () => {
         try {
@@ -51,8 +54,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           console.error('Failed to fetch pending count:', error);
         }
       };
+
+      // Initial fetch
       fetchPendingCount();
+
+      // Auto-refresh every 1 second
+      intervalId = setInterval(fetchPendingCount, 1000);
     }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [role, refreshTrigger]);
 
   const handleLogout = () => {
@@ -102,6 +114,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: Calendar, label: 'Appointments', path: '/hospital/appointments' },
           { icon: Users, label: 'Patients', path: '/hospital/patients' },
           { icon: AlertCircle, label: 'Emergency', path: '/hospital/emergency' },
+          { icon: Bed, label: 'Bed Management', path: '/hospital/beds' },
+          { icon: Pill, label: 'Inventory & Pharmacy', path: '/hospital/inventory' },
+          { icon: FileText, label: 'Billing', path: '/hospital/billing' },
           { icon: FileText, label: 'Reports', path: '/hospital/reports' },
           { icon: User, label: 'Profile', path: '/hospital/profile' },
         ];
@@ -181,13 +196,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const dashboardPath = getDashboardPath();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-slate-50 flex relative">
+      <AnimatedBackground type={role} />
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r shadow-sm">
-        <div className="p-4 border-b">
+      <aside className="w-64 bg-white border-r border-slate-200 relative z-10">
+        <div className="p-4 border-b border-slate-200">
           <div className="flex items-center gap-2">
             <Activity className="h-6 w-6 text-emerald-600" />
-            <span className="text-xl text-emerald-600 font-bold">HYNO</span>
+            <span className="text-xl text-slate-900 font-semibold">HYNO</span>
           </div>
         </div>
 
@@ -217,11 +233,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="bg-white border-b sticky top-0 z-40">
+        <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold text-gray-900">
+                <span className="text-lg font-medium text-slate-900">
                   Welcome, {user?.name || 'User'}
                 </span>
               </div>

@@ -35,6 +35,9 @@ import { HospitalPatients } from './components/hospital/HospitalPatients';
 import { HospitalPatientDetails } from './components/hospital/HospitalPatientDetails';
 import { HospitalReports } from './components/hospital/HospitalReports';
 import { HospitalEmergency } from './components/hospital/HospitalEmergency';
+import { HospitalBedManagement } from './components/hospital/HospitalBedManagement';
+import { HospitalInventory } from './components/hospital/HospitalInventory';
+import { HospitalBilling } from './components/hospital/HospitalBilling';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminPatients } from './components/admin/AdminPatients';
 import { AdminAppointments } from './components/admin/AdminAppointments';
@@ -57,6 +60,10 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 import { Card, CardContent } from './components/ui/card';
 import { Video, MessageSquare, MapPin, Building2 } from 'lucide-react';
+import { ServicesPage } from './components/ServicesPage';
+import { DoctorsPage } from './components/DoctorsPage';
+import { PageTransition } from './components/common/PageTransition';
+
 
 function AppContent() {
   const [currentPath, setCurrentPath] = useState('/');
@@ -65,7 +72,7 @@ function AppContent() {
   // Initialize path from URL on mount
   useEffect(() => {
     const path = window.location.pathname;
-    const publicPaths = ['/', '/login', '/admin-login', '/doctor-login', '/hospital-login', '/trainer-login', '/register', '/forgot-password', '/reset-password', '/about', '/terms', '/privacy'];
+    const publicPaths = ['/', '/login', '/admin-login', '/doctor-login', '/hospital-login', '/trainer-login', '/register', '/forgot-password', '/reset-password', '/about', '/terms', '/privacy', '/services', '/doctors'];
 
     // Check if user is authenticated (has token and user in localStorage)
     const token = localStorage.getItem('token');
@@ -161,6 +168,14 @@ function AppContent() {
 
     if (currentPath === '/privacy') {
       return <PrivacyPolicy />;
+    }
+
+    if (currentPath === '/services') {
+      return <ServicesPage onNavigate={navigate} />;
+    }
+
+    if (currentPath === '/doctors') {
+      return <DoctorsPage onNavigate={navigate} />;
     }
 
     // Protected routes - require authentication
@@ -285,6 +300,9 @@ function AppContent() {
             />
           )}
           {currentPath === '/hospital/emergency' && <HospitalEmergency />}
+          {currentPath === '/hospital/beds' && <HospitalBedManagement />}
+          {currentPath === '/hospital/inventory' && <HospitalInventory />}
+          {currentPath === '/hospital/billing' && <HospitalBilling />}
           {currentPath === '/hospital/reports' && <HospitalReports />}
           {currentPath === '/hospital/profile' && <HospitalProfile />}
         </DashboardLayout>
@@ -327,7 +345,9 @@ function AppContent() {
 
   return (
     <>
-      {renderContent()}
+      <PageTransition currentPath={currentPath}>
+        {renderContent()}
+      </PageTransition>
       <Toaster />
     </>
   );

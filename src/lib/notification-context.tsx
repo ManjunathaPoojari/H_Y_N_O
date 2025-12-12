@@ -41,11 +41,19 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  // Load notifications on mount and when user changes
+  // Load notifications on mount and when user changes, with auto-refresh
   useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
     if (user) {
       refreshNotifications();
+      // Auto-refresh notifications every 1 second
+      intervalId = setInterval(refreshNotifications, 1000);
     }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [user]);
 
   const refreshNotifications = async () => {
