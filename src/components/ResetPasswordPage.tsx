@@ -5,8 +5,7 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Activity, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
-import axios from 'axios';
-import { API_URL } from '../lib/config';
+import { authAPI } from '../lib/api-client';
 import { PasswordStrengthIndicator } from './ui/password-strength-indicator';
 
 interface ResetPasswordPageProps {
@@ -35,8 +34,9 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
 
   const validateToken = async (resetToken: string) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/validate-reset-token`, { token: resetToken });
-      setTokenValid(response.status === 200);
+      const response = await authAPI.validateResetToken(resetToken);
+      // If no error thrown, token is valid
+      setTokenValid(true);
     } catch (error) {
       setTokenValid(false);
       toast.error('Invalid or expired reset link');
@@ -66,17 +66,13 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
 
     setIsLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/auth/reset-password`, {
-        token,
-        newPassword: formData.password
-      });
-
-      if (response.status === 200) {
-        toast.success('Password reset successfully!');
+      const response = await authAPI.resetPassword(token!, formData.password);
+      if (response && response.message) {
+        toast.success(response.message);
         onNavigate('/login');
       }
-    } catch (error) {
-      toast.error('Failed to reset password. Please try again.');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to reset password. Please try again.');
     } finally {
       setIsLoading(false);
     }

@@ -4,6 +4,7 @@ import { authAPI } from './api-client';
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string, role: string) => Promise<User | null>;
+  googleLogin: (token: string) => Promise<User | null>;
   logout: () => void;
   register: (userData: any) => Promise<{ success: boolean; error?: string }>;
   updateUserProfile: (updates: Partial<User>) => void;
@@ -80,6 +81,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const googleLogin = async (token: string): Promise<User | null> => {
+    try {
+      const res = await authAPI.googleLogin(token);
+      const userData = res.user;
+      // Convert role to lowercase to match frontend expectations
+      const normalizedUser = {
+        ...userData,
+        role: userData.role.toLowerCase()
+      };
+      const jwtToken = res.token;
+      setUser(normalizedUser);
+      sessionStorage.setItem('user', JSON.stringify(normalizedUser));
+      sessionStorage.setItem('token', jwtToken);
+      return normalizedUser;
+    } catch (err: any) {
+      console.error('Google Login failed:', err);
+      throw err;
+    }
+  };
+
   const register = async (userData: any): Promise<{ success: boolean; error?: string }> => {
     try {
       await authAPI.register(userData);
@@ -127,7 +148,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, updateUserProfile, isAuthenticated: !!user, navigateToStoredPath }}>
+    <AuthContext.Provider value={{ user, login, googleLogin, logout, register, updateUserProfile, isAuthenticated: !!user, navigateToStoredPath }}>
       {children}
     </AuthContext.Provider>
   );

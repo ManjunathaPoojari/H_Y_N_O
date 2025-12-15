@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GoogleLogin } from '@react-oauth/google';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -20,7 +21,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [isSignInHovered, setIsSignInHovered] = useState(false);
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -29,6 +30,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
     if (!password.trim()) newErrors.password = 'Please enter your password to continue';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      setIsLoading(true);
+      const user = await googleLogin(credentialResponse.credential);
+      if (user) {
+        toast.success(`Welcome back, ${user.name}!`);
+        const path =
+          user.role === 'admin'
+            ? '/admin-dashboard'
+            : user.role === 'doctor'
+              ? '/doctor-dashboard'
+              : user.role === 'hospital'
+                ? '/hospital-dashboard'
+                : user.role === 'trainer'
+                  ? '/trainer-dashboard'
+                  : '/patient/dashboard';
+        onNavigate(path);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Google Sign-In failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -216,15 +243,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
             </div>
 
             {/* Google Sign-in */}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => toast.info('Google sign-in coming soon!')}
-              className="w-full h-12 rounded-xl hover:scale-105 font-semibold transition-all duration-200 -mt-2"
-            >
-              <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" className="w-5 h-5" />
-              Google
-            </Button>
+            <div className="w-full flex justify-center -mt-2">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => toast.error('Google Sign-In failed')}
+                useOneTap
+                theme="outline"
+                shape="pill"
+                width="350px"
+              />
+            </div>
 
             {/* Register link */}
             {role === 'patient' && (

@@ -5,8 +5,7 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Activity, ArrowLeft, Mail } from 'lucide-react';
 import { toast } from 'sonner';
-import axios from 'axios';
-import { API_URL } from '../lib/config';
+import { authAPI } from '../lib/api-client';
 
 interface ForgotPasswordPageProps {
   onNavigate: (path: string) => void;
@@ -27,13 +26,13 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
 
     setIsLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/auth/forgot-password`, { email });
-      if (response.status === 200) {
+      const response = await authAPI.forgotPassword(email);
+      if (response && response.message) {
         setEmailSent(true);
-        toast.success('Password reset email sent! Check your inbox.');
+        toast.success(response.message);
       }
-    } catch (error) {
-      toast.error('Failed to send reset email. Please try again.');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to send reset email. Please try again.');
     } finally {
       setIsLoading(false);
     }

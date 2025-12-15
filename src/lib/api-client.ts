@@ -68,6 +68,13 @@ export const authAPI = {
     });
   },
 
+  googleLogin: async (token: string) => {
+    return apiCall<{ token: string; user: any }>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  },
+
   register: async (userData: any) => {
     return apiCall<{ token: string; user: any }>('/auth/register', {
       method: 'POST',
@@ -84,6 +91,27 @@ export const authAPI = {
     return apiCall<{ message: string }>('/auth/change-password', {
       method: 'POST',
       body: JSON.stringify({ email, oldPassword, newPassword }),
+    });
+  },
+
+  forgotPassword: async (email: string) => {
+    return apiCall<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  validateResetToken: async (token: string) => {
+    return apiCall<{ message: string }>('/auth/validate-reset-token', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  },
+
+  resetPassword: async (token: string, newPassword: string) => {
+    return apiCall<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
     });
   },
 };

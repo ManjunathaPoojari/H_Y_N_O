@@ -11,6 +11,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class EmailService {
@@ -22,6 +23,9 @@ public class EmailService {
 
     @Autowired
     private TemplateEngine templateEngine;
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
 
     public void sendWelcomeEmail(String to, String name, String temporaryPassword, String userType) {
         try {
@@ -37,21 +41,20 @@ public class EmailService {
             logger.info("Welcome email sent successfully to: {}", to);
         } catch (Exception e) {
             logger.error("Failed to send welcome email to: {}", to, e);
+            // Verify if we want to block registration on email failure. Usually soft fail
+            // is better for welcome emails.
+            // But for password reset, hard fail is needed.
         }
     }
 
-    public void sendPasswordResetEmail(String to, String resetLink) {
-        try {
-            Context context = new Context();
-            context.setVariable("resetUrl", resetLink);
+    public void sendPasswordResetEmail(String to, String resetLink) throws Exception {
+        Context context = new Context();
+        context.setVariable("resetUrl", resetLink);
 
-            String htmlContent = templateEngine.process("password-reset-email", context);
+        String htmlContent = templateEngine.process("password-reset-email", context);
 
-            sendHtmlEmail(to, "Password Reset Request - HYNO Health System", htmlContent);
-            logger.info("Password reset email sent successfully to: {}", to);
-        } catch (Exception e) {
-            logger.error("Failed to send password reset email to: {}", to, e);
-        }
+        sendHtmlEmail(to, "Password Reset Request - HYNO Health System", htmlContent);
+        logger.info("Password reset email sent successfully to: {}", to);
     }
 
     public void sendVerificationEmail(String to, String name, String verificationLink) {
@@ -76,7 +79,8 @@ public class EmailService {
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(htmlContent, true);
-        helper.setFrom("noreply@hynohealth.com");
+        helper.setText(htmlContent, true);
+        helper.setFrom(fromEmail);
 
         mailSender.send(message);
     }

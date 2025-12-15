@@ -155,7 +155,8 @@ function AppContent() {
     }
 
     if (currentPath === '/reset-password') {
-      return <ResetPasswordPage onNavigate={navigate} />;
+      const token = new URLSearchParams(window.location.search).get('token') || undefined;
+      return <ResetPasswordPage onNavigate={navigate} token={token} />;
     }
 
     if (currentPath === '/about') {

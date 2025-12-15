@@ -28,6 +28,14 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
+import java.util.Collections;
+
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -495,13 +503,20 @@ public class AuthController {
         try {
             String normalizedEmail = email.trim().toLowerCase();
             // Check if user exists
-            boolean userExists = adminService.findByEmail(normalizedEmail).isPresent() ||
-                    patientService.findByEmail(normalizedEmail).isPresent() ||
-                    doctorService.getDoctorByEmail(normalizedEmail) != null ||
-                    hospitalService.getHospitalByEmail(normalizedEmail) != null ||
-                    trainerService.getTrainerByEmail(normalizedEmail).isPresent();
+            String userType = null;
+            if (adminService.findByEmail(normalizedEmail).isPresent()) {
+                userType = "admin";
+            } else if (patientService.findByEmail(normalizedEmail).isPresent()) {
+                userType = "patient";
+            } else if (doctorService.getDoctorByEmail(normalizedEmail) != null) {
+                userType = "doctor";
+            } else if (hospitalService.getHospitalByEmail(normalizedEmail) != null) {
+                userType = "hospital";
+            } else if (trainerService.getTrainerByEmail(normalizedEmail).isPresent()) {
+                userType = "trainer";
+            }
 
-            if (!userExists) {
+            if (userType == null) {
                 // Don't reveal if email exists or not for security
                 return ResponseEntity.ok(Map.of("message",
                         "If an account with this email exists, a password reset link has been sent."));
@@ -512,6 +527,7 @@ public class AuthController {
             PasswordResetToken resetToken = new PasswordResetToken();
             resetToken.setToken(token);
             resetToken.setEmail(normalizedEmail);
+            resetToken.setUserType(userType);
             resetToken.setExpiryDate(java.time.LocalDateTime.now().plusHours(1)); // 1 hour expiry
 
             passwordResetTokenRepository.save(resetToken);
@@ -527,7 +543,7 @@ public class AuthController {
         } catch (Exception e) {
             logger.error("Error sending password reset email for: {}", email, e);
             return ResponseEntity.internalServerError()
-                    .body(Map.of("message", "Failed to send password reset email. Please try again."));
+                    .body(Map.of("message", "Failed to send password reset email: " + e.getMessage()));
         }
     }
 
@@ -790,6 +806,130 @@ public class AuthController {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("message", "Failed to change password. Please try again."));
+        }
+    }
+
+    @Value("${google.client.id}")
+    private String googleClientId;
+
+    @PostMapping("/google")
+    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        // Support both 'token' and 'credential' for compatibility
+        if (token == null) {
+            token = request.get("credential");
+        }
+
+        if (token == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Token is required"));
+        }
+
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(),
+                    new GsonFactory())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
+
+            GoogleIdToken idToken = verifier.verify(token);
+            if (idToken != null) {
+                Payload payload = idToken.getPayload();
+                String email = payload.getEmail();
+                String name = (String) payload.get("name");
+
+                logger.info("Google login for email: {}", email);
+
+                String normalizedEmail = email.toLowerCase();
+                Map<String, Object> response = new HashMap<>();
+                Map<String, Object> userData = new HashMap<>();
+                String jwtToken = null;
+
+                // 1. Check if user exists in any role
+
+                // Check Admin
+                Optional<Admin> admin = adminService.findByEmail(normalizedEmail);
+                if (admin.isPresent()) {
+                    userData.put("id", admin.get().getId());
+                    userData.put("name", admin.get().getName());
+                    userData.put("email", admin.get().getEmail());
+                    userData.put("role", "admin");
+                    jwtToken = jwtService.generateToken(admin.get().getId(), email, "admin");
+                }
+                // Check Patient
+                else if (patientService.findByEmail(normalizedEmail).isPresent()) {
+                    Patient patient = patientService.findByEmail(normalizedEmail).get();
+                    userData.put("id", patient.getId());
+                    userData.put("name", patient.getName());
+                    userData.put("email", patient.getEmail());
+                    userData.put("role", "patient");
+                    jwtToken = jwtService.generateToken(patient.getId(), email, "patient");
+                }
+                // Check Doctor
+                else if (doctorService.getDoctorByEmail(normalizedEmail) != null) {
+                    Doctor doctor = doctorService.getDoctorByEmail(normalizedEmail);
+                    userData.put("id", doctor.getId());
+                    userData.put("name", doctor.getName());
+                    userData.put("email", doctor.getEmail());
+                    userData.put("role", "doctor");
+                    jwtToken = jwtService.generateToken(doctor.getId(), email, "doctor");
+                }
+                // Check Hospital
+                else if (hospitalService.getHospitalByEmail(normalizedEmail) != null) {
+                    Hospital hospital = hospitalService.getHospitalByEmail(normalizedEmail);
+                    userData.put("id", hospital.getId());
+                    userData.put("name", hospital.getName());
+                    userData.put("email", hospital.getEmail());
+                    userData.put("role", "hospital");
+                    jwtToken = jwtService.generateToken(hospital.getId(), email, "hospital");
+                }
+                // Check Trainer
+                else if (trainerService.getTrainerByEmail(normalizedEmail).isPresent()) {
+                    Trainer trainer = trainerService.getTrainerByEmail(normalizedEmail).get();
+                    userData.put("id", trainer.getId());
+                    userData.put("name", trainer.getName());
+                    userData.put("email", trainer.getEmail());
+                    userData.put("role", "trainer");
+                    jwtToken = jwtService.generateToken(trainer.getId().toString(), email, "trainer");
+                } else {
+                    // User not found - Register as new Patient
+                    Patient newPatient = new Patient();
+                    newPatient.setEmail(normalizedEmail);
+                    newPatient.setName(name);
+                    newPatient.setPassword(
+                            passwordEncoder.encode("GoogleAuth@" + UUID.randomUUID().toString().substring(0, 8))); // Random
+                                                                                                                   // secure
+                                                                                                                   // password
+                    newPatient.setVerified(true);
+                    // Set defaults
+                    newPatient.setPhone("");
+                    newPatient.setAge(0);
+                    newPatient.setGender("");
+                    newPatient.setBloodGroup("");
+                    newPatient.setAddress("");
+                    newPatient.setEmergencyContact("");
+
+                    Patient savedPatient = patientService.createPatient(newPatient);
+
+                    userData.put("id", savedPatient.getId());
+                    userData.put("name", savedPatient.getName());
+                    userData.put("email", savedPatient.getEmail());
+                    userData.put("role", "patient"); // Default role
+
+                    jwtToken = jwtService.generateToken(savedPatient.getId(), email, "patient");
+                    logger.info("Created new patient account for Google user: {}", email);
+                }
+
+                response.put("user", userData);
+                response.put("token", jwtToken);
+                return ResponseEntity.ok(response);
+
+            } else {
+                logger.warn("Invalid Google ID token");
+                return ResponseEntity.status(401).body(Map.of("message", "Invalid Google ID token"));
+            }
+        } catch (Exception e) {
+            logger.error("Error verifying Google token", e);
+            return ResponseEntity.status(401)
+                    .body(Map.of("message", "Google authentication failed: " + e.getMessage()));
         }
     }
 }

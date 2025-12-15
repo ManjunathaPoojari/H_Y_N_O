@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { GoogleLogin } from '@react-oauth/google';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -67,7 +68,33 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isNextHovered, setIsNextHovered] = useState(false);
 
-  const { register } = useAuth();
+  const { register, googleLogin } = useAuth();
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      setIsLoading(true);
+      const user = await googleLogin(credentialResponse.credential);
+      if (user) {
+        toast.success(`Welcome, ${user.name}!`);
+        const path =
+          user.role === 'admin'
+            ? '/admin-dashboard'
+            : user.role === 'doctor'
+              ? '/doctor-dashboard'
+              : user.role === 'hospital'
+                ? '/hospital-dashboard'
+                : user.role === 'trainer'
+                  ? '/trainer-dashboard'
+                  : '/patient/dashboard';
+        onNavigate(path);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Google Sign-In failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const totalSteps = 4;
 
@@ -254,6 +281,22 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
 
   const renderStep1 = () => (
     <div className="space-y-4">
+      {/* Google Sign-up Button */}
+      <div className="flex flex-col items-center gap-2 mb-2">
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={() => toast.error('Google Sign-In failed')}
+          useOneTap
+          theme="outline"
+          shape="pill"
+          width="350px"
+          text="continue_with"
+        />
+        <div className="relative flex justify-center text-xs w-full py-2">
+          <span className="px-3 bg-white text-gray-400">or register with email</span>
+        </div>
+      </div>
+
       <p className="text-center text-sm text-gray-600 mb-4">Select your role</p>
       <div className="grid grid-cols-2 gap-2">
         {(['PATIENT', 'DOCTOR', 'HOSPITAL', 'TRAINER'] as const).map((role) => (
