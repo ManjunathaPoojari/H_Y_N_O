@@ -10,7 +10,6 @@ import { Activity, Eye, EyeOff, User, Stethoscope, Building2, Dumbbell, ChevronL
 import { useAuth } from '../lib/auth-context';
 import { toast } from 'sonner';
 import { PasswordStrengthIndicator } from './ui/password-strength-indicator';
-import { MinimalistHealthBackground } from './common/MinimalistHealthBackground';
 
 interface RegisterPageProps {
   onNavigate: (path: string) => void;
@@ -598,9 +597,9 @@ const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative">
-      <MinimalistHealthBackground />
-      <Card className="w-full max-w-md shadow-lg border border-gray-200/50 rounded-xl bg-white/90 backdrop-blur-md relative z-10">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4 relative">
+      {/* <MinimalistHealthBackground /> Removed */}
+      <Card className="w-full max-w-md shadow-lg border border-gray-200/50 rounded-xl bg-white relative z-10">
         <CardContent className="p-6">
           {/* Header */}
           <div className="text-center mb-5">

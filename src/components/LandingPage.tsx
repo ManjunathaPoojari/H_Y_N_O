@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../lib/api-client';
-import { LandingBackground } from './common/LandingBackground';
 
 interface LandingPageProps {
     onNavigate: (path: string) => void;
@@ -298,7 +297,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-800 relative">
             {/* Animated Background */}
-            <LandingBackground />
+            {/* Animated Background - Removed */}
 
             {/* Navigation */}
             <nav className="border-b bg-white sticky top-0 z-50">
@@ -333,7 +332,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             <header className="relative pt-20 pb-32 overflow-hidden bg-slate-50">
                 {/* Animated Background for Hero */}
                 <div className="absolute inset-0 pointer-events-none">
-                    <LandingBackground />
+                    {/* <LandingBackground /> Removed */}
                 </div>
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

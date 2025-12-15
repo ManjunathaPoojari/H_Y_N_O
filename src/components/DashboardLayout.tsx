@@ -196,8 +196,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const dashboardPath = getDashboardPath();
 
   return (
-    <div className="min-h-screen bg-slate-50 flex relative">
-      <AnimatedBackground type={role} />
+    <div className="min-h-screen bg-white flex relative">
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-slate-200 relative z-10">
         <div className="p-4 border-b border-slate-200">

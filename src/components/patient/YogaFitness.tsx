@@ -265,10 +265,10 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
   const filteredTrainers = mockTrainers.filter(trainer => {
     const matchesSearch = trainer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       trainer.specialty.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+
     const matchesStyle = selectedStyleFilter.length === 0 ||
       selectedStyleFilter.some(style => trainer.specialty.includes(style));
-    
+
     return matchesSearch && matchesStyle;
   });
 
@@ -276,13 +276,13 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
   const filteredVideos = mockVideos.filter(video => {
     const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       video.style.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesStyle = selectedStyleFilter.length === 0 ||
       selectedStyleFilter.includes(video.style);
-    
+
     const matchesLevel = selectedLevelFilter.length === 0 ||
       selectedLevelFilter.includes(video.level);
-    
+
     return matchesSearch && matchesStyle && matchesLevel;
   });
 
@@ -321,8 +321,8 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
     }
   };
 
-  const timeSlots = ['06:00 AM', '07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM', 
-                     '05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM'];
+  const timeSlots = ['06:00 AM', '07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM',
+    '05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM'];
 
   // AI Functions
   const generateAIRoutine = async () => {
@@ -376,7 +376,7 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
   return (
     <div className="space-y-6 p-6 relative">
       {/* Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 -z-10"></div>
+      <div className="fixed inset-0 bg-white -z-10"></div>
 
       {/* AI Chat Assistant */}
       <AIChatAssistant context="yoga" />
@@ -415,11 +415,10 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
                       <button
                         key={mode}
                         onClick={() => setSelectedMode(mode)}
-                        className={`p-4 rounded-xl border-2 transition-all ${
-                          selectedMode === mode
+                        className={`p-4 rounded-xl border-2 transition-all ${selectedMode === mode
                             ? 'border-purple-500 bg-purple-50'
                             : 'border-slate-200 hover:border-purple-300'
-                        }`}
+                          }`}
                       >
                         {mode === 'virtual' ? <Video className="h-5 w-5 mb-2" /> : <MapPin className="h-5 w-5 mb-2" />}
                         <div className="font-semibold capitalize">{mode}</div>
@@ -448,11 +447,10 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
                       <button
                         key={time}
                         onClick={() => setSelectedTime(time)}
-                        className={`p-3 rounded-lg border-2 text-sm transition-all ${
-                          selectedTime === time
+                        className={`p-3 rounded-lg border-2 text-sm transition-all ${selectedTime === time
                             ? 'border-purple-500 bg-purple-50'
                             : 'border-slate-200 hover:border-purple-300'
-                        }`}
+                          }`}
                       >
                         {time}
                       </button>
@@ -525,7 +523,7 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
               <div className="text-white">
                 <h4 className="font-semibold mb-2">About this practice</h4>
                 <p className="text-slate-300 mb-4">{selectedVideo.description}</p>
-                
+
                 <h4 className="font-semibold mb-2">Benefits</h4>
                 <ul className="space-y-1">
                   {selectedVideo.benefits.map((benefit, i) => (
@@ -668,7 +666,7 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
           </h1>
           <p className="text-slate-600">Your journey to wellness starts here - powered by AI</p>
         </div>
-        <Button 
+        <Button
           onClick={generateAIRoutine}
           disabled={isGeneratingRoutine}
           className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
@@ -807,7 +805,7 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
                         </div>
                         <Badge className={
                           trainer.availability === 'available' ? 'bg-green-500' :
-                          trainer.availability === 'busy' ? 'bg-yellow-500' : 'bg-slate-400'
+                            trainer.availability === 'busy' ? 'bg-yellow-500' : 'bg-slate-400'
                         }>
                           {trainer.availability}
                         </Badge>
@@ -1025,8 +1023,8 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
                                 {appointment.time}
                               </div>
                               <div className="flex items-center gap-1">
-                                {appointment.mode === 'virtual' ? 
-                                  <Video className="h-4 w-4 text-purple-600" /> : 
+                                {appointment.mode === 'virtual' ?
+                                  <Video className="h-4 w-4 text-purple-600" /> :
                                   <MapPin className="h-4 w-4 text-purple-600" />
                                 }
                                 {appointment.mode}
@@ -1037,7 +1035,7 @@ export const YogaFitness: React.FC<YogaFitnessProps> = ({ onNavigate }) => {
                         <div className="text-right">
                           <Badge className={
                             appointment.status === 'upcoming' ? 'bg-green-500' :
-                            appointment.status === 'completed' ? 'bg-blue-500' : 'bg-slate-400'
+                              appointment.status === 'completed' ? 'bg-blue-500' : 'bg-slate-400'
                           }>
                             {appointment.status}
                           </Badge>

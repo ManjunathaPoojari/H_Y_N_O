@@ -5,8 +5,8 @@ import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Progress } from '../ui/progress';
-import { 
-  Apple, Droplet, TrendingUp, Heart, Search, Filter, 
+import {
+  Apple, Droplet, TrendingUp, Heart, Search, Filter,
   Plus, Check, X, Award, Clock, Target, Sparkles,
   ChefHat, Flame, Activity, AlertCircle, Star, Bell,
   Calendar, ChevronRight, Trophy, Zap, Brain, Wand2
@@ -48,6 +48,8 @@ interface UserProfile {
   calorieGoal: number;
   waterGoal: number; // in ml
   activeDietPlan: string;
+  healthConditions: string[];
+  activityLevel: string;
 }
 
 const mockMeals: Meal[] = [
@@ -196,7 +198,7 @@ const diseaseCategories = [
 ];
 
 const dietaryTags = [
-  'Vegetarian', 'Non-Vegetarian', 'Vegan', 'Gluten-Free', 
+  'Vegetarian', 'Non-Vegetarian', 'Vegan', 'Gluten-Free',
   'Lactose-Free', 'High-Protein', 'Low-Carb', 'Keto', 'Low-Fat'
 ];
 
@@ -211,7 +213,9 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
     bmi: 24.2,
     calorieGoal: 2000,
     waterGoal: 3000,
-    activeDietPlan: 'Weight Maintenance'
+    activeDietPlan: 'Weight Maintenance',
+    healthConditions: [],
+    activityLevel: 'moderate'
   });
 
   const [selectedMeals, setSelectedMeals] = useState<{ [key: string]: { meal: Meal; status: 'pending' | 'done' | 'skipped' } }>({});
@@ -295,17 +299,17 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
   const filteredMeals = mockMeals.filter(meal => {
     const matchesSearch = meal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       meal.ingredients.some(ing => ing.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+
     const matchesDisease = selectedDiseaseFilter.length === 0 ||
       selectedDiseaseFilter.some(disease => meal.diseaseCategories.includes(disease));
-    
+
     const matchesDietary = selectedDietaryFilter.length === 0 ||
       selectedDietaryFilter.some(tag => meal.dietaryTags.includes(tag));
-    
+
     return matchesSearch && matchesDisease && matchesDietary;
   });
 
-  const handleMealAction = (mealId: string, meal: Meal, action: 'done' | 'skipped') => {
+  const handleMealAction = (mealId: string, meal: Meal, action: 'done' | 'skipped' | 'pending') => {
     setSelectedMeals(prev => ({
       ...prev,
       [mealId]: { meal, status: action }
@@ -322,8 +326,8 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
   };
 
   const toggleFavorite = (mealId: string) => {
-    setFavorites(prev => 
-      prev.includes(mealId) 
+    setFavorites(prev =>
+      prev.includes(mealId)
         ? prev.filter(id => id !== mealId)
         : [...prev, mealId]
     );
@@ -363,7 +367,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
   const analyzeSelectedMeal = async (meal: Meal) => {
     setSelectedMealForAnalysis(meal);
     setShowAIAnalysis(true);
-    
+
     try {
       const response = await aiService.getNutritionRecommendations({
         userProfile,
@@ -382,7 +386,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
   return (
     <div className="space-y-6 p-6 relative">
       {/* Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 -z-10"></div>
+      <div className="fixed inset-0 bg-white -z-10"></div>
 
       {/* AI Chat Assistant */}
       <AIChatAssistant context="nutrition" userProfile={userProfile} />
@@ -470,8 +474,8 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
           <p className="text-slate-600">Your personalized nutrition journey powered by AI</p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            onClick={generateAIMealPlan} 
+          <Button
+            onClick={generateAIMealPlan}
             disabled={isGeneratingPlan}
             className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
           >
@@ -554,9 +558,9 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
             </div>
             <div className="text-3xl">{userProfile.bmi}</div>
             <div className="text-xs text-slate-500 mt-1">
-              {userProfile.bmi < 18.5 ? 'Underweight' : 
-               userProfile.bmi < 25 ? 'Normal' : 
-               userProfile.bmi < 30 ? 'Overweight' : 'Obese'}
+              {userProfile.bmi < 18.5 ? 'Underweight' :
+                userProfile.bmi < 25 ? 'Normal' :
+                  userProfile.bmi < 30 ? 'Overweight' : 'Obese'}
             </div>
           </CardContent>
         </Card>
@@ -767,7 +771,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
                     className="pl-10"
                   />
                 </div>
-                
+
                 <div className="space-y-3">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
@@ -849,7 +853,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
                       />
                     </button>
                   </div>
-                  
+
                   <h4 className="font-semibold mb-1">{meal.name}</h4>
                   <div className="flex items-center gap-2 mb-2 text-xs text-slate-600">
                     <span className="flex items-center gap-1">

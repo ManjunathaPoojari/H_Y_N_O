@@ -7,7 +7,6 @@ import { Card, CardContent } from './ui/card';
 import { Activity, Eye, EyeOff, ChevronRight } from 'lucide-react';
 import { useAuth } from '../lib/auth-context';
 import { toast } from 'sonner';
-import { WellnessBackground } from './common/WellnessBackground';
 
 interface LoginPageProps {
   onNavigate: (path: string) => void;
@@ -87,9 +86,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, role }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative">
-      <WellnessBackground />
-      <Card className="w-full max-w-md shadow-xl border border-gray-200/50 rounded-3xl bg-white/80 backdrop-blur-md relative z-10">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4 relative">
+      <Card className="w-full max-w-md shadow-xl border border-gray-200/50 rounded-3xl bg-white relative z-10">
         <CardContent className="p-8 space-y-4">
           {/* Header */}
           <div className="text-center">

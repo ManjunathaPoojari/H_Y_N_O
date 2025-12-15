@@ -24,7 +24,7 @@ const ResetPassword = () => {
     }
   }, [searchParams]);
 
-  const onSubmitHandler = async (event) => {
+  const onSubmitHandler = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
     setSuccess("");
@@ -43,7 +43,7 @@ const ResetPassword = () => {
         "Password reset successfully. You can now login with your new password.",
       );
       setTimeout(() => navigate("/login"), 2000);
-    } catch (err) {
+    } catch (err: any) {
       if (err.response && err.response.data && err.response.data.message) {
         setError(err.response.data.message);
       } else {
@@ -53,18 +53,18 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 via-gray-900 to-black">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <motion.form
         onSubmit={onSubmitHandler}
-        className="w-full max-w-md mx-auto bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-10 flex flex-col gap-6"
+        className="w-full max-w-md mx-auto bg-white border border-gray-200 rounded-3xl shadow-xl p-10 flex flex-col gap-6"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
       >
-        <h2 className="text-3xl font-bold text-center text-white mb-2 tracking-tight drop-shadow">
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-2 tracking-tight drop-shadow">
           Reset Password
         </h2>
-        <p className="text-center text-gray-300 mb-4">
+        <p className="text-center text-gray-500 mb-4">
           Enter your new password.
         </p>
 
@@ -83,7 +83,7 @@ const ResetPassword = () => {
             onChange={(e) => setNewPassword(e.target.value)}
             required
             placeholder="New Password"
-            className="pl-10 pr-3 py-2 w-full border-b-2 border-gray-600 focus:border-cyan-400 bg-transparent text-white outline-none"
+            className="pl-10 pr-3 py-2 w-full border-b-2 border-gray-300 focus:border-cyan-500 bg-transparent text-gray-800 outline-none"
           />
         </div>
 
@@ -95,7 +95,7 @@ const ResetPassword = () => {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             placeholder="Confirm New Password"
-            className="pl-10 pr-3 py-2 w-full border-b-2 border-gray-600 focus:border-cyan-400 bg-transparent text-white outline-none"
+            className="pl-10 pr-3 py-2 w-full border-b-2 border-gray-300 focus:border-cyan-500 bg-transparent text-gray-800 outline-none"
           />
         </div>
 

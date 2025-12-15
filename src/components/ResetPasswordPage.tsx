@@ -80,7 +80,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
 
   if (tokenValid === false) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <Button variant="ghost" onClick={() => onNavigate('/')} className="mb-4">
@@ -113,7 +113,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
 
   if (tokenValid === null) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
           <Activity className="h-8 w-8 text-emerald-600 mx-auto mb-4 animate-pulse" />
           <p>Validating reset link...</p>
@@ -123,7 +123,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <Button variant="ghost" onClick={() => onNavigate('/')} className="mb-4">

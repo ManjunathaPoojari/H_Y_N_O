@@ -533,7 +533,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto h-full relative bg-gradient-to-br from-emerald-50 via-white to-teal-50 rounded-lg overflow-hidden shadow-2xl">
+    <div className="w-full max-w-6xl mx-auto h-full relative bg-white rounded-lg overflow-hidden shadow-2xl">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-3 flex justify-between items-center shadow-lg">
         <div className="flex items-center gap-3">
