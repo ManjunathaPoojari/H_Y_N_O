@@ -45,6 +45,8 @@ import { AdminEmergency } from './components/admin/AdminEmergency';
 import { HospitalManagement } from './components/admin/HospitalManagement';
 import { DoctorManagement } from './components/admin/DoctorManagement';
 import { ConfigStatus } from './components/ConfigStatus';
+import DailyTracker from './components/patient/DailyTracker';
+import WaterTracking from './components/patient/WaterTracking';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 import { Card, CardContent } from './components/ui/card';
@@ -184,7 +186,7 @@ function AppContent() {
           {currentPath === '/patient/reports' && <PatientReports />}
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
-          {currentPath === '/patient/nutrition/daily-tracker' && <WaterTracking />}
+          {currentPath === '/patient/nutrition/daily-tracker' && <DailyTracker />}
           {currentPath === '/patient/nutrition/recipes' && <HealthyRecipes onNavigate={navigate} />}
           {currentPath === '/patient/nutrition/premium' && <PremiumPlans onNavigate={navigate} />}
           {currentPath === '/patient/nutrition/profile' && <UserProfile />}
