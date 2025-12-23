@@ -23,21 +23,39 @@ public class WebSocketVideoCallController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    private static Map<String, List<String>> appointmentParticipants = new ConcurrentHashMap<>();
+    // Store ParticipantInfo instead of just String IDs
+    // AppointmentID -> Map<UserID, ParticipantInfo>
+    private static Map<String, Map<String, ParticipantInfo>> appointmentParticipants = new ConcurrentHashMap<>();
 
-    @MessageMapping("/api/video-call/{appointmentId}/join")
+    @MessageMapping("/video-call/{appointmentId}/join")
     public void joinVideoCall(
             @DestinationVariable String appointmentId,
             @Payload JoinCallRequest request) {
 
-        // Add participant to the appointment
-        appointmentParticipants.computeIfAbsent(appointmentId, k -> new ArrayList<>()).add(request.getUserId());
+        // Get or create the participants map for this appointment
+        Map<String, ParticipantInfo> participants = appointmentParticipants.computeIfAbsent(appointmentId, k -> new ConcurrentHashMap<>());
+        
+        // Store the new participant's info
+        ParticipantInfo newParticipant = new ParticipantInfo(request.getUserId(), request.getUserName(), request.getUserRole());
+        participants.put(request.getUserId(), newParticipant);
 
-        // Notify the doctor that a patient wants to join
+        // 1. Notify EVERYONE (including existing users) that a new user joined
         messagingTemplate.convertAndSend(
             "/topic/video-call/" + appointmentId + "/join",
             new JoinCallNotification(request.getUserId(), request.getUserName(), request.getUserRole())
         );
+
+        // 2. Notify the NEW user about ALL EXISTING participants
+        // We broadcast this to the room, but client-side filtering (if(fromUserId === myId)) prevents issues for existing users.
+        // The new user will receive "Join" events for essentially "re-playing" the room state.
+        for (ParticipantInfo existingUser : participants.values()) {
+            if (!existingUser.getUserId().equals(request.getUserId())) {
+                messagingTemplate.convertAndSend(
+                    "/topic/video-call/" + appointmentId + "/join",
+                    new JoinCallNotification(existingUser.getUserId(), existingUser.getUserName(), existingUser.getUserRole())
+                );
+            }
+        }
     }
 
     @MessageMapping("/video-call/{appointmentId}/offer")
@@ -45,18 +63,11 @@ public class WebSocketVideoCallController {
             @DestinationVariable String appointmentId,
             @Payload WebRTCOffer offer) {
 
-        // Send offer to other participants
-        List<String> participants = appointmentParticipants.get(appointmentId);
-        if (participants != null) {
-            for (String userId : participants) {
-                if (!userId.equals(offer.getFromUserId())) {
-                    messagingTemplate.convertAndSend(
-                        "/topic/user/" + userId + "/video-call/offer",
-                        offer
-                    );
-                }
-            }
-        }
+        // Broadcast offer to the appointment room
+        messagingTemplate.convertAndSend(
+            "/topic/video-call/" + appointmentId + "/offer",
+            offer
+        );
     }
 
     @MessageMapping("/video-call/{appointmentId}/answer")
@@ -64,18 +75,11 @@ public class WebSocketVideoCallController {
             @DestinationVariable String appointmentId,
             @Payload WebRTCAnswer answer) {
 
-        // Send answer to other participants
-        List<String> participants = appointmentParticipants.get(appointmentId);
-        if (participants != null) {
-            for (String userId : participants) {
-                if (!userId.equals(answer.getFromUserId())) {
-                    messagingTemplate.convertAndSend(
-                        "/topic/user/" + userId + "/video-call/answer",
-                        answer
-                    );
-                }
-            }
-        }
+        // Broadcast answer to the appointment room
+        messagingTemplate.convertAndSend(
+            "/topic/video-call/" + appointmentId + "/answer",
+            answer
+        );
     }
 
     @MessageMapping("/video-call/{appointmentId}/ice-candidate")
@@ -83,18 +87,11 @@ public class WebSocketVideoCallController {
             @DestinationVariable String appointmentId,
             @Payload IceCandidate candidate) {
 
-        // Send ICE candidate to other participants
-        List<String> participants = appointmentParticipants.get(appointmentId);
-        if (participants != null) {
-            for (String userId : participants) {
-                if (!userId.equals(candidate.getFromUserId())) {
-                    messagingTemplate.convertAndSend(
-                        "/topic/user/" + userId + "/video-call/ice-candidate",
-                        candidate
-                    );
-                }
-            }
-        }
+        // Broadcast ICE candidate to the appointment room
+        messagingTemplate.convertAndSend(
+            "/topic/video-call/" + appointmentId + "/ice-candidate",
+            candidate
+        );
     }
 
     @MessageMapping("/video-call/{appointmentId}/leave")
@@ -103,22 +100,19 @@ public class WebSocketVideoCallController {
             @Payload LeaveCallRequest request) {
 
         // Remove participant from the appointment
-        List<String> participants = appointmentParticipants.get(appointmentId);
+        Map<String, ParticipantInfo> participants = appointmentParticipants.get(appointmentId);
         if (participants != null) {
             participants.remove(request.getUserId());
             if (participants.isEmpty()) {
                 appointmentParticipants.remove(appointmentId);
             }
-        }
-
-        // Notify others that someone left the call
-        if (participants != null) {
-            for (String userId : participants) {
-                messagingTemplate.convertAndSend(
-                    "/topic/user/" + userId + "/video-call/leave",
-                    new LeaveCallNotification(request.getUserId(), request.getUserName())
-                );
-            }
+            
+            // Notify others that someone left the call
+            // We can iterate remaining participants or just broadcast to the room topic (simpler/more robust)
+             messagingTemplate.convertAndSend(
+                "/topic/video-call/" + appointmentId + "/leave",
+                new LeaveCallNotification(request.getUserId(), request.getUserName())
+            );
         }
     }
 
@@ -279,5 +273,22 @@ public class WebSocketVideoCallController {
 
         public String getUserName() { return userName; }
         public void setUserName(String userName) { this.userName = userName; }
+    }
+
+    // Helper class to store participant info
+    public static class ParticipantInfo {
+        private String userId;
+        private String userName;
+        private String userRole;
+
+        public ParticipantInfo(String userId, String userName, String userRole) {
+            this.userId = userId;
+            this.userName = userName;
+            this.userRole = userRole;
+        }
+
+        public String getUserId() { return userId; }
+        public String getUserName() { return userName; }
+        public String getUserRole() { return userRole; }
     }
 }

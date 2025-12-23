@@ -65,30 +65,33 @@ export const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (isBackground = false) => {
     try {
-      setLoading(true);
+      if (!isBackground) {
+        setLoading(true);
+      }
       setError(null);
       const data = await adminAPI.getStats();
-      console.log('Dashboard API Response:', data);
-      console.log('Response keys:', Object.keys(data));
-      console.log('Has networkStats?', !!data.networkStats);
-      console.log('Has pendingApprovals?', !!data.pendingApprovals);
-      console.log('Has operationalMetrics?', !!data.operationalMetrics);
+      // Keeping logs for debugging if needed, but reducing noise
+      // console.log('Dashboard API Response:', data); 
       setStats(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+      if (!isBackground) {
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+      }
       console.error('Error fetching dashboard stats:', err);
     } finally {
-      setLoading(false);
+      if (!isBackground) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     fetchDashboardData();
 
-    // Auto-refresh every 1 second
-    const intervalId = setInterval(fetchDashboardData, 1000);
+    // Auto-refresh every 30 seconds
+    const intervalId = setInterval(() => fetchDashboardData(true), 30000);
 
     return () => clearInterval(intervalId);
   }, []);

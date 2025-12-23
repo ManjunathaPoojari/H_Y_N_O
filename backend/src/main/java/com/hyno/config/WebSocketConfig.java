@@ -29,8 +29,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setAllowedOriginPatterns("http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "http://localhost:3002")
                 .withSockJS(); // Enable SockJS fallback
 
-        // Also register without SockJS for native WebSocket clients
-        registry.addEndpoint("/api/ws")
-                .setAllowedOriginPatterns("http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "http://localhost:3002");
+
     }
 }

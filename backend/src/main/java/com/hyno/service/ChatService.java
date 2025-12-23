@@ -79,6 +79,12 @@ public class ChatService {
     public ChatRoom createChatRoomForAppointment(String appointmentId) {
         logger.info("Creating chat room for appointment: {}", appointmentId);
         try {
+            List<ChatRoom> existingRooms = chatRoomRepository.findByAppointmentId(appointmentId);
+            if (!existingRooms.isEmpty()) {
+                logger.info("Chat room already exists for appointment: {}", appointmentId);
+                return existingRooms.get(0);
+            }
+
             Optional<Appointment> appointment = appointmentRepository.findById(appointmentId);
             if (appointment.isPresent()) {
                 ChatRoom chatRoom = new ChatRoom();

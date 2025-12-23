@@ -20,7 +20,7 @@ public class WebSocketChatController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    @MessageMapping("/api/chat.send")
+    @MessageMapping("/chat.send")
     public WebSocketMessageResponse sendMessage(
             @Payload ChatMessageRequest messageRequest) {
 
@@ -34,6 +34,20 @@ public class WebSocketChatController {
             ChatMessage.SenderRole.valueOf(messageRequest.getSenderRole().toUpperCase()),
             messageRequest.getContent()
         );
+
+        if (message == null) {
+            // Log error or send error message back
+            // For now, we return a dummy response or similar to avoid client hanging?
+            // Or just return null which might be cleaner if client handles it.
+            // But let's return an error object if possible, but the signature returns WebSocketMessageResponse.
+            // Let's retry creation if possible? No.
+            // Just return an empty response with id "error"
+            WebSocketMessageResponse errorResponse = new WebSocketMessageResponse();
+            errorResponse.setId("error");
+            errorResponse.setContent("Failed to process message: Chat room not found");
+            errorResponse.setMessageType("error");
+            return errorResponse;
+        }
 
         // Create response for frontend
         WebSocketMessageResponse response = new WebSocketMessageResponse();
