@@ -19,7 +19,21 @@ export const WellnessCommunity: React.FC<WellnessCommunityProps> = ({ onNavigate
     email: '',
     interests: ''
   });
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [joined, setJoined] = useState(false);
+
+  const interestOptions = [
+    'Yoga',
+    'Nutrition',
+    'Fitness',
+    'Mental Health',
+    'Weight Loss',
+    'Meditation',
+    'Healthy Cooking',
+    'Sports',
+    'Wellness Coaching',
+    'Holistic Health'
+  ];
   const [activeTab, setActiveTab] = useState('feed');
 
   // States for feature dialogs
@@ -29,11 +43,166 @@ export const WellnessCommunity: React.FC<WellnessCommunityProps> = ({ onNavigate
   const [showLiveEvents, setShowLiveEvents] = useState(false);
   const [showSupportGroups, setShowSupportGroups] = useState(false);
   const [showCommunityCalendar, setShowCommunityCalendar] = useState(false);
+  const [connectedMembers, setConnectedMembers] = useState<Set<number>>(new Set());
+  const [joinedForums, setJoinedForums] = useState<Set<number>>(new Set());
+  const [joinedChallenges, setJoinedChallenges] = useState<Set<number>>(new Set());
+  const [joinedEvents, setJoinedEvents] = useState<Set<number>>(new Set());
+  const [joinedGroups, setJoinedGroups] = useState<Set<number>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
+  const [comments, setComments] = useState<Map<number, Array<{user: string, text: string}>>>(new Map());
+  const [showComments, setShowComments] = useState<Set<number>>(new Set());
+  const [newComment, setNewComment] = useState<Map<number, string>>(new Map());
+
+  const members = [
+    { id: 1, name: 'Priya Sharma', description: 'Nutrition Expert | Delhi', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face' },
+    { id: 2, name: 'Raj Kumar', description: 'Fitness Trainer | Bangalore', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face' },
+    { id: 3, name: 'Amit Singh', description: 'Dietitian | Mumbai', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face' },
+    { id: 4, name: 'Kavita Rao', description: 'Meal Planner | Chennai', avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face' },
+    { id: 5, name: 'Vikram Patel', description: 'Nutrition Coach | Pune', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=40&h=40&fit=crop&crop=face' },
+    { id: 6, name: 'Sneha Gupta', description: 'Healthy Eating Specialist | Hyderabad', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face' },
+    { id: 7, name: 'Arjun Mehta', description: 'Weight Management Expert | Ahmedabad', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face' },
+    { id: 8, name: 'Meera Joshi', description: 'Diet Consultant | Jaipur', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face' },
+    { id: 9, name: 'Rohan Desai', description: 'Sports Nutritionist | Surat', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face' },
+    { id: 10, name: 'Poonam Agarwal', description: 'Holistic Nutritionist | Lucknow', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=40&h=40&fit=crop&crop=face' },
+    { id: 11, name: 'Suresh Nair', description: 'Nutritional Therapist | Kochi', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face' },
+    { id: 12, name: 'Anjali Verma', description: 'Food Scientist | Indore', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face' }
+  ];
+
+  const filteredMembers = members.filter(member =>
+    member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    member.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const forums = [
+    { id: 1, title: 'Nutrition Tips for Beginners', description: 'Started by: Priya S. | 15 replies | Last post: 2 hours ago' },
+    { id: 2, title: 'Mental Health and Exercise', description: 'Started by: Raj K. | 28 replies | Last post: 1 day ago' }
+  ];
+
+  const challenges = [
+    { id: 1, title: 'Hydration Challenge', description: 'Track your daily water consumption for better hydration.' },
+    { id: 2, title: 'Meal Prep Challenge', description: 'Prepare healthy meals in advance for the week.' },
+    { id: 3, title: 'Veggie Intake Challenge', description: 'Increase your daily vegetable consumption.' },
+    { id: 4, title: 'Sugar-Free Challenge', description: 'Avoid added sugars for 30 days.' }
+  ];
+
+  const feedPosts = [
+    {
+      id: 1,
+      user: 'Sarah Johnson',
+      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face',
+      content: 'Just completed my 30-day yoga challenge! Feeling amazing! 🧘‍♀️ #WellnessJourney',
+      likes: 12,
+      comments: []
+    },
+    {
+      id: 2,
+      user: 'Mike Chen',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face',
+      content: 'Looking for a running buddy in Mumbai. Anyone interested? #FitnessCommunity',
+      likes: 8,
+      comments: []
+    },
+    {
+      id: 3,
+      user: 'Priya Sharma',
+      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face',
+      content: 'Amazing nutrition webinar today! Learned so much about meal planning. Thanks to everyone who joined! 📚🥗',
+      likes: 15,
+      comments: []
+    },
+    {
+      id: 4,
+      user: 'Raj Kumar',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
+      content: 'Day 5 of the hydration challenge! Already feeling more energized. Who else is participating? 💧',
+      likes: 22,
+      comments: []
+    },
+    {
+      id: 5,
+      user: 'Sneha Gupta',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face',
+      content: 'Just tried a new smoothie recipe with kale, banana, and almond milk. So refreshing! Recipe in comments 👇',
+      likes: 18,
+      comments: []
+    },
+    {
+      id: 6,
+      user: 'Arjun Mehta',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
+      content: 'Mental health is just as important as physical health. Taking time for meditation today. 🧘‍♂️ #SelfCare',
+      likes: 27,
+      comments: []
+    }
+  ];
+
+  const handleConnect = (memberId: number) => {
+    setConnectedMembers(prev => new Set(prev).add(memberId));
+  };
+
+  const handleCancel = (memberId: number) => {
+    setConnectedMembers(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(memberId);
+      return newSet;
+    });
+  };
+
+  const handleJoinForum = (forumId: number) => {
+    setJoinedForums(prev => new Set(prev).add(forumId));
+  };
+
+  const handleCancelForum = (forumId: number) => {
+    setJoinedForums(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(forumId);
+      return newSet;
+    });
+  };
+
+  const handleJoinChallenge = (challengeId: number) => {
+    setJoinedChallenges(prev => new Set(prev).add(challengeId));
+  };
+
+  const handleCancelChallenge = (challengeId: number) => {
+    setJoinedChallenges(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(challengeId);
+      return newSet;
+    });
+  };
+
+  const handleJoinEvent = (eventId: number) => {
+    setJoinedEvents(prev => new Set(prev).add(eventId));
+  };
+
+  const handleCancelEvent = (eventId: number) => {
+    setJoinedEvents(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(eventId);
+      return newSet;
+    });
+  };
+
+  const handleJoinGroup = (groupId: number) => {
+    setJoinedGroups(prev => new Set(prev).add(groupId));
+  };
+
+  const handleCancelGroup = (groupId: number) => {
+    setJoinedGroups(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(groupId);
+      return newSet;
+    });
+  };
 
   const handleJoinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Simulate joining community
-    console.log('Joining community:', joinForm);
+    console.log('Joining community:', { ...joinForm, interests: selectedInterests });
     setJoined(true);
     addNotification({
       type: 'system',
@@ -45,11 +214,53 @@ export const WellnessCommunity: React.FC<WellnessCommunityProps> = ({ onNavigate
       setShowJoinForm(false);
       setJoined(false);
       setJoinForm({ name: '', email: '', interests: '' });
+      setSelectedInterests([]);
     }, 2000);
   };
 
   const handleInputChange = (field: string, value: string) => {
     setJoinForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleLikePost = (postId: number) => {
+    setLikedPosts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleToggleComments = (postId: number) => {
+    setShowComments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleAddComment = (postId: number) => {
+    const commentText = newComment.get(postId)?.trim();
+    if (commentText) {
+      setComments(prev => {
+        const newComments = new Map(prev);
+        const postComments = newComments.get(postId) || [];
+        newComments.set(postId, [...postComments, { user: 'You', text: commentText }]);
+        return newComments;
+      });
+      setNewComment(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(postId);
+        return newMap;
+      });
+    }
   };
 
   const communityFeatures = [
@@ -103,36 +314,63 @@ export const WellnessCommunity: React.FC<WellnessCommunityProps> = ({ onNavigate
       case 'feed':
         return (
           <div className="space-y-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face" alt="User" className="w-10 h-10 rounded-full" />
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">Sarah Johnson</p>
-                    <p className="text-sm text-gray-700">Just completed my 30-day yoga challenge! Feeling amazing! 🧘‍♀️ #WellnessJourney</p>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800"><Heart className="h-4 w-4 mr-1" /> Like</Button>
-                      <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800"><MessageCircle className="h-4 w-4 mr-1" /> Comment</Button>
+            {feedPosts.map((post) => (
+              <Card key={post.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-start space-x-3">
+                    <img src={post.avatar} alt="User" className="w-10 h-10 rounded-full" />
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-800">{post.user}</p>
+                      <p className="text-sm text-gray-700">{post.content}</p>
+                      <div className="flex items-center space-x-4 mt-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`text-gray-600 hover:text-gray-800 ${likedPosts.has(post.id) ? 'text-red-500' : ''}`}
+                          onClick={() => handleLikePost(post.id)}
+                        >
+                          <Heart className={`h-4 w-4 mr-1 ${likedPosts.has(post.id) ? 'fill-current' : ''}`} />
+                          {likedPosts.has(post.id) ? post.likes + 1 : post.likes}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-gray-600 hover:text-gray-800"
+                          onClick={() => handleToggleComments(post.id)}
+                        >
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          {(comments.get(post.id)?.length || 0)}
+                        </Button>
+                      </div>
+                      {showComments.has(post.id) && (
+                        <div className="mt-3 space-y-2">
+                          {(comments.get(post.id) || []).map((comment, index) => (
+                            <div key={index} className="bg-gray-50 p-2 rounded">
+                              <p className="text-sm font-medium">{comment.user}</p>
+                              <p className="text-sm text-gray-700">{comment.text}</p>
+                            </div>
+                          ))}
+                          <div className="flex space-x-2">
+                            <Input
+                              placeholder="Add a comment..."
+                              value={newComment.get(post.id) || ''}
+                              onChange={(e) => setNewComment(prev => new Map(prev).set(post.id, e.target.value))}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleAddComment(post.id);
+                                }
+                              }}
+                              className="flex-1"
+                            />
+                            <Button size="sm" onClick={() => handleAddComment(post.id)}>Post</Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" alt="User" className="w-10 h-10 rounded-full" />
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">Mike Chen</p>
-                    <p className="text-sm text-gray-700">Looking for a running buddy in Mumbai. Anyone interested? #FitnessCommunity</p>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800"><Heart className="h-4 w-4 mr-1" /> Like</Button>
-                      <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800"><MessageCircle className="h-4 w-4 mr-1" /> Comment</Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         );
       case 'challenges':
@@ -188,7 +426,11 @@ export const WellnessCommunity: React.FC<WellnessCommunityProps> = ({ onNavigate
                 <p className="text-sm text-gray-700 mb-3">Share experiences and tips for managing diabetes.</p>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700">342 members</span>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">Join Group</Button>
+                  {joinedGroups.has(1) ? (
+                    <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50" onClick={() => handleCancelGroup(1)}>Cancel</Button>
+                  ) : (
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => handleJoinGroup(1)}>Join Group</Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -198,7 +440,11 @@ export const WellnessCommunity: React.FC<WellnessCommunityProps> = ({ onNavigate
                 <p className="text-sm text-gray-700 mb-3">Motivation and accountability for your weight loss journey.</p>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700">567 members</span>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">Join Group</Button>
+                  {joinedGroups.has(2) ? (
+                    <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50" onClick={() => handleCancelGroup(2)}>Cancel</Button>
+                  ) : (
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => handleJoinGroup(2)}>Join Group</Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -212,7 +458,7 @@ export const WellnessCommunity: React.FC<WellnessCommunityProps> = ({ onNavigate
   return (
     <div className="space-y-8 p-6 max-w-6xl mx-auto">
       {/* Hero Section */}
-      <section className="text-center py-16 px-8 bg-gradient-to-br from-green-100 to-blue-100 rounded-2xl shadow-lg">
+      <section className="text-center py-16 px-8 bg-blue-50 rounded-2xl shadow-lg">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl mb-6 font-bold text-gray-800">
             Welcome to Our Wellness Community
@@ -340,89 +586,125 @@ export const WellnessCommunity: React.FC<WellnessCommunityProps> = ({ onNavigate
 
       {/* Member Directory Dialog */}
       <Dialog open={showMemberDirectory} onOpenChange={setShowMemberDirectory}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Member Directory</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face" alt="Sarah" className="w-10 h-10 rounded-full" />
-              <div>
-                <p className="font-medium">Sarah Johnson</p>
-                <p className="text-sm text-gray-600">Yoga Enthusiast | Mumbai</p>
-              </div>
-              <Button size="sm" variant="outline">Connect</Button>
+            <div className="relative">
+              <Input
+                placeholder="Search members..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowDropdown(true);
+                  if (!e.target.value) {
+                    setSelectedMember(null);
+                  }
+                }}
+                className="max-w-md mx-auto"
+              />
+              {searchQuery && showDropdown && (
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-w-md w-full z-10 max-h-48 overflow-y-auto">
+                  {members
+                    .filter(member => member.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map((member) => (
+                      <div
+                        key={member.id}
+                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                          setSelectedMember(member);
+                          setSearchQuery('');
+                          setShowDropdown(false);
+                        }}
+                      >
+                        {member.name}
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" alt="Mike" className="w-10 h-10 rounded-full" />
-              <div>
-                <p className="font-medium">Mike Chen</p>
-                <p className="text-sm text-gray-600">Runner | Chennai</p>
+            {selectedMember && (
+              <div className="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <img src={selectedMember.avatar} alt={selectedMember.name} className="w-10 h-10 rounded-full" />
+                <div className="flex-1">
+                  <p className="font-medium">{selectedMember.name}</p>
+                  <p className="text-sm text-gray-600">{selectedMember.description}</p>
+                </div>
+                {connectedMembers.has(selectedMember.id) ? (
+                  <Button size="sm" variant="outline" onClick={() => handleCancel(selectedMember.id)}>Cancel</Button>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={() => handleConnect(selectedMember.id)}>Connect</Button>
+                )}
               </div>
-              <Button size="sm" variant="outline">Connect</Button>
-            </div>
-            <div className="text-center">
-              <Input placeholder="Search members..." className="max-w-md mx-auto" />
+            )}
+            <div className="max-h-96 overflow-y-auto space-y-4">
+              {filteredMembers.map((member) => (
+                <div key={member.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <img src={member.avatar} alt={member.name} className="w-10 h-10 rounded-full" />
+                  <div className="flex-1">
+                    <p className="font-medium">{member.name}</p>
+                    <p className="text-sm text-gray-600">{member.description}</p>
+                  </div>
+                  {connectedMembers.has(member.id) ? (
+                    <Button size="sm" variant="outline" onClick={() => handleCancel(member.id)}>Cancel</Button>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => handleConnect(member.id)}>Connect</Button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Discussion Forums Dialog */}
       <Dialog open={showDiscussionForums} onOpenChange={setShowDiscussionForums}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Discussion Forums</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Card>
-              <CardContent className="p-4">
-                <h4 className="font-semibold mb-2">Nutrition Tips for Beginners</h4>
-                <p className="text-sm text-gray-600 mb-3">Started by: Priya S. | 15 replies | Last post: 2 hours ago</p>
-                <Button size="sm" variant="outline">Join Discussion</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <h4 className="font-semibold mb-2">Mental Health and Exercise</h4>
-                <p className="text-sm text-gray-600 mb-3">Started by: Raj K. | 28 replies | Last post: 1 day ago</p>
-                <Button size="sm" variant="outline">Join Discussion</Button>
-              </CardContent>
-            </Card>
+            {forums.map((forum) => (
+              <Card key={forum.id}>
+                <CardContent className="p-4">
+                  <h4 className="font-semibold mb-2">{forum.title}</h4>
+                  <p className="text-sm text-gray-600 mb-3">{forum.description}</p>
+                  {joinedForums.has(forum.id) ? (
+                    <Button size="sm" variant="outline" onClick={() => handleCancelForum(forum.id)}>Cancel</Button>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => handleJoinForum(forum.id)}>Join Discussion</Button>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Wellness Challenges Dialog */}
       <Dialog open={showWellnessChallenges} onOpenChange={setShowWellnessChallenges}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-md max-h-[60vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Wellness Challenges</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-semibold mb-2">30-Day Yoga Challenge</h4>
-              <p className="text-sm text-gray-600 mb-3">Daily yoga sessions to improve flexibility and reduce stress.</p>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Progress: 45%</span>
-                <Button size="sm">Join</Button>
+            {challenges.map((challenge) => (
+              <div key={challenge.id} className="p-4 border rounded-lg">
+                <h4 className="font-semibold mb-2">{challenge.title}</h4>
+                <p className="text-sm text-gray-600 mb-3">{challenge.description}</p>
+                {joinedChallenges.has(challenge.id) ? (
+                  <Button size="sm" variant="outline" onClick={() => handleCancelChallenge(challenge.id)}>Cancel</Button>
+                ) : (
+                  <Button size="sm" onClick={() => handleJoinChallenge(challenge.id)}>Join Challenge</Button>
+                )}
               </div>
-            </div>
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-semibold mb-2">Water Intake Challenge</h4>
-              <p className="text-sm text-gray-600 mb-3">Track your daily water consumption for better hydration.</p>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Progress: 60%</span>
-                <Button size="sm">Join</Button>
-              </div>
-            </div>
+            ))}
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Live Events Dialog */}
       <Dialog open={showLiveEvents} onOpenChange={setShowLiveEvents}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Live Events</DialogTitle>
           </DialogHeader>
@@ -434,7 +716,11 @@ export const WellnessCommunity: React.FC<WellnessCommunityProps> = ({ onNavigate
                   <span className="text-sm text-green-600">Live Now</span>
                 </div>
                 <p className="text-sm text-gray-600 mb-3">Join Dr. Sharma for tips on balanced diets.</p>
-                <Button size="sm">Join Event</Button>
+                {joinedEvents.has(1) ? (
+                  <Button size="sm" variant="outline" onClick={() => handleCancelEvent(1)}>Cancel</Button>
+                ) : (
+                  <Button size="sm" onClick={() => handleJoinEvent(1)}>Join Event</Button>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -464,7 +750,11 @@ export const WellnessCommunity: React.FC<WellnessCommunityProps> = ({ onNavigate
                 Diabetes Support
               </h4>
               <p className="text-sm text-gray-600 mb-3">Share tips and motivation for managing diabetes.</p>
-              <Button size="sm" className="w-full">Join Group</Button>
+              {joinedGroups.has(1) ? (
+                <Button size="sm" variant="outline" className="w-full" onClick={() => handleCancelGroup(1)}>Cancel</Button>
+              ) : (
+                <Button size="sm" className="w-full" onClick={() => handleJoinGroup(1)}>Join Group</Button>
+              )}
             </div>
             <div className="p-4 border rounded-lg">
               <h4 className="font-semibold mb-2 flex items-center">
@@ -472,7 +762,11 @@ export const WellnessCommunity: React.FC<WellnessCommunityProps> = ({ onNavigate
                 Weight Loss Journey
               </h4>
               <p className="text-sm text-gray-600 mb-3">Accountability partners for sustainable weight loss.</p>
-              <Button size="sm" className="w-full">Join Group</Button>
+              {joinedGroups.has(2) ? (
+                <Button size="sm" variant="outline" className="w-full" onClick={() => handleCancelGroup(2)}>Cancel</Button>
+              ) : (
+                <Button size="sm" className="w-full" onClick={() => handleJoinGroup(2)}>Join Group</Button>
+              )}
             </div>
           </div>
         </DialogContent>
@@ -487,12 +781,12 @@ export const WellnessCommunity: React.FC<WellnessCommunityProps> = ({ onNavigate
           <div className="space-y-4">
             <div className="p-4 border rounded-lg">
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold">Yoga Meetup</h4>
+                <h4 className="font-semibold">Nutrition</h4>
                 <span className="text-sm text-gray-600">Oct 15, 6 PM</span>
               </div>
-              <p className="text-sm text-gray-600 mb-3">Join us at the local park for a group yoga session.</p>
+              <p className="text-sm text-gray-600 mb-3">Learn about balanced diets and healthy eating habits.</p>
               <div className="flex space-x-2">
-                <Button size="sm" variant="outline"><MapPin className="h-3 w-3 mr-1" /> Location</Button>
+                <Button size="sm" variant="outline" onClick={() => onNavigate('/video-call')}><Video className="h-3 w-3 mr-1" /> Online</Button>
                 <Button size="sm"><Star className="h-3 w-3 mr-1" /> RSVP</Button>
               </div>
             </div>

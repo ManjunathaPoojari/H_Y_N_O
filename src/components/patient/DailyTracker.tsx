@@ -1,8 +1,3 @@
-
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import { Scale, Ruler, Plus, Minus } from 'lucide-react'; // Icons for weight and height
 

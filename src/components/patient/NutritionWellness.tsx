@@ -26,7 +26,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
     preferredTime: '',
     healthGoals: ''
   });
-  const [bookingSubmitted, setBookingSubmitted] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [likes, setLikes] = useState<{ [key: number]: boolean }>({});
@@ -40,27 +40,14 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
     e.preventDefault();
     // Here you would typically send the booking data to your backend
     console.log('Booking submitted:', bookingForm);
-    setBookingSubmitted(true);
+    setBookingSuccess(true);
+    setShowBookingForm(false);
     addNotification({
       type: 'system',
       title: 'Booking Submitted',
-      message: 'Your consultation booking has been submitted successfully. We\'ll contact you soon to confirm your appointment.',
+      message: 'Your consultation booking has been submitted successfully. We will contact you soon to confirm your appointment.',
       unread: true
     });
-    setTimeout(() => {
-      setShowBookingForm(false);
-      setSelectedNutritionist(null);
-      setBookingSubmitted(false);
-      setBookingForm({
-        name: '',
-        email: '',
-        phone: '',
-        consultationType: '',
-        preferredDate: '',
-        preferredTime: '',
-        healthGoals: ''
-      });
-    }, 2000);
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -464,7 +451,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
   return (
     <div className="space-y-8 p-6">
       {/* Hero Section */}
-      <section className="text-center py-48 px-8 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-2xl mb-12">
+      <section className="text-center py-8 px-1 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-2xl mb-12">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl md:text-5xl mb-6 text-black font-bold tracking-tight leading-tight">
             Transform Your Wellness Journey
@@ -680,12 +667,7 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
 
       {/* Join Community Button */}
       <div className="flex justify-center mb-12">
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold" onClick={() => addNotification({
-          type: 'system',
-          title: 'Welcome to the Community!',
-          message: 'You have successfully joined our wellness community. Start connecting with others on your health journey!',
-          unread: true
-        })}>
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold" onClick={() => onNavigate('/patient/community')}>
           Join Community
         </Button>
       </div>
@@ -754,6 +736,279 @@ export const NutritionWellness: React.FC<NutritionWellnessProps> = ({ onNavigate
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Nutritionist Detail Dialog */}
+      <Dialog open={!!selectedNutritionist} onOpenChange={() => setSelectedNutritionist(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-bold text-center mb-6">
+              Nutritionist Profile
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedNutritionist && (
+            <div className="space-y-6">
+              {/* Header with Photo and Basic Info */}
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                <img
+                  src={selectedNutritionist.photo}
+                  alt={selectedNutritionist.name}
+                  className="w-32 h-32 rounded-full object-cover border-4 border-gray-100"
+                />
+                <div className="text-center md:text-left flex-1">
+                  <h2 className="text-2xl font-bold mb-2">{selectedNutritionist.name}</h2>
+                  <p className="text-lg text-gray-600 mb-2">{selectedNutritionist.specialty}</p>
+                  <p className="text-gray-500 mb-3">{selectedNutritionist.experience} experience</p>
+                  <div className="flex items-center justify-center md:justify-start gap-1 mb-4">
+                    <Star className="h-5 w-5 text-yellow-400 fill-current" />
+                    <span className="text-lg font-medium">{selectedNutritionist.rating}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detailed Information Grid */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Qualifications */}
+                <div>
+                  <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                    <Award className="h-5 w-5 text-blue-600" />
+                    Qualifications
+                  </h4>
+                  <p className="text-gray-600">{selectedNutritionist.qualifications}</p>
+                </div>
+
+                {/* Languages */}
+                <div>
+                  <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-green-600" />
+                    Languages
+                  </h4>
+                  <p className="text-gray-600">{selectedNutritionist.languages}</p>
+                </div>
+
+                {/* Contact Information */}
+                <div>
+                  <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                    <Mail className="h-5 w-5 text-purple-600" />
+                    Contact Information
+                  </h4>
+                  <div className="space-y-2">
+                    <p className="text-gray-600 flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      {selectedNutritionist.email}
+                    </p>
+                    <p className="text-gray-600 flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      {selectedNutritionist.phone}
+                    </p>
+                    <p className="text-gray-600 flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {selectedNutritionist.location}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Experience & Rating */}
+                <div>
+                  <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-orange-600" />
+                    Professional Details
+                  </h4>
+                  <div className="space-y-2">
+                    <p className="text-gray-600">Experience: {selectedNutritionist.experience}</p>
+                    <p className="text-gray-600">Rating: {selectedNutritionist.rating}/5.0</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bio */}
+              <div>
+                <h4 className="font-semibold text-lg mb-3">About</h4>
+                <p className="text-gray-600 leading-relaxed">{selectedNutritionist.bio}</p>
+              </div>
+
+              {/* Achievements */}
+              <div>
+                <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                  <Check className="h-5 w-5 text-green-600" />
+                  Achievements & Recognition
+                </h4>
+                <ul className="space-y-2">
+                  {selectedNutritionist.achievements.map((achievement: string, index: number) => (
+                    <li key={index} className="text-gray-600 flex items-start gap-2">
+                      <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      {achievement}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-between items-center pt-6 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedNutritionist(null)}
+                >
+                  Close Profile
+                </Button>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => {
+                    setSelectedNutritionist(null);
+                    handleBookConsultation();
+                  }}
+                >
+                  Book Consultation
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Booking Consultation Dialog */}
+      <Dialog open={showBookingForm} onOpenChange={() => setShowBookingForm(false)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">
+              Book Consultation
+            </DialogTitle>
+            <p className="text-center text-gray-600 mt-2">
+              Please provide your details to schedule a consultation with our nutritionist.
+            </p>
+          </DialogHeader>
+
+          <form onSubmit={handleBookingSubmit} className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                <Input
+                  type="text"
+                  value={bookingForm.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <Input
+                  type="email"
+                  value={bookingForm.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                <Input
+                  type="tel"
+                  value={bookingForm.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  placeholder="Enter your phone number"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Consultation Type</label>
+                <Select value={bookingForm.consultationType} onValueChange={(value: string) => handleInputChange('consultationType', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select consultation type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="General Consultation">General Consultation</SelectItem>
+                    <SelectItem value="Diet Planning">Diet Planning</SelectItem>
+                    <SelectItem value="Weight Management">Weight Management</SelectItem>
+                    <SelectItem value="Sports Nutrition">Sports Nutrition</SelectItem>
+                    <SelectItem value="Diabetes Management">Diabetes Management</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Date</label>
+                <Input
+                  type="date"
+                  value={bookingForm.preferredDate}
+                  onChange={(e) => handleInputChange('preferredDate', e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Time</label>
+                <Input
+                  type="time"
+                  value={bookingForm.preferredTime}
+                  onChange={(e) => handleInputChange('preferredTime', e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Symptoms / Health Goals</label>
+              <Textarea
+                value={bookingForm.healthGoals}
+                onChange={(e) => handleInputChange('healthGoals', e.target.value)}
+                placeholder="Describe your symptoms, health concerns, or goals for the consultation"
+                rows={4}
+                required
+              />
+            </div>
+
+            <div className="flex justify-end gap-4 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowBookingForm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Submit
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Popup Dialog */}
+      <Dialog open={bookingSuccess} onOpenChange={() => setBookingSuccess(false)}>
+        <DialogContent className="max-w-sm bg-green-50 border-2 border-emerald-200 rounded-2xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center text-emerald-700 mb-2">
+              🎉 Booking Confirmed!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="text-center space-y-4">
+            <div className="relative">
+              <Check className="h-16 w-16 mx-auto text-emerald-600 animate-pulse" />
+              <div className="absolute inset-0 bg-emerald-400 rounded-full opacity-20 animate-ping"></div>
+            </div>
+            <p className="text-gray-700 text-base font-medium leading-relaxed">
+              Your consultation has been successfully booked! Our expert nutritionist will reach out to you soon to confirm your appointment details.
+            </p>
+            <div className="flex justify-center">
+              <Button
+                onClick={() => setBookingSuccess(false)}
+                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 py-2 rounded-full font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
+              >
+                Got it! ✨
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
