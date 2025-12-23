@@ -21,7 +21,27 @@ export const HealthyRecipes: React.FC<HealthyRecipesProps> = ({ onNavigate }) =>
     { id: 2, name: 'Hypertension' },
     { id: 3, name: 'Weight Loss' },
     { id: 4, name: 'Digestive Issues' },
-    { id: 5, name: 'Heart Health' }
+    { id: 5, name: 'Heart Health' },
+    { id: 6, name: 'Fever' },
+    { id: 7, name: 'Cough' },
+    { id: 8, name: 'Headache' },
+    { id: 9, name: 'Fatigue' },
+    { id: 10, name: 'Dizziness' },
+    { id: 11, name: 'Nausea' },
+    { id: 12, name: 'Vomiting' },
+    { id: 13, name: 'Diarrhea' },
+    { id: 14, name: 'Constipation' },
+    { id: 15, name: 'Abdominal pain' },
+    { id: 16, name: 'Chest pain' },
+    { id: 17, name: 'Shortness of breath' },
+    { id: 18, name: 'Runny nose' },
+    { id: 19, name: 'Sore throat' },
+    { id: 20, name: 'Muscle aches' },
+    { id: 21, name: 'Joint pain' },
+    { id: 22, name: 'Sweating' },
+    { id: 23, name: 'Tremors' },
+    { id: 24, name: 'Numbness' },
+    { id: 25, name: 'Weakness' }
   ];
 
   const recipes = [
@@ -189,8 +209,338 @@ export const HealthyRecipes: React.FC<HealthyRecipesProps> = ({ onNavigate }) =>
       ingredients: ['Mixed vegetables', 'Olive oil', 'Herbs', 'Garlic', 'Lemon juice'],
       instructions: 'Cut vegetables into chunks and thread onto skewers. Brush with olive oil mixture and grill until tender.',
       prepTime: '25 mins'
-    }
-  ];
+    },
+    // Fever recipes
+    {
+      id: 16,
+      name: 'Vegetable Broth Soup',
+      imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop',
+      calories: 120,
+      dietaryPrefs: ['Vegan', 'Low-Calorie'],
+      categoryId: 6,
+      ingredients: ['4 cups vegetable broth', '2 carrots', '2 celery stalks', '1 onion', 'Garlic', 'Fresh herbs'],
+      instructions: 'Chop vegetables and simmer in broth for 30 minutes. Season with herbs and serve hot.',
+      prepTime: '40 mins'
+    },
+    {
+      id: 17,
+      name: 'Lemon Ginger Tea',
+      imageUrl: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&h=300&fit=crop',
+      calories: 25,
+      dietaryPrefs: ['Caffeine-Free', 'Anti-Inflammatory'],
+      categoryId: 6,
+      ingredients: ['1 inch ginger', '1 lemon', '1 cup water', 'Honey (optional)'],
+      instructions: 'Slice ginger and lemon. Boil in water for 10 minutes. Sweeten with honey if desired.',
+      prepTime: '15 mins'
+    },
+    {
+      id: 18,
+      name: 'Steamed Rice with Boiled Veggies',
+      imageUrl: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400&h=300&fit=crop',
+      calories: 220,
+      dietaryPrefs: ['Vegan', 'Gluten-Free'],
+      categoryId: 6,
+      ingredients: ['1 cup rice', '2 cups mixed vegetables', 'Salt', 'Water'],
+      instructions: 'Cook rice according to package. Steam vegetables until tender. Serve together.',
+      prepTime: '25 mins'
+    },
+    {
+      id: 19,
+      name: 'Oatmeal with Honey',
+      imageUrl: 'https://images.unsplash.com/photo-1505252585461-9044a396130f?w=400&h=300&fit=crop',
+      calories: 180,
+      dietaryPrefs: ['Vegan', 'Comfort Food'],
+      categoryId: 6,
+      ingredients: ['1/2 cup oats', '1 cup water', '1 tbsp honey', 'Cinnamon'],
+      instructions: 'Cook oats in water. Stir in honey and cinnamon. Let cool slightly before serving.',
+      prepTime: '10 mins'
+    },
+    {
+      id: 20,
+      name: 'Coconut Water Smoothie',
+      imageUrl: 'https://images.unsplash.com/photo-1553909489-cd47e9c9b90c?w=400&h=300&fit=crop',
+      calories: 150,
+      dietaryPrefs: ['Vegan', 'Hydrating'],
+      categoryId: 6,
+      ingredients: ['2 cups coconut water', '1 banana', '1/2 cup berries', 'Ice'],
+      instructions: 'Blend all ingredients until smooth. Serve chilled.',
+      prepTime: '5 mins'
+    },
+    // Cough recipes
+    {
+      id: 21,
+      name: 'Honey Lemon Tea',
+      imageUrl: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&h=300&fit=crop',
+      calories: 40,
+      dietaryPrefs: ['Caffeine-Free', 'Soothing'],
+      categoryId: 7,
+      ingredients: ['1 lemon', '1 tbsp honey', '1 cup hot water'],
+      instructions: 'Squeeze lemon into hot water. Stir in honey until dissolved. Sip slowly.',
+      prepTime: '5 mins'
+    },
+    {
+      id: 22,
+      name: 'Turmeric Milk (Golden Milk)',
+      imageUrl: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400&h=300&fit=crop',
+      calories: 120,
+      dietaryPrefs: ['Anti-Inflammatory', 'Comforting'],
+      categoryId: 7,
+      ingredients: ['1 cup milk', '1 tsp turmeric', '1/2 tsp cinnamon', '1 tsp honey', 'Pinch of black pepper'],
+      instructions: 'Heat milk with spices. Stir in honey. Simmer for 5 minutes.',
+      prepTime: '10 mins'
+    },
+    {
+      id: 23,
+      name: 'Ginger Carrot Soup',
+      imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop',
+      calories: 140,
+      dietaryPrefs: ['Vegan', 'Immune-Boosting'],
+      categoryId: 7,
+      ingredients: ['4 carrots', '1 inch ginger', '1 onion', '2 cups vegetable broth', 'Salt'],
+      instructions: 'Chop vegetables and simmer in broth for 25 minutes. Blend until smooth.',
+      prepTime: '35 mins'
+    },
+    {
+      id: 24,
+      name: 'Warm Herbal Tea with Tulsi',
+      imageUrl: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&h=300&fit=crop',
+      calories: 15,
+      dietaryPrefs: ['Caffeine-Free', 'Herbal'],
+      categoryId: 7,
+      ingredients: ['1 cup water', '2-3 tulsi leaves', '1 tsp honey', 'Lemon slice'],
+      instructions: 'Boil water with tulsi leaves for 5 minutes. Add honey and lemon.',
+      prepTime: '10 mins'
+    },
+    {
+      id: 25,
+      name: 'Steamed Pear with Honey',
+      imageUrl: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&h=300&fit=crop',
+      calories: 100,
+      dietaryPrefs: ['Vegan', 'Natural Sweetener'],
+      categoryId: 7,
+      ingredients: ['1 pear', '1 tsp honey', 'Cinnamon'],
+      instructions: 'Steam pear until soft. Drizzle with honey and sprinkle cinnamon.',
+      prepTime: '15 mins'
+    },
+    // Headache recipes
+    {
+      id: 26,
+      name: 'Spinach and Avocado Smoothie',
+      imageUrl: 'https://images.unsplash.com/photo-1571771019784-3ff35f4f4277?w=400&h=300&fit=crop',
+      calories: 180,
+      dietaryPrefs: ['Vegan', 'Nutrient-Rich'],
+      categoryId: 8,
+      ingredients: ['1 cup spinach', '1/2 avocado', '1 banana', '1 cup almond milk', '1 tsp chia seeds'],
+      instructions: 'Blend all ingredients until smooth. Serve immediately.',
+      prepTime: '5 mins'
+    },
+    {
+      id: 27,
+      name: 'Almond Banana Shake',
+      imageUrl: 'https://images.unsplash.com/photo-1553909489-cd47e9c9b90c?w=400&h=300&fit=crop',
+      calories: 220,
+      dietaryPrefs: ['Vegan', 'Energy-Boosting'],
+      categoryId: 8,
+      ingredients: ['1 banana', '1 cup almond milk', '1 tbsp almond butter', '1 tsp honey', 'Cinnamon'],
+      instructions: 'Blend banana, almond milk, and almond butter. Sweeten with honey and cinnamon.',
+      prepTime: '5 mins'
+    },
+    {
+      id: 28,
+      name: 'Whole Grain Toast with Nut Butter',
+      imageUrl: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=400&h=300&fit=crop',
+      calories: 280,
+      dietaryPrefs: ['High-Protein', 'Whole Grain'],
+      categoryId: 8,
+      ingredients: ['2 slices whole grain bread', '2 tbsp almond butter', 'Banana slices', 'Cinnamon'],
+      instructions: 'Toast bread and spread with almond butter. Top with banana slices and cinnamon.',
+      prepTime: '5 mins'
+    },
+    {
+      id: 29,
+      name: 'Cucumber Mint Salad',
+      imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=300&fit=crop',
+      calories: 50,
+      dietaryPrefs: ['Vegan', 'Refreshing'],
+      categoryId: 8,
+      ingredients: ['1 cucumber', 'Fresh mint leaves', '1 tbsp olive oil', 'Lemon juice', 'Salt'],
+      instructions: 'Slice cucumber and chop mint. Dress with olive oil and lemon juice.',
+      prepTime: '10 mins'
+    },
+    {
+      id: 30,
+      name: 'Chamomile Tea',
+      imageUrl: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&h=300&fit=crop',
+      calories: 10,
+      dietaryPrefs: ['Caffeine-Free', 'Calming'],
+      categoryId: 8,
+      ingredients: ['1 chamomile tea bag', '1 cup hot water', 'Lemon slice', 'Honey (optional)'],
+      instructions: 'Steep tea bag in hot water for 5 minutes. Add lemon and honey if desired.',
+      prepTime: '8 mins'
+    },
+    // Fatigue recipes
+    {
+      id: 31,
+      name: 'Quinoa Salad with Chickpeas',
+      imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop',
+      calories: 350,
+      dietaryPrefs: ['Vegan', 'High-Protein'],
+      categoryId: 9,
+      ingredients: ['1/2 cup quinoa', '1/2 cup chickpeas', 'Mixed greens', 'Cherry tomatoes', 'Lemon dressing'],
+      instructions: 'Cook quinoa and mix with chickpeas and vegetables. Dress with lemon.',
+      prepTime: '20 mins'
+    },
+    {
+      id: 32,
+      name: 'Green Smoothie (Spinach, Kale, Apple)',
+      imageUrl: 'https://images.unsplash.com/photo-1571771019784-3ff35f4f4277?w=400&h=300&fit=crop',
+      calories: 160,
+      dietaryPrefs: ['Vegan', 'Detoxifying'],
+      categoryId: 9,
+      ingredients: ['1 cup spinach', '1 cup kale', '1 apple', '1 banana', '1 cup water'],
+      instructions: 'Blend all ingredients until smooth. Serve chilled.',
+      prepTime: '5 mins'
+    },
+    {
+      id: 33,
+      name: 'Lentil Soup',
+      imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop',
+      calories: 240,
+      dietaryPrefs: ['Vegan', 'High-Fiber'],
+      categoryId: 9,
+      ingredients: ['1 cup lentils', '1 onion', '2 carrots', '2 cups vegetable broth', 'Spices'],
+      instructions: 'Cook lentils with chopped vegetables and broth. Season to taste.',
+      prepTime: '35 mins'
+    },
+    {
+      id: 34,
+      name: 'Overnight Oats with Chia Seeds',
+      imageUrl: 'https://images.unsplash.com/photo-1505252585461-9044a396130f?w=400&h=300&fit=crop',
+      calories: 280,
+      dietaryPrefs: ['Vegan', 'Make-Ahead'],
+      categoryId: 9,
+      ingredients: ['1/2 cup oats', '1 cup almond milk', '1 tbsp chia seeds', '1 banana', 'Nuts'],
+      instructions: 'Mix oats, milk, and chia seeds. Refrigerate overnight. Top with banana and nuts.',
+      prepTime: '5 mins + overnight'
+    },
+    {
+      id: 35,
+      name: 'Grilled Salmon with Vegetables',
+      imageUrl: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=300&fit=crop',
+      calories: 320,
+      dietaryPrefs: ['Omega-3 Rich', 'High-Protein'],
+      categoryId: 9,
+      ingredients: ['6 oz salmon', 'Mixed vegetables', 'Olive oil', 'Lemon', 'Herbs'],
+      instructions: 'Grill salmon and vegetables. Season with olive oil, lemon, and herbs.',
+      prepTime: '25 mins'
+    },
+    // Dizziness recipes
+    {
+      id: 36,
+      name: 'Banana Smoothie',
+      imageUrl: 'https://images.unsplash.com/photo-1553909489-cd47e9c9b90c?w=400&h=300&fit=crop',
+      calories: 180,
+      dietaryPrefs: ['Vegan', 'Potassium-Rich'],
+      categoryId: 10,
+      ingredients: ['2 bananas', '1 cup yogurt', '1/2 cup milk', '1 tsp honey'],
+      instructions: 'Blend bananas, yogurt, and milk. Sweeten with honey.',
+      prepTime: '5 mins'
+    },
+    {
+      id: 37,
+      name: 'Hydrating Watermelon Juice',
+      imageUrl: 'https://images.unsplash.com/photo-1571771019784-3ff35f4f4277?w=400&h=300&fit=crop',
+      calories: 80,
+      dietaryPrefs: ['Vegan', 'Hydrating'],
+      categoryId: 10,
+      ingredients: ['2 cups watermelon', '1 lime', 'Mint leaves', 'Ice'],
+      instructions: 'Blend watermelon and lime juice. Serve over ice with mint.',
+      prepTime: '5 mins'
+    },
+    {
+      id: 38,
+      name: 'Yogurt with Berries',
+      imageUrl: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400&h=300&fit=crop',
+      calories: 200,
+      dietaryPrefs: ['Probiotic', 'Antioxidant-Rich'],
+      categoryId: 10,
+      ingredients: ['1 cup yogurt', '1 cup mixed berries', '1 tbsp honey', 'Granola'],
+      instructions: 'Layer yogurt and berries. Top with honey and granola.',
+      prepTime: '5 mins'
+    },
+    {
+      id: 39,
+      name: 'Spinach Omelet',
+      imageUrl: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=400&h=300&fit=crop',
+      calories: 220,
+      dietaryPrefs: ['High-Protein', 'Iron-Rich'],
+      categoryId: 10,
+      ingredients: ['2 eggs', '1 cup spinach', '1 tomato', 'Salt and pepper', 'Olive oil'],
+      instructions: 'Whisk eggs and cook with spinach and tomato. Season to taste.',
+      prepTime: '10 mins'
+    },
+    {
+      id: 40,
+      name: 'Herbal Ginger Tea',
+      imageUrl: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&h=300&fit=crop',
+      calories: 20,
+      dietaryPrefs: ['Caffeine-Free', 'Digestive'],
+      categoryId: 10,
+      ingredients: ['1 inch ginger', '1 cup water', 'Lemon slice', 'Honey'],
+      instructions: 'Boil ginger in water for 10 minutes. Add lemon and honey.',
+      prepTime: '15 mins'
+    },
+    // Nausea recipes
+    {
+      id: 41,
+      name: 'Plain Rice Porridge',
+      imageUrl: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400&h=300&fit=crop',
+      calories: 150,
+      dietaryPrefs: ['Vegan', 'Simple'],
+      categoryId: 11,
+      ingredients: ['1/2 cup rice', '2 cups water', 'Salt'],
+      instructions: 'Cook rice in water until soft and porridge-like. Season lightly.',
+      prepTime: '25 mins'
+    },
+    {
+      id: 42,
+      name: 'Ginger Tea',
+      imageUrl: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&h=300&fit=crop',
+      calories: 15,
+      dietaryPrefs: ['Caffeine-Free', 'Anti-Nausea'],
+      categoryId: 11,
+      ingredients: ['1 inch ginger', '1 cup water', 'Lemon slice'],
+      instructions: 'Slice ginger and boil in water for 10 minutes. Add lemon.',
+      prepTime: '15 mins'
+    },
+    {
+      id: 43,
+      name: 'Apple Sauce',
+      imageUrl: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&h=300&fit=crop',
+      calories: 80,
+      dietaryPrefs: ['Vegan', 'Natural'],
+      categoryId: 11,
+      ingredients: ['2 apples', '1/2 cup water', 'Cinnamon'],
+      instructions: 'Cook apples with water until soft. Mash and add cinnamon.',
+      prepTime: '20 mins'
+    },
+    {
+      id: 44,
+      name: 'Toasted Whole Wheat Bread',
+      imageUrl: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=400&h=300&fit=crop',
+      calories: 120,
+      dietaryPrefs: ['Vegan', 'Simple'],
+      categoryId: 11,
+      ingredients: ['2 slices whole wheat bread', 'Butter (optional)'],
+      instructions: 'Toast bread until golden. Spread with butter if desired.',
+      prepTime: '5 mins'
+    },
+    {
+      id: 45,
+      name: 'Peppermint Tea',
+      imageUrl: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&h=300&fit=crop',
+      calories: 5,
+      dietaryPrefs: ['Caffeine-Free', 'Soothing'],
 
   const filteredRecipes = recipes.filter(recipe => {
     const matchesSearch = recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
