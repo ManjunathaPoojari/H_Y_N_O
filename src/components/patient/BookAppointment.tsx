@@ -10,7 +10,6 @@ import { Calendar, Clock, Video, MessageSquare, MapPin, Building2, Star, Loader2
 import { useAppStore } from '../../lib/app-store';
 import { useAuth } from '../../lib/auth-context';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
 import api from '../../lib/api-client';
 
 interface BookAppointmentProps {
@@ -31,7 +30,6 @@ interface ScheduleSlot {
 export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
   const { doctors, hospitals, bookAppointment } = useAppStore();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [selectedDoctor, setSelectedDoctor] = useState<string>('');
   const [selectedHospital, setSelectedHospital] = useState<string>('');
   const [selectedSlot, setSelectedSlot] = useState<string>('');
@@ -172,7 +170,7 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
       setAvailableSlots([]);
 
       // Navigate to My Appointments page
-      navigate('/patient/appointments');
+      window.location.href = '/patient/appointments';
     } catch (error) {
       console.error('Failed to book appointment:', error);
       toast.error('Failed to book appointment. Please try again.');
@@ -186,14 +184,14 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
           {icons[type]}
           {titles[type]}
         </h1>
-        <p className="text-gray-600">Select a hospital/clinic, doctor and choose your preferred time slot</p>
-        {type === 'video' && (
-          <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-sm text-blue-800">
-              <strong>Note:</strong> Booking a video consultation also creates a chat consultation for follow-up purposes.
-            </p>
-          </div>
-        )}
+      <p className="text-gray-600">Select a hospital/clinic, doctor and choose your preferred time slot</p>
+      {type === 'video' && (
+        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-sm text-blue-800">
+            <strong>Note:</strong> Booking a video consultation also creates a chat consultation for follow-up purposes.
+          </p>
+        </div>
+      )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -212,10 +210,11 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                 <div className="flex bg-gray-100 rounded-lg p-1">
                   <button
                     type="button"
-                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${!selectByDoctor
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                      !selectByDoctor
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
                     onClick={() => setSelectByDoctor(false)}
                   >
                     <Building2 className="h-4 w-4 inline mr-2" />
@@ -223,10 +222,11 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                   </button>
                   <button
                     type="button"
-                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${selectByDoctor
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                      selectByDoctor
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
                     onClick={() => setSelectByDoctor(true)}
                   >
                     <User className="h-4 w-4 inline mr-2" />
@@ -248,8 +248,9 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                   {hospitals.filter(h => h.status === 'approved').map((hospital) => (
                     <div
                       key={hospital.id}
-                      className={`border rounded-lg p-4 cursor-pointer transition-all ${selectedHospital === hospital.id ? 'border-blue-600 bg-blue-50' : 'hover:border-gray-400'
-                        }`}
+                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                        selectedHospital === hospital.id ? 'border-blue-600 bg-blue-50' : 'hover:border-gray-400'
+                      }`}
                       onClick={() => setSelectedHospital(hospital.id)}
                     >
                       <h4 className="mb-1">{hospital.name}</h4>
@@ -277,8 +278,9 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                   {availableDoctors.map((doctor) => (
                     <div
                       key={doctor.id}
-                      className={`border rounded-lg p-4 cursor-pointer transition-all ${selectedDoctor === doctor.id ? 'border-blue-600 bg-blue-50' : 'hover:border-gray-400'
-                        }`}
+                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                        selectedDoctor === doctor.id ? 'border-blue-600 bg-blue-50' : 'hover:border-gray-400'
+                      }`}
                       onClick={() => {
                         setSelectedDoctor(doctor.id);
                         // Auto-select hospital based on doctor's hospital
@@ -322,7 +324,7 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
 
 
           {/* Available Time Slots */}
-          {(type === 'hospital' ? selectedHospital : selectedDoctor) && (
+          {selectedHospital && (selectedDoctor || type === 'hospital') && (
             <Card>
               <CardHeader>
                 <CardTitle>Available Time Slots</CardTitle>
@@ -340,10 +342,11 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                       {availableSlots.map((slot) => (
                         <div
                           key={slot.id}
-                          className={`border rounded-lg p-4 cursor-pointer transition-all ${selectedSlot === slot.id
-                            ? 'border-blue-600 bg-blue-50'
-                            : 'hover:border-gray-400'
-                            }`}
+                          className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                            selectedSlot === slot.id
+                              ? 'border-blue-600 bg-blue-50'
+                              : 'hover:border-gray-400'
+                          }`}
                           onClick={() => setSelectedSlot(slot.id)}
                         >
                           <div className="flex items-center justify-between">
@@ -385,7 +388,7 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
           )}
 
           {/* Appointment Details */}
-          {(type === 'hospital' ? selectedHospital : selectedDoctor) && selectedSlot && (
+          {selectedHospital && (selectedDoctor || type === 'hospital') && selectedSlot && (
             <Card>
               <CardHeader>
                 <CardTitle>Appointment Details</CardTitle>
@@ -403,13 +406,12 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                 </div>
 
                 <Button
-                  className="w-full sm:w-2/3 mx-auto flex bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all duration-300 transform hover:-translate-y-1 font-semibold text-lg py-6"
+                  className="w-full"
                   size="lg"
                   disabled={!reason.trim()}
                   onClick={handleBooking}
                 >
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Confirm Booking
+                  Book Appointment
                 </Button>
               </CardContent>
             </Card>

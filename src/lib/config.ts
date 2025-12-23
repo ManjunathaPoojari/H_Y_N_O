@@ -25,7 +25,7 @@ const loadConfig = (): Config => {
   if (windowEnv) {
     return {
       USE_BACKEND: windowEnv.REACT_APP_USE_BACKEND === 'true',
-      API_URL: (windowEnv.REACT_APP_API_URL || defaultConfig.API_URL).replace(/\/api$/, ''),
+      API_URL: windowEnv.REACT_APP_API_URL || defaultConfig.API_URL,
     };
   }
 
