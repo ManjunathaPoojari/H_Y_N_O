@@ -1,10 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
-import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { Input } from '../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Droplets, Flame, Apple, Coffee, Sandwich, Cookie, Utensils, Edit, User } from 'lucide-react';
+
+interface ProfileData {
+  name: string;
+  age: number;
+  gender: string;
+  height: number;
+  weight: number;
+  bmi: number;
+}
+
+interface Meal {
+  name: string;
+  items: string[];
+  calories: number;
+  icon: React.ComponentType<any>;
+}
 
 export const UserProfile: React.FC = () => {
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [profileData, setProfileData] = useState<ProfileData>({
+    name: '',
+    age: 0,
+    gender: '',
+    height: 0,
+    weight: 0,
+    bmi: 0,
+  });
   const [waterGlasses, setWaterGlasses] = useState<boolean[]>(Array(8).fill(false));
-  const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({});
+
+  const calculateBMI = (height: number, weight: number): number => {
+    if (height > 0 && weight > 0) {
+      return Math.round((weight / ((height / 100) ** 2)) * 10) / 10;
+    }
+    return 0;
+  };
+
+  const handleInputChange = (field: keyof ProfileData, value: string | number) => {
+    setProfileData(prev => {
+      const updated = { ...prev, [field]: value };
+      if (field === 'height' || field === 'weight') {
+        updated.bmi = calculateBMI(updated.height, updated.weight);
+      }
+      return updated;
+    });
+  };
+
+  const isFormValid = () => {
+    return profileData.name.trim() !== '' &&
+           profileData.age > 0 &&
+           profileData.gender !== '' &&
+           profileData.height > 0 &&
+           profileData.weight > 0;
+  };
+
+  const handleSubmit = () => {
+    if (isFormValid()) {
+      setShowDashboard(true);
+    }
+  };
+
+  const handleEdit = () => {
+    setShowDashboard(false);
+  };
 
   const toggleGlass = (index: number) => {
     const newGlasses = [...waterGlasses];
@@ -12,190 +75,346 @@ export const UserProfile: React.FC = () => {
     setWaterGlasses(newGlasses);
   };
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+  const getDietPlan = (bmi: number): Meal[] => {
+    if (bmi < 18.5) {
+      // Underweight - higher calorie meals
+      return [
+        {
+          name: 'Breakfast',
+          items: ['Oatmeal with nuts and fruits', 'Whole grain toast with avocado', 'Greek yogurt with honey'],
+          calories: 450,
+          icon: Coffee
+        },
+        {
+          name: 'Lunch',
+          items: ['Grilled chicken salad with quinoa', 'Whole grain bread sandwich', 'Fruit smoothie'],
+          calories: 550,
+          icon: Sandwich
+        },
+        {
+          name: 'Snacks',
+          items: ['Mixed nuts and dried fruits', 'Cheese and crackers', 'Protein bar'],
+          calories: 300,
+          icon: Cookie
+        },
+        {
+          name: 'Dinner',
+          items: ['Salmon with brown rice', 'Steamed vegetables', 'Sweet potato'],
+          calories: 600,
+          icon: Utensils
+        }
+      ];
+    } else if (bmi < 25) {
+      // Healthy weight - balanced meals
+      return [
+        {
+          name: 'Breakfast',
+          items: ['Greek yogurt with berries', 'Whole grain toast', 'Green tea'],
+          calories: 350,
+          icon: Coffee
+        },
+        {
+          name: 'Lunch',
+          items: ['Turkey and vegetable wrap', 'Mixed green salad', 'Apple'],
+          calories: 450,
+          icon: Sandwich
+        },
+        {
+          name: 'Snacks',
+          items: ['Handful of almonds', 'Fresh fruit', 'Carrot sticks with hummus'],
+          calories: 200,
+          icon: Cookie
+        },
+        {
+          name: 'Dinner',
+          items: ['Grilled fish with quinoa', 'Steamed broccoli', 'Mixed greens salad'],
+          calories: 500,
+          icon: Utensils
+        }
+      ];
+    } else {
+      // Overweight - lower calorie, portion controlled meals
+      return [
+        {
+          name: 'Breakfast',
+          items: ['Oatmeal with berries', 'Black coffee', 'Small banana'],
+          calories: 250,
+          icon: Coffee
+        },
+        {
+          name: 'Lunch',
+          items: ['Grilled chicken breast', 'Large mixed salad', 'Light vinaigrette'],
+          calories: 350,
+          icon: Sandwich
+        },
+        {
+          name: 'Snacks',
+          items: ['Celery sticks', 'Small apple', 'Herbal tea'],
+          calories: 100,
+          icon: Cookie
+        },
+        {
+          name: 'Dinner',
+          items: ['Baked turkey breast', 'Steamed vegetables', 'Small sweet potato'],
+          calories: 400,
+          icon: Utensils
+        }
+      ];
+    }
   };
 
   const waterProgress = (waterGlasses.filter(Boolean).length / 8) * 100;
   const calorieProgress = 65; // Example value
+  const totalCaloriesConsumed = 1200; // Example value
+  const recommendedCalories = profileData.bmi < 18.5 ? 2000 : profileData.bmi < 25 ? 1800 : 1500;
+
+  if (showDashboard) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6" style={{
+        backgroundImage: 'url(https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1935&q=80)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}>
+        <div className="max-w-6xl mx-auto space-y-6 bg-white/90 backdrop-blur-sm rounded-lg p-6">
+          {/* Dashboard Header */}
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <User className="h-8 w-8 text-blue-600" />
+              <h1 className="text-4xl font-bold text-gray-900">{profileData.name}'s Nutrition Dashboard</h1>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+              <div className="bg-white/80 p-4 rounded-lg shadow-sm">
+                <p className="text-sm text-gray-500 mb-1">Weight</p>
+                <p className="text-xl font-semibold text-gray-900">{profileData.weight} kg</p>
+              </div>
+              <div className="bg-white/80 p-4 rounded-lg shadow-sm">
+                <p className="text-sm text-gray-500 mb-1">Height</p>
+                <p className="text-xl font-semibold text-gray-900">{profileData.height} cm</p>
+              </div>
+              <div className="bg-white/80 p-4 rounded-lg shadow-sm">
+                <p className="text-sm text-gray-500 mb-1">Age</p>
+                <p className="text-xl font-semibold text-gray-900">{profileData.age}</p>
+              </div>
+              <div className="bg-white/80 p-4 rounded-lg shadow-sm">
+                <p className="text-sm text-gray-500 mb-1">Gender</p>
+                <p className="text-xl font-semibold text-gray-900">{profileData.gender}</p>
+              </div>
+              <div className="bg-white/80 p-4 rounded-lg shadow-sm">
+                <p className="text-sm text-gray-500 mb-1">BMI</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-semibold text-gray-900">{profileData.bmi}</span>
+                  <Badge variant={profileData.bmi < 18.5 ? 'secondary' : profileData.bmi < 25 ? 'default' : 'destructive'}>
+                    {profileData.bmi < 18.5 ? 'Underweight' : profileData.bmi < 25 ? 'Healthy' : profileData.bmi < 30 ? 'Overweight' : 'Obese'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-center mb-6">
+              <Button onClick={handleEdit} variant="outline" className="flex items-center gap-2">
+                <Edit className="h-4 w-4" />
+                Edit Profile
+              </Button>
+            </div>
+          </div>
+
+          {/* Recommended Diet Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Apple className="h-5 w-5 text-green-600" />
+                Recommended Diet Chart
+              </CardTitle>
+              <p className="text-sm text-gray-600">Personalized meal recommendations based on your BMI and health profile</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {getDietPlan(profileData.bmi).map((meal, index) => (
+                  <Card key={index} className="border-2 border-gray-100 hover:border-green-200 transition-colors">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <meal.icon className="h-6 w-6 text-blue-600" />
+                        <h3 className="font-semibold text-gray-900">{meal.name}</h3>
+                      </div>
+                      <ul className="space-y-1 mb-3">
+                        {meal.items.map((item, itemIndex) => (
+                          <li key={itemIndex} className="text-sm text-gray-600 flex items-center gap-2">
+                            <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">{meal.calories} cal</span>
+                        <Badge variant="outline" className="text-xs">
+                          Recommended
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Achievements */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Water Tracker */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Droplets className="h-5 w-5 text-blue-600" />
+                  Water Intake Achievement
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-center space-x-2 mb-4">
+                    {waterGlasses.map((filled, index) => (
+                      <button
+                        key={index}
+                        onClick={() => toggleGlass(index)}
+                        className={`w-8 h-8 rounded-full border-2 transition-colors ${
+                          filled ? 'bg-blue-200 border-blue-300' : 'border-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className="bg-blue-400 h-3 rounded-full transition-all duration-300"
+                      style={{ width: `${waterProgress}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm text-gray-600">{waterGlasses.filter(Boolean).length}/8 glasses</p>
+                    <Badge variant={waterProgress >= 100 ? 'default' : 'secondary'}>
+                      {waterProgress >= 100 ? 'Goal Achieved!' : 'In Progress'}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Calorie Tracker */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Flame className="h-5 w-5 text-orange-600" />
+                  Calorie Achievement
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-gray-900">{totalCaloriesConsumed}</p>
+                    <p className="text-sm text-gray-600">Calories consumed today</p>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className="bg-orange-400 h-3 rounded-full transition-all duration-300"
+                      style={{ width: `${calorieProgress}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm text-gray-600">{calorieProgress}% of daily goal</p>
+                    <Badge variant={calorieProgress >= 100 ? 'default' : 'secondary'}>
+                      {calorieProgress >= 100 ? 'Goal Achieved!' : 'In Progress'}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-gray-500 text-center">
+                    Recommended: {recommendedCalories} calories/day
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-2xl mx-auto">
-        {/* Top Section */}
-        <div className="flex items-start justify-between mb-12">
-          <div className="flex-1 text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Twinkle</h1>
-            <p className="text-lg text-gray-500">23 · Female</p>
-          </div>
-          <Button variant="link" className="text-gray-600 hover:text-gray-800">
-            Edit Profile
-          </Button>
-        </div>
-
-        {/* User Stats Row */}
-        <div className="flex justify-between items-center mb-8">
-          <div className="text-center">
-            <p className="text-sm text-gray-500 mb-1">Height</p>
-            <p className="text-2xl font-semibold text-gray-900">165 cm</p>
-          </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-500 mb-1">Weight</p>
-            <p className="text-2xl font-semibold text-gray-900">55 kg</p>
-          </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-500 mb-1">BMI</p>
-            <p className="text-2xl font-semibold text-gray-900">20.2</p>
-            <span className="inline-block ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Healthy</span>
-          </div>
-        </div>
-
-        {/* Recommended Calories */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-8 text-center">
-          <p className="text-lg font-medium text-gray-900">Recommended Calories: 1650 kcal/day</p>
-        </div>
-
-        {/* Divider */}
-        <hr className="border-gray-200 mb-8" />
-
-        {/* Accordion Sections */}
-        <div className="space-y-4">
-          {/* Water Tracker */}
-          <div className="border-b border-gray-100">
-            <button
-              onClick={() => toggleSection('water')}
-              className="w-full flex items-center justify-between py-4 text-left"
-            >
-              <span className="text-xl font-medium text-gray-900">Water Tracker</span>
-              {expandedSections.water ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
-            </button>
-            <div className={`overflow-hidden transition-all duration-300 ${expandedSections.water ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="pb-6">
-                <div className="flex justify-center space-x-2 mb-6">
-                  {waterGlasses.map((filled, index) => (
-                    <button
-                      key={index}
-                      onClick={() => toggleGlass(index)}
-                      className={`w-8 h-8 rounded-full border-2 transition-colors ${
-                        filled ? 'bg-blue-200 border-blue-300' : 'border-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-400 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${waterProgress}%` }}
-                  />
-                </div>
-                <p className="text-sm text-gray-600 mt-2 text-center">{waterGlasses.filter(Boolean).length}/8 glasses</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Profile Information</h1>
+        <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Name</label>
+              <Input
+                type="text"
+                value={profileData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Enter your name"
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Age</label>
+              <Input
+                type="number"
+                value={profileData.age || ''}
+                onChange={(e) => handleInputChange('age', parseInt(e.target.value) || 0)}
+                placeholder="Enter your age"
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Gender</label>
+              <Select value={profileData.gender} onValueChange={(value: string) => handleInputChange('gender', value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Height (cm)</label>
+              <Input
+                type="number"
+                value={profileData.height || ''}
+                onChange={(e) => handleInputChange('height', parseFloat(e.target.value) || 0)}
+                placeholder="Enter height in cm"
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Weight (kg)</label>
+              <Input
+                type="number"
+                value={profileData.weight || ''}
+                onChange={(e) => handleInputChange('weight', parseFloat(e.target.value) || 0)}
+                placeholder="Enter weight in kg"
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">BMI (Auto Calculated)</label>
+              <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
+                <span className="text-lg font-semibold text-gray-900">{profileData.bmi}</span>
+                {profileData.bmi > 0 && (
+                  <Badge variant={profileData.bmi < 18.5 ? 'secondary' : profileData.bmi < 25 ? 'default' : 'destructive'}>
+                    {profileData.bmi < 18.5 ? 'Underweight' :
+                     profileData.bmi < 25 ? 'Healthy' :
+                     profileData.bmi < 30 ? 'Overweight' : 'Obese'}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
-
-          {/* Meal Tracker */}
-          <div className="border-b border-gray-100">
-            <button
-              onClick={() => toggleSection('meal')}
-              className="w-full flex items-center justify-between py-4 text-left"
-            >
-              <span className="text-xl font-medium text-gray-900">Meal Tracker</span>
-              {expandedSections.meal ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
-            </button>
-            <div className={`overflow-hidden transition-all duration-300 ${expandedSections.meal ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="pb-6 space-y-4">
-                {['Breakfast', 'Lunch', 'Dinner'].map((meal) => (
-                  <div key={meal} className="flex items-center justify-between">
-                    <span className="text-lg text-gray-900">{meal}</span>
-                    <Button variant="outline" size="sm" className="flex items-center gap-1">
-                      <Plus className="h-4 w-4" />
-                      Add
-                    </Button>
-                  </div>
-                ))}
-                <div className="mt-6">
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-green-400 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${calorieProgress}%` }}
-                    />
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2 text-center">{calorieProgress}% of daily calories</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Achievements */}
-          <div className="border-b border-gray-100">
-            <button
-              onClick={() => toggleSection('achievements')}
-              className="w-full flex items-center justify-between py-4 text-left"
-            >
-              <span className="text-xl font-medium text-gray-900">Achievements</span>
-              {expandedSections.achievements ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
-            </button>
-            <div className={`overflow-hidden transition-all duration-300 ${expandedSections.achievements ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="pb-6 flex justify-around">
-                {[
-                  { label: 'Water Streak', progress: 80, color: 'text-blue-500' },
-                  { label: 'Calorie Consistency', progress: 65, color: 'text-green-500' },
-                  { label: 'Weight Tracking', progress: 90, color: 'text-purple-500' }
-                ].map((achievement, index) => (
-                  <div key={index} className="text-center">
-                    <div className="relative w-16 h-16 mx-auto mb-2">
-                      <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#e5e7eb"
-                          strokeWidth="2"
-                        />
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeDasharray={`${achievement.progress}, 100`}
-                          className={achievement.color}
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xs font-medium text-gray-900">{achievement.progress}%</span>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600">{achievement.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Weight Progress */}
-          <div className="border-b border-gray-100">
-            <button
-              onClick={() => toggleSection('weight')}
-              className="w-full flex items-center justify-between py-4 text-left"
-            >
-              <span className="text-xl font-medium text-gray-900">Weight Progress</span>
-              {expandedSections.weight ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
-            </button>
-            <div className={`overflow-hidden transition-all duration-300 ${expandedSections.weight ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="pb-6">
-                <svg viewBox="0 0 300 100" className="w-full h-24">
-                  <polyline
-                    fill="none"
-                    stroke="#6CC4A1"
-                    strokeWidth="2"
-                    points="0,80 50,70 100,60 150,55 200,50 250,45 300,40"
-                  />
-                </svg>
-                <p className="text-sm text-gray-600 mt-2 text-center">Last 7 days</p>
-              </div>
-            </div>
+          <div className="flex justify-center gap-4 pt-4">
+            <Button onClick={handleSubmit} disabled={!isFormValid()} className="px-8">
+              Submit
+            </Button>
+            <Button onClick={handleEdit} variant="outline" className="flex items-center gap-2">
+              <Edit className="h-4 w-4" />
+              Edit Profile
+            </Button>
           </div>
         </div>
       </div>
