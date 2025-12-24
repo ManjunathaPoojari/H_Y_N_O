@@ -5,6 +5,7 @@ import com.hyno.repository.TrainerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
@@ -17,6 +18,9 @@ public class TrainerService {
 
     @Autowired
     private TrainerRepository trainerRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<Trainer> getAllTrainers() {
         logger.info("Fetching all trainers");
@@ -177,6 +181,12 @@ public class TrainerService {
             // Generate trainer ID starting from T001 and incrementing
             String nextId = generateNextTrainerId();
             trainer.setId(nextId);
+
+            // Encode password if provided
+            if (trainer.getPassword() != null && !trainer.getPassword().isEmpty()) {
+                trainer.setPassword(passwordEncoder.encode(trainer.getPassword()));
+            }
+
             Trainer savedTrainer = trainerRepository.save(trainer);
             logger.info("Trainer created successfully with ID: {}", savedTrainer.getId());
             return savedTrainer;
@@ -260,8 +270,8 @@ public class TrainerService {
                 if (trainerDetails.getStatus() != null) {
                     trainer.setStatus(trainerDetails.getStatus());
                 }
-                if (trainerDetails.getPassword() != null) {
-                    trainer.setPassword(trainerDetails.getPassword());
+                if (trainerDetails.getPassword() != null && !trainerDetails.getPassword().isEmpty()) {
+                    trainer.setPassword(passwordEncoder.encode(trainerDetails.getPassword()));
                 }
                 if (trainer.isVerified() != trainerDetails.isVerified()) {
                     trainer.setVerified(trainerDetails.isVerified());

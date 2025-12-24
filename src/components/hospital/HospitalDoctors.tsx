@@ -236,6 +236,9 @@ export const HospitalDoctors = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <h4 className="font-medium">{doctor.name}</h4>
+                        <Badge variant="outline" className="font-mono text-xs">
+                          {doctor.id}
+                        </Badge>
                         <Badge variant={doctor.available ? 'default' : 'secondary'}>
                           {doctor.available ? 'Available' : 'Unavailable'}
                         </Badge>
@@ -348,7 +351,7 @@ const DoctorForm: React.FC<DoctorFormProps> = ({ form, setForm, onSubmit, onCanc
         <Input
           id="name"
           value={form.name}
-          onChange={(e) => setForm({...form, name: e.target.value})}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
           placeholder="Dr. John Doe"
         />
       </div>
@@ -358,13 +361,13 @@ const DoctorForm: React.FC<DoctorFormProps> = ({ form, setForm, onSubmit, onCanc
           id="email"
           type="email"
           value={form.email}
-          onChange={(e) => setForm({...form, email: e.target.value})}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
           placeholder="doctor@example.com"
         />
       </div>
       <div>
         <Label htmlFor="specialization">Specialization</Label>
-        <Select value={form.specialization} onValueChange={(value: string) => setForm({...form, specialization: value})}>
+        <Select value={form.specialization} onValueChange={(value: string) => setForm({ ...form, specialization: value })}>
           <SelectTrigger>
             <SelectValue placeholder="Select specialization" />
           </SelectTrigger>
@@ -387,7 +390,7 @@ const DoctorForm: React.FC<DoctorFormProps> = ({ form, setForm, onSubmit, onCanc
         <Input
           id="qualification"
           value={form.qualification}
-          onChange={(e) => setForm({...form, qualification: e.target.value})}
+          onChange={(e) => setForm({ ...form, qualification: e.target.value })}
           placeholder="MBBS, MD"
         />
       </div>
@@ -397,7 +400,7 @@ const DoctorForm: React.FC<DoctorFormProps> = ({ form, setForm, onSubmit, onCanc
           id="experience"
           type="number"
           value={form.experience}
-          onChange={(e) => setForm({...form, experience: e.target.value})}
+          onChange={(e) => setForm({ ...form, experience: e.target.value })}
           placeholder="5"
         />
       </div>
@@ -407,7 +410,7 @@ const DoctorForm: React.FC<DoctorFormProps> = ({ form, setForm, onSubmit, onCanc
           id="consultationFee"
           type="number"
           value={form.consultationFee}
-          onChange={(e) => setForm({...form, consultationFee: e.target.value})}
+          onChange={(e) => setForm({ ...form, consultationFee: e.target.value })}
           placeholder="500"
         />
       </div>
@@ -416,7 +419,7 @@ const DoctorForm: React.FC<DoctorFormProps> = ({ form, setForm, onSubmit, onCanc
         <Input
           id="phone"
           value={form.phone}
-          onChange={(e) => setForm({...form, phone: e.target.value})}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
           placeholder="+91 9876543210"
         />
       </div>
@@ -425,7 +428,7 @@ const DoctorForm: React.FC<DoctorFormProps> = ({ form, setForm, onSubmit, onCanc
         <Input
           id="address"
           value={form.address}
-          onChange={(e) => setForm({...form, address: e.target.value})}
+          onChange={(e) => setForm({ ...form, address: e.target.value })}
           placeholder="Clinic address"
         />
       </div>
@@ -434,7 +437,7 @@ const DoctorForm: React.FC<DoctorFormProps> = ({ form, setForm, onSubmit, onCanc
         <Textarea
           id="bio"
           value={form.bio}
-          onChange={(e) => setForm({...form, bio: e.target.value})}
+          onChange={(e) => setForm({ ...form, bio: e.target.value })}
           placeholder="Brief description about the doctor..."
           rows={3}
         />

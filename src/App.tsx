@@ -19,6 +19,7 @@ import { OnlinePharmacy } from './components/patient/OnlinePharmacy';
 import { NutritionWellness } from './components/patient/NutritionWellness';
 import { YogaFitness } from './components/patient/YogaFitness';
 import { PatientMeetings } from './components/patient/PatientMeetings';
+import { PatientCarePlan } from './components/patient/PatientCarePlan';
 import { ChatInterface } from './components/common/ChatInterface';
 import { DoctorDashboard } from './components/doctor/DoctorDashboard';
 import { DoctorProfile } from './components/doctor/DoctorProfile';
@@ -250,6 +251,7 @@ function AppContent() {
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
           {currentPath === '/patient/yoga' && <YogaFitness onNavigate={navigate} />}
+          {currentPath === '/patient/care-plan' && <PatientCarePlan />}
           {currentPath === '/my-profile' && <PatientProfile />}
         </DashboardLayout>
       );

@@ -6,7 +6,7 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
-import { Calendar, Clock, Video, MessageSquare, MapPin, Building2, Star, Loader2, User } from 'lucide-react';
+import { Calendar, Clock, Video, MessageSquare, MapPin, Building2, Star, Loader2, User, Search, Filter } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
 import { useAuth } from '../../lib/auth-context';
 import { toast } from 'sonner';
@@ -38,6 +38,13 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
   const [reason, setReason] = useState('');
   const [selectByDoctor, setSelectByDoctor] = useState(false);
 
+  // Search and filter state
+  const [hospitalSearch, setHospitalSearch] = useState('');
+  const [hospitalCityFilter, setHospitalCityFilter] = useState('');
+  const [doctorSearch, setDoctorSearch] = useState('');
+  const [doctorSpecializationFilter, setDoctorSpecializationFilter] = useState('');
+  const [doctorMinRating, setDoctorMinRating] = useState(0);
+
   const titles = {
     video: 'Book Video Consultation',
     chat: 'Book Chat Consultation',
@@ -52,47 +59,55 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
     hospital: <Building2 className="h-5 w-5" />,
   };
 
-  const availableDoctors = selectedHospital
-    ? doctors.filter(d => d.hospitalId === selectedHospital && d.available && d.status === 'approved')
-    : doctors.filter(d => d.available && d.status === 'approved');
+  // Get unique values for filter dropdowns
+  const uniqueCities = [...new Set(hospitals.filter(h => h.status === 'approved').map(h => h.city).filter(Boolean))];
+  const uniqueSpecializations = [...new Set(doctors.filter(d => d.available && d.status?.toLowerCase() === 'approved').map(d => d.specialization).filter(Boolean))];
 
-  // Fetch available slots when doctor is selected (or hospital for hospital appointments)
+  // Filtered hospitals based on search and city filter
+  const filteredHospitals = hospitals.filter(h => {
+    if (h.status !== 'approved') return false;
+    if (hospitalSearch && !h.name.toLowerCase().includes(hospitalSearch.toLowerCase()) && !h.address?.toLowerCase().includes(hospitalSearch.toLowerCase())) return false;
+    if (hospitalCityFilter && hospitalCityFilter !== 'all' && h.city !== hospitalCityFilter) return false;
+    return true;
+  });
+
+  // Base available doctors (hospital-related or all)
+  const baseDoctors = selectedHospital
+    ? doctors.filter(d => {
+      const docHospitalId = d.hospitalId || d.hospital?.id;
+      return docHospitalId === selectedHospital && d.available && d.status?.toLowerCase() === 'approved';
+    })
+    : doctors.filter(d => d.available && d.status?.toLowerCase() === 'approved');
+
+  // Filtered doctors based on search and filters
+  const availableDoctors = baseDoctors.filter(d => {
+    if (doctorSearch && !d.name.toLowerCase().includes(doctorSearch.toLowerCase()) && !d.specialization?.toLowerCase().includes(doctorSearch.toLowerCase())) return false;
+    if (doctorSpecializationFilter && doctorSpecializationFilter !== 'all' && d.specialization !== doctorSpecializationFilter) return false;
+    if (doctorMinRating > 0 && (d.rating || 0) < doctorMinRating) return false;
+    return true;
+  });
+
+  // Fetch available slots when doctor is selected
   useEffect(() => {
     const fetchAvailableSlots = async () => {
-      if (type === 'hospital' && !selectedHospital) {
-        setAvailableSlots([]);
-        return;
-      }
-      if (type !== 'hospital' && !selectedDoctor) {
+      // Always require a doctor to be selected now
+      if (!selectedDoctor) {
         setAvailableSlots([]);
         return;
       }
 
       setLoadingSlots(true);
       try {
-        if (type === 'hospital') {
-          // For hospital appointments, fetch hospital-wide slots
-          const scheduleData = await api.hospitals.getSchedule(selectedHospital);
-          const slots = scheduleData.availableSlots || [];
-          // Filter only available slots for future dates
-          const now = new Date();
-          const futureSlots = slots.filter((slot: ScheduleSlot) => {
-            const slotDateTime = new Date(`${slot.date}T${slot.startTime}`);
-            return slot.isAvailable && slotDateTime > now;
-          });
-          setAvailableSlots(futureSlots);
-        } else {
-          // For doctor appointments, fetch doctor-specific slots
-          const scheduleData = await api.doctors.getSchedule(selectedDoctor);
-          const slots = scheduleData.availableSlots || [];
-          // Filter only available slots for future dates
-          const now = new Date();
-          const futureSlots = slots.filter((slot: ScheduleSlot) => {
-            const slotDateTime = new Date(`${slot.date}T${slot.startTime}`);
-            return slot.isAvailable && slotDateTime > now;
-          });
-          setAvailableSlots(futureSlots);
-        }
+        // For all appointment types, fetch doctor-specific slots
+        const scheduleData = await api.doctors.getSchedule(selectedDoctor);
+        const slots = scheduleData.availableSlots || [];
+        // Filter only available slots for future dates
+        const now = new Date();
+        const futureSlots = slots.filter((slot: ScheduleSlot) => {
+          const slotDateTime = new Date(`${slot.date}T${slot.startTime}`);
+          return slot.isAvailable && slotDateTime > now;
+        });
+        setAvailableSlots(futureSlots);
       } catch (error) {
         console.error('Failed to fetch available slots:', error);
         toast.error('Failed to load available time slots');
@@ -103,11 +118,11 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
     };
 
     fetchAvailableSlots();
-  }, [selectedDoctor, selectedHospital, type]);
+  }, [selectedDoctor]);
 
   const handleBooking = async () => {
-    if (type === 'hospital' && (!selectedHospital || !selectedSlot || !reason)) {
-      toast.error('Please select a hospital, time slot, and provide a reason');
+    if (type === 'hospital' && (!selectedHospital || !selectedDoctor || !selectedSlot || !reason)) {
+      toast.error('Please select a hospital, doctor, time slot, and provide a reason');
       return;
     }
     if (type !== 'hospital' && (!selectedDoctor || !selectedSlot || !reason)) {
@@ -143,6 +158,16 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
         status: 'pending', // All appointments start as pending for doctor approval
         reason,
       });
+
+      // Mark the schedule slot as booked so it's not available to others
+      if (doctor?.id && slot.id) {
+        try {
+          await api.doctors.bookScheduleSlot(doctor.id, slot.id, `pending-${user.id}-${Date.now()}`);
+        } catch (slotError) {
+          console.warn('Failed to book schedule slot:', slotError);
+          // Don't fail the whole booking if slot update fails
+        }
+      }
 
       // If booking a video consultation, also create a chat consultation for follow-up
       if (type === 'video') {
@@ -184,21 +209,21 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
           {icons[type]}
           {titles[type]}
         </h1>
-      <p className="text-gray-600">Select a hospital/clinic, doctor and choose your preferred time slot</p>
-      {type === 'video' && (
-        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-          <p className="text-sm text-blue-800">
-            <strong>Note:</strong> Booking a video consultation also creates a chat consultation for follow-up purposes.
-          </p>
-        </div>
-      )}
+        <p className="text-gray-600">Select a hospital/clinic, doctor and choose your preferred time slot</p>
+        {type === 'video' && (
+          <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-sm text-blue-800">
+              <strong>Note:</strong> Booking a video consultation also creates a chat consultation for follow-up purposes.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Booking Form */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Selection Mode Toggle */}
-          {(type === 'video' || type === 'chat' || type === 'inperson') && (
+          {/* Selection Mode Toggle - Only for In-Person appointments */}
+          {type === 'inperson' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -210,11 +235,10 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                 <div className="flex bg-gray-100 rounded-lg p-1">
                   <button
                     type="button"
-                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                      !selectByDoctor
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
+                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${!selectByDoctor
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                      }`}
                     onClick={() => setSelectByDoctor(false)}
                   >
                     <Building2 className="h-4 w-4 inline mr-2" />
@@ -222,11 +246,10 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                   </button>
                   <button
                     type="button"
-                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                      selectByDoctor
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
+                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${selectByDoctor
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                      }`}
                     onClick={() => setSelectByDoctor(true)}
                   >
                     <User className="h-4 w-4 inline mr-2" />
@@ -237,94 +260,309 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
             </Card>
           )}
 
-          {/* Hospital Selection */}
-          {(!selectByDoctor || type === 'hospital') && (
+          {/* Hospital Selection - Only for inperson (when not selecting by doctor) or hospital type */}
+          {((type === 'inperson' && !selectByDoctor) || type === 'hospital') && (
             <Card>
               <CardHeader>
                 <CardTitle>Select Hospital/Clinic</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {hospitals.filter(h => h.status === 'approved').map((hospital) => (
-                    <div
-                      key={hospital.id}
-                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                        selectedHospital === hospital.id ? 'border-blue-600 bg-blue-50' : 'hover:border-gray-400'
-                      }`}
-                      onClick={() => setSelectedHospital(hospital.id)}
-                    >
-                      <h4 className="mb-1">{hospital.name}</h4>
-                      <p className="text-sm text-gray-600">{hospital.address}, {hospital.city}</p>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {hospital.facilities.slice(0, 4).map((facility) => (
-                          <Badge key={facility} variant="secondary" className="text-xs">{facility}</Badge>
+                {/* Search and Filter */}
+                <div className="space-y-3 mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search hospitals by name or address..."
+                      value={hospitalSearch}
+                      onChange={(e) => setHospitalSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Select value={hospitalCityFilter} onValueChange={setHospitalCityFilter}>
+                      <SelectTrigger className="w-48">
+                        <Filter className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Filter by City" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Cities</SelectItem>
+                        {uniqueCities.map((city) => (
+                          <SelectItem key={city} value={city}>{city}</SelectItem>
                         ))}
+                      </SelectContent>
+                    </Select>
+                    {(hospitalSearch || (hospitalCityFilter && hospitalCityFilter !== 'all')) && (
+                      <Button variant="outline" size="sm" onClick={() => { setHospitalSearch(''); setHospitalCityFilter('all'); }}>
+                        Clear Filters
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Hospital List */}
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {filteredHospitals.length > 0 ? (
+                    filteredHospitals.map((hospital) => (
+                      <div
+                        key={hospital.id}
+                        className={`border rounded-lg p-4 cursor-pointer transition-all ${selectedHospital === hospital.id ? 'border-blue-600 bg-blue-50' : 'hover:border-gray-400'}`}
+                        onClick={() => setSelectedHospital(hospital.id)}
+                      >
+                        <h4 className="mb-1">{hospital.name}</h4>
+                        <p className="text-sm text-gray-600">{hospital.address}, {hospital.city}</p>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {hospital.facilities.slice(0, 4).map((facility) => (
+                            <Badge key={facility} variant="secondary" className="text-xs">{facility}</Badge>
+                          ))}
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Building2 className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                      <p>No hospitals found</p>
+                      <p className="text-sm">Try adjusting your search or filters</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Doctor Selection */}
-          {(selectByDoctor && (type === 'video' || type === 'chat' || type === 'inperson')) && (
+          {/* Doctor Selection - For video/chat always, or inperson when selecting by doctor */}
+          {(type === 'video' || type === 'chat' || (type === 'inperson' && selectByDoctor)) && (
             <Card>
               <CardHeader>
                 <CardTitle>Select Doctor</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {availableDoctors.map((doctor) => (
-                    <div
-                      key={doctor.id}
-                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                        selectedDoctor === doctor.id ? 'border-blue-600 bg-blue-50' : 'hover:border-gray-400'
-                      }`}
-                      onClick={() => {
-                        setSelectedDoctor(doctor.id);
-                        // Auto-select hospital based on doctor's hospital
-                        const doctorHospital = hospitals.find(h => h.id === doctor.hospitalId);
-                        if (doctorHospital) {
-                          setSelectedHospital(doctorHospital.id);
-                        }
-                      }}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4>{doctor.name}</h4>
-                            <Badge variant="secondary">Available</Badge>
+                {/* Search and Filters */}
+                <div className="space-y-3 mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search doctors by name or specialization..."
+                      value={doctorSearch}
+                      onChange={(e) => setDoctorSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Select value={doctorSpecializationFilter} onValueChange={setDoctorSpecializationFilter}>
+                      <SelectTrigger className="w-48">
+                        <Filter className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Specialization" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Specializations</SelectItem>
+                        {uniqueSpecializations.map((spec) => (
+                          <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={doctorMinRating.toString()} onValueChange={(v: string) => setDoctorMinRating(Number(v))}>
+                      <SelectTrigger className="w-40">
+                        <Star className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Min Rating" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">Any Rating</SelectItem>
+                        <SelectItem value="3">3+ Stars</SelectItem>
+                        <SelectItem value="4">4+ Stars</SelectItem>
+                        <SelectItem value="4.5">4.5+ Stars</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {(doctorSearch || (doctorSpecializationFilter && doctorSpecializationFilter !== 'all') || doctorMinRating > 0) && (
+                      <Button variant="outline" size="sm" onClick={() => { setDoctorSearch(''); setDoctorSpecializationFilter('all'); setDoctorMinRating(0); }}>
+                        Clear Filters
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Doctor List */}
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {availableDoctors.length > 0 ? (
+                    availableDoctors.map((doctor) => (
+                      <div
+                        key={doctor.id}
+                        className={`border rounded-lg p-4 cursor-pointer transition-all ${selectedDoctor === doctor.id ? 'border-blue-600 bg-blue-50' : 'hover:border-gray-400'}`}
+                        onClick={() => {
+                          setSelectedDoctor(doctor.id);
+                          const doctorHospital = hospitals.find(h => h.id === doctor.hospitalId);
+                          if (doctorHospital) {
+                            setSelectedHospital(doctorHospital.id);
+                          }
+                        }}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4>{doctor.name}</h4>
+                              <Badge variant="secondary">Available</Badge>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-1">{doctor.specialization}</p>
+                            <p className="text-xs text-gray-500">{doctor.qualification}</p>
+                            <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
+                              <span>{doctor.experience} years exp.</span>
+                              <span className="flex items-center gap-1">
+                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                {doctor.rating}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {hospitals.find(h => h.id === doctor.hospitalId)?.name}
+                            </p>
                           </div>
-                          <p className="text-sm text-gray-600 mb-1">{doctor.specialization}</p>
-                          <p className="text-xs text-gray-500">{doctor.qualification}</p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
-                            <span>{doctor.experience} years exp.</span>
-                            <span className="flex items-center gap-1">
-                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                              {doctor.rating}
-                            </span>
+                          <div className="text-right">
+                            <p className="text-sm">Consultation Fee</p>
+                            <p className="text-lg">₹{doctor.consultationFee}</p>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {hospitals.find(h => h.id === doctor.hospitalId)?.name}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm">Consultation Fee</p>
-                          <p className="text-lg">₹{doctor.consultationFee}</p>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <User className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                      <p>No doctors found</p>
+                      <p className="text-sm">Try adjusting your search or filters</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
           )}
 
+          {/* Doctor Selection for Hospital Booking Type or In-Person with Hospital Selected */}
+          {((type === 'hospital' && selectedHospital) || (type === 'inperson' && !selectByDoctor && selectedHospital)) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Select Doctor
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  // First get all doctors from this hospital
+                  const allHospitalDoctors = doctors.filter(d => {
+                    const docHospitalId = d.hospitalId || d.hospital?.id;
+                    return docHospitalId === selectedHospital && d.available && d.status?.toLowerCase() === 'approved';
+                  });
+
+                  // Apply search and filters
+                  const hospitalDoctors = allHospitalDoctors.filter(d => {
+                    if (doctorSearch && !d.name.toLowerCase().includes(doctorSearch.toLowerCase()) && !d.specialization?.toLowerCase().includes(doctorSearch.toLowerCase())) return false;
+                    if (doctorSpecializationFilter && doctorSpecializationFilter !== 'all' && d.specialization !== doctorSpecializationFilter) return false;
+                    if (doctorMinRating > 0 && (d.rating || 0) < doctorMinRating) return false;
+                    return true;
+                  });
+
+                  // Get unique specializations for this hospital
+                  const hospitalSpecializations = [...new Set(allHospitalDoctors.map(d => d.specialization).filter(Boolean))];
+
+                  return (
+                    <>
+                      {/* Search and Filters */}
+                      <div className="space-y-3 mb-4">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            placeholder="Search doctors..."
+                            value={doctorSearch}
+                            onChange={(e) => setDoctorSearch(e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Select value={doctorSpecializationFilter} onValueChange={setDoctorSpecializationFilter}>
+                            <SelectTrigger className="w-48">
+                              <Filter className="h-4 w-4 mr-2" />
+                              <SelectValue placeholder="Specialization" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Specializations</SelectItem>
+                              {hospitalSpecializations.map((spec) => (
+                                <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select value={doctorMinRating.toString()} onValueChange={(v: string) => setDoctorMinRating(Number(v))}>
+                            <SelectTrigger className="w-40">
+                              <Star className="h-4 w-4 mr-2" />
+                              <SelectValue placeholder="Min Rating" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0">Any Rating</SelectItem>
+                              <SelectItem value="3">3+ Stars</SelectItem>
+                              <SelectItem value="4">4+ Stars</SelectItem>
+                              <SelectItem value="4.5">4.5+ Stars</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {(doctorSearch || (doctorSpecializationFilter && doctorSpecializationFilter !== 'all') || doctorMinRating > 0) && (
+                            <Button variant="outline" size="sm" onClick={() => { setDoctorSearch(''); setDoctorSpecializationFilter('all'); setDoctorMinRating(0); }}>
+                              Clear
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Doctor List */}
+                      {hospitalDoctors.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <User className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                          <p>No doctors found</p>
+                          <p className="text-sm">{allHospitalDoctors.length > 0 ? 'Try adjusting your filters' : 'No doctors at this hospital'}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          <p className="text-sm text-gray-600 mb-3">
+                            {hospitalDoctors.length} doctor{hospitalDoctors.length > 1 ? 's' : ''} {allHospitalDoctors.length !== hospitalDoctors.length ? `of ${allHospitalDoctors.length}` : ''} available
+                          </p>
+                          {hospitalDoctors.map((doctor) => (
+                            <div
+                              key={doctor.id}
+                              className={`border rounded-lg p-4 cursor-pointer transition-all ${selectedDoctor === doctor.id ? 'border-blue-600 bg-blue-50' : 'hover:border-gray-400'}`}
+                              onClick={() => {
+                                setSelectedDoctor(doctor.id);
+                                setSelectedSlot('');
+                              }}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4>{doctor.name}</h4>
+                                    <Badge variant="secondary">Available</Badge>
+                                  </div>
+                                  <p className="text-sm text-gray-600 mb-1">{doctor.specialization}</p>
+                                  <p className="text-xs text-gray-500">{doctor.qualification}</p>
+                                  <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
+                                    <span>{doctor.experience} years exp.</span>
+                                    <span className="flex items-center gap-1">
+                                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                      {doctor.rating}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm">Consultation Fee</p>
+                                  <p className="text-lg">₹{doctor.consultationFee}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
 
 
           {/* Available Time Slots */}
-          {selectedHospital && (selectedDoctor || type === 'hospital') && (
+          {selectedDoctor && (
             <Card>
               <CardHeader>
                 <CardTitle>Available Time Slots</CardTitle>
@@ -342,11 +580,10 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                       {availableSlots.map((slot) => (
                         <div
                           key={slot.id}
-                          className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                            selectedSlot === slot.id
-                              ? 'border-blue-600 bg-blue-50'
-                              : 'hover:border-gray-400'
-                          }`}
+                          className={`border rounded-lg p-4 cursor-pointer transition-all ${selectedSlot === slot.id
+                            ? 'border-blue-600 bg-blue-50'
+                            : 'hover:border-gray-400'
+                            }`}
                           onClick={() => setSelectedSlot(slot.id)}
                         >
                           <div className="flex items-center justify-between">
@@ -354,7 +591,7 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                               <Clock className="h-5 w-5 text-gray-500" />
                               <div>
                                 <p className="font-medium">
-                                  {new Date(slot.date).toLocaleDateString('en-IN', {
+                                  {new Date(slot.date + 'T00:00:00').toLocaleDateString('en-IN', {
                                     weekday: 'short',
                                     month: 'short',
                                     day: 'numeric'
@@ -457,7 +694,7 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
                         return slot ? (
                           <div>
                             <p className="font-medium">
-                              {new Date(slot.date).toLocaleDateString('en-IN', {
+                              {new Date(slot.date + 'T00:00:00').toLocaleDateString('en-IN', {
                                 weekday: 'long',
                                 month: 'long',
                                 day: 'numeric'
@@ -497,6 +734,6 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
           </Card>
         </div>
       </div>
-    </div>
+    </div >
   );
 };

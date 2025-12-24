@@ -12,16 +12,23 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { patientAPI, hospitalAPI } from '../../lib/api-client';
-import { Patient } from '../../types';
+import { Patient, Doctor, Appointment } from '../../types';
 
 export const HospitalPatients = () => {
-  const { patients, appointments, doctors } = useAppStore();
+  const { patients, appointments, doctors, addPatient } = useAppStore();
   const { user } = useAuth();
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
-  const [hospitalPatients, setHospitalPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Filter patients for this hospital 
+  // If backend is used, patients might already be filtered by the API call in app-store
+  // But for safety/mocking, we can filter by querying appointments or checking hospital association if that field existed directly
+  // In the current mock/setup, patients loaded for hospital role are already specific to the hospital in loadDataFromBackend
+  // OR if we are in mock mode, we might want to filter. 
+  // However, looking at loadDataFromBackend, it fetches `api.hospitals.getPatients(userId)`.
+  // So `patients` in store should be correct for the logged-in hospital.
+  const hospitalPatients = patients;
+
   const [patientForm, setPatientForm] = useState({
     name: '',
     email: '',
@@ -35,24 +42,12 @@ export const HospitalPatients = () => {
     medicalHistory: ''
   });
 
-  // Fetch hospital patients on component mount
+  // Data is loaded by AppStore
+  /*
   useEffect(() => {
-    const fetchHospitalPatients = async () => {
-      if (user?.id) {
-        try {
-          const patients = await hospitalAPI.getPatients(user.id);
-          setHospitalPatients(patients);
-        } catch (error) {
-          console.error('Error fetching hospital patients:', error);
-          toast.error('Failed to load patients');
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchHospitalPatients();
+    // ... removed local fetching
   }, [user?.id]);
+  */
 
   const resetForm = () => {
     setPatientForm({
@@ -76,25 +71,22 @@ export const HospitalPatients = () => {
     }
 
     try {
-      const patientData = {
+      const patientData: Patient = {
         id: `PAT${Date.now()}`,
         ...patientForm,
+        gender: patientForm.gender as Patient['gender'],
         age: parseInt(patientForm.age) || 0,
         allergies: patientForm.allergies ? patientForm.allergies.split(',').map(a => a.trim()) : [],
         medicalHistory: patientForm.medicalHistory ? patientForm.medicalHistory.split(',').map(h => h.trim()) : [],
-        hospitalId: user.id, // Associate patient with current hospital
+        // hospitalId: user.id, // Patient type doesn't natively have hospitalId usually, but we can assume association via appointments or custom field if needed. 
+        // For now, adding to the store is enough.
         createdAt: new Date().toISOString()
       };
 
-      await patientAPI.create(patientData);
-      toast.success('Patient added successfully!');
+      await addPatient(patientData);
       setIsAddPatientOpen(false);
       resetForm();
-      // Refresh the patient list
-      const patients = await hospitalAPI.getPatients(user.id);
-      setHospitalPatients(patients);
     } catch (error) {
-      toast.error('Failed to add patient. Please try again.');
       console.error('Error adding patient:', error);
     }
   };
@@ -227,6 +219,9 @@ export const HospitalPatients = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h4 className="font-medium">{patient.name}</h4>
+                          <Badge variant="outline" className="font-mono text-xs">
+                            {patient.id}
+                          </Badge>
                           <Badge variant="outline">
                             {patient.age} years
                           </Badge>
@@ -309,7 +304,7 @@ export const HospitalPatients = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => window.location.href = `/hospital/patient/${patient.id}`}
+                          onClick={() => setSelectedPatient(patient)}
                         >
                           <FileText className="h-3 w-3 mr-1" />
                           View Details
@@ -333,12 +328,41 @@ export const HospitalPatients = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+
+
+      <Dialog open={!!selectedPatient} onOpenChange={(open) => !open && setSelectedPatient(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Patient Details</DialogTitle>
+          </DialogHeader>
+          {selectedPatient && (
+            <PatientDetails
+              patient={selectedPatient}
+              stats={getPatientStats(selectedPatient.id)}
+              doctors={getPatientDoctors(selectedPatient.id)}
+              appointments={appointments.filter(a => a.patientId === selectedPatient.id)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div >
   );
 };
 
 // Patient Details Component
-const PatientDetails = ({ patient, stats, doctors, appointments }) => {
+interface PatientDetailsProps {
+  patient: Patient;
+  stats: {
+    totalAppointments: number;
+    completedAppointments: number;
+    upcomingAppointments: number;
+    lastVisit: string | null;
+  };
+  doctors: Doctor[];
+  appointments: Appointment[];
+}
+
+export const PatientDetails = ({ patient, stats, doctors, appointments }: PatientDetailsProps) => {
   return (
     <div className="space-y-6">
       {/* Basic Info */}
@@ -348,6 +372,7 @@ const PatientDetails = ({ patient, stats, doctors, appointments }) => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4 text-sm">
+            <div><strong>ID:</strong> <span className="font-mono">{patient.id}</span></div>
             <div><strong>Name:</strong> {patient.name}</div>
             <div><strong>Age:</strong> {patient.age} years</div>
             <div><strong>Gender:</strong> {patient.gender}</div>
@@ -369,11 +394,11 @@ const PatientDetails = ({ patient, stats, doctors, appointments }) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {patient.allergies?.length > 0 && (
+            {(patient.allergies?.length ?? 0) > 0 && (
               <div>
                 <strong className="text-red-600">Allergies:</strong>
                 <div className="mt-1 flex flex-wrap gap-1">
-                  {patient.allergies.map((allergy, index) => (
+                  {patient.allergies?.map((allergy, index) => (
                     <Badge key={index} variant="outline" className="text-red-600 border-red-600">
                       {allergy}
                     </Badge>
@@ -382,11 +407,11 @@ const PatientDetails = ({ patient, stats, doctors, appointments }) => {
               </div>
             )}
 
-            {patient.medicalHistory?.length > 0 && (
+            {(patient.medicalHistory?.length ?? 0) > 0 && (
               <div>
                 <strong className="text-blue-600">Medical History:</strong>
                 <div className="mt-1 flex flex-wrap gap-1">
-                  {patient.medicalHistory.map((condition, index) => (
+                  {patient.medicalHistory?.map((condition, index) => (
                     <Badge key={index} variant="outline" className="text-blue-600 border-blue-600">
                       {condition}
                     </Badge>
@@ -395,7 +420,7 @@ const PatientDetails = ({ patient, stats, doctors, appointments }) => {
               </div>
             )}
 
-            {(!patient.allergies?.length && !patient.medicalHistory?.length) && (
+            {!(patient.allergies?.length ?? 0) && !(patient.medicalHistory?.length ?? 0) && (
               <p className="text-gray-500">No medical history recorded.</p>
             )}
           </div>
@@ -416,7 +441,7 @@ const PatientDetails = ({ patient, stats, doctors, appointments }) => {
                   <div key={appointment.id} className="border rounded p-3">
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="font-medium">{appointment.date} at {appointment.time}</div>
+                        <div className="font-medium">{appointment.date} at {appointment.time} <span className="text-xs text-gray-500 font-mono">({appointment.id})</span></div>
                         <div className="text-sm text-gray-600">
                           Dr. {doctors.find(d => d.id === appointment.doctorId)?.name || 'Unknown'}
                         </div>
@@ -441,7 +466,15 @@ const PatientDetails = ({ patient, stats, doctors, appointments }) => {
 };
 
 // Patient Form Component
-const PatientForm = ({ form, setForm, onSubmit, onCancel, submitLabel }) => {
+interface PatientFormProps {
+  form: any;
+  setForm: (form: any) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  submitLabel: string;
+}
+
+const PatientForm = ({ form, setForm, onSubmit, onCancel, submitLabel }: PatientFormProps) => {
   return (
     <div className="grid grid-cols-2 gap-4">
       <div>
@@ -449,7 +482,7 @@ const PatientForm = ({ form, setForm, onSubmit, onCancel, submitLabel }) => {
         <Input
           id="name"
           value={form.name}
-          onChange={(e) => setForm({...form, name: e.target.value})}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
           placeholder="John Doe"
         />
       </div>
@@ -459,7 +492,7 @@ const PatientForm = ({ form, setForm, onSubmit, onCancel, submitLabel }) => {
           id="email"
           type="email"
           value={form.email}
-          onChange={(e) => setForm({...form, email: e.target.value})}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
           placeholder="john@example.com"
         />
       </div>
@@ -468,7 +501,7 @@ const PatientForm = ({ form, setForm, onSubmit, onCancel, submitLabel }) => {
         <Input
           id="phone"
           value={form.phone}
-          onChange={(e) => setForm({...form, phone: e.target.value})}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
           placeholder="+91 9876543210"
         />
       </div>
@@ -478,13 +511,13 @@ const PatientForm = ({ form, setForm, onSubmit, onCancel, submitLabel }) => {
           id="age"
           type="number"
           value={form.age}
-          onChange={(e) => setForm({...form, age: e.target.value})}
+          onChange={(e) => setForm({ ...form, age: e.target.value })}
           placeholder="30"
         />
       </div>
       <div>
         <Label htmlFor="gender">Gender</Label>
-        <Select value={form.gender} onValueChange={(value: string) => setForm({...form, gender: value})}>
+        <Select value={form.gender} onValueChange={(value: string) => setForm({ ...form, gender: value })}>
           <SelectTrigger>
             <SelectValue placeholder="Select gender" />
           </SelectTrigger>
@@ -497,7 +530,7 @@ const PatientForm = ({ form, setForm, onSubmit, onCancel, submitLabel }) => {
       </div>
       <div>
         <Label htmlFor="bloodGroup">Blood Group</Label>
-        <Select value={form.bloodGroup} onValueChange={(value: string) => setForm({...form, bloodGroup: value})}>
+        <Select value={form.bloodGroup} onValueChange={(value: string) => setForm({ ...form, bloodGroup: value })}>
           <SelectTrigger>
             <SelectValue placeholder="Select blood group" />
           </SelectTrigger>
@@ -518,7 +551,7 @@ const PatientForm = ({ form, setForm, onSubmit, onCancel, submitLabel }) => {
         <Input
           id="address"
           value={form.address}
-          onChange={(e) => setForm({...form, address: e.target.value})}
+          onChange={(e) => setForm({ ...form, address: e.target.value })}
           placeholder="Full address"
         />
       </div>
@@ -527,7 +560,7 @@ const PatientForm = ({ form, setForm, onSubmit, onCancel, submitLabel }) => {
         <Input
           id="emergencyContact"
           value={form.emergencyContact}
-          onChange={(e) => setForm({...form, emergencyContact: e.target.value})}
+          onChange={(e) => setForm({ ...form, emergencyContact: e.target.value })}
           placeholder="+91 9876543210"
         />
       </div>
@@ -536,7 +569,7 @@ const PatientForm = ({ form, setForm, onSubmit, onCancel, submitLabel }) => {
         <Input
           id="allergies"
           value={form.allergies}
-          onChange={(e) => setForm({...form, allergies: e.target.value})}
+          onChange={(e) => setForm({ ...form, allergies: e.target.value })}
           placeholder="Penicillin, Nuts, etc."
         />
       </div>
@@ -545,7 +578,7 @@ const PatientForm = ({ form, setForm, onSubmit, onCancel, submitLabel }) => {
         <Textarea
           id="medicalHistory"
           value={form.medicalHistory}
-          onChange={(e) => setForm({...form, medicalHistory: e.target.value})}
+          onChange={(e) => setForm({ ...form, medicalHistory: e.target.value })}
           placeholder="Diabetes, Hypertension, etc."
           rows={3}
         />

@@ -120,7 +120,17 @@ export const DoctorDashboard = () => {
     <div className="space-y-8">
       <section>
         <p className="text-sm text-muted-foreground">Today&apos;s workload</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Good morning, {user?.name}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+          {(() => {
+            const hour = new Date().getHours();
+            if (hour < 12) return 'Good morning';
+            if (hour < 17) return 'Good afternoon';
+            return 'Good evening';
+          })()}, {user?.name}
+          <Badge variant="outline" className="ml-3 font-mono text-sm font-normal align-middle">
+            {user?.id}
+          </Badge>
+        </h1>
         <p className="mt-2 text-muted-foreground">
           Stay ahead of your appointments, reports, and team coordination from one place.
         </p>

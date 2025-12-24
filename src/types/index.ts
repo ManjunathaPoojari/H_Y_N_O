@@ -105,6 +105,28 @@ export interface NutritionPlan {
   dietaryRestrictions: string[];
 }
 
+export interface CarePlanTask {
+  id: string;
+  patientId: string;
+  title: string;
+  description: string;
+  time: string;
+  status: 'pending' | 'completed';
+  type: 'medication' | 'exercise' | 'hydration' | 'vitals';
+  iconName?: string;
+  date: string; // ISO date YYYY-MM-DD
+}
+
+export interface VitalsRecord {
+  id: string;
+  patientId: string;
+  date: string;
+  bpSystolic?: number;
+  bpDiastolic?: number;
+  weight?: number;
+  glucose?: number;
+}
+
 export interface Meal {
   id: string;
   name: string;
@@ -176,6 +198,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   role: 'patient' | 'doctor' | 'hospital' | 'admin' | 'trainer';
   avatar?: string;
 }

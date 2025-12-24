@@ -44,7 +44,14 @@ export const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ onNavigate }
       <section className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-sm text-muted-foreground">Daily coaching dashboard</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Welcome, Coach Avery</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+            {(() => {
+              const hour = new Date().getHours();
+              if (hour < 12) return 'Good morning';
+              if (hour < 17) return 'Good afternoon';
+              return 'Good evening';
+            })()}, Coach
+          </h1>
           <p className="text-muted-foreground mt-2">
             Track client progress, upcoming sessions, and personalized programs.
           </p>

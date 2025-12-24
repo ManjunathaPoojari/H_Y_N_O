@@ -1,13 +1,30 @@
 import React from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Video, Pill, Dumbbell, Apple, Activity, HeartPulse, Stethoscope, Truck } from 'lucide-react';
+import { Video, Pill, Dumbbell, Apple, Activity, HeartPulse, Stethoscope, Truck, AlertCircle } from 'lucide-react';
+import { useAppStore } from '../lib/app-store';
+import { toast } from 'sonner';
 
 interface ServicesPageProps {
     onNavigate: (path: string) => void;
 }
 
 export function ServicesPage({ onNavigate }: ServicesPageProps) {
+    const { createEmergencyRequest } = useAppStore();
+
+    const handleEmergency = () => {
+        createEmergencyRequest({
+            patientId: 'P-GUEST', // In real app, get from auth context
+            patientName: 'Current User', // In real app, get from auth context
+            patientPhone: 'N/A',
+            emergencyType: 'medical',
+            severity: 'high',
+            symptoms: 'Emergency SOS Triggered',
+            description: 'User triggered SOS from Services Page'
+        });
+        toast.error('SOS Alert Sent! Emergency services notified.');
+    };
+
     const services = [
         {
             icon: Video,
@@ -99,8 +116,14 @@ export function ServicesPage({ onNavigate }: ServicesPageProps) {
                                         </li>
                                     ))}
                                 </ul>
-                                <Button className="w-full mt-6" variant="outline" onClick={() => onNavigate('/login')}>
-                                    Book Now
+                                <Button
+                                    className={`w-full mt-6 ${service.title === 'Emergency Services' ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' : ''}`}
+                                    variant={service.title === 'Emergency Services' ? 'default' : 'outline'}
+                                    onClick={() => service.title === 'Emergency Services' ? handleEmergency() : onNavigate('/login')}
+                                >
+                                    {service.title === 'Emergency Services' ? (
+                                        <><AlertCircle className="w-4 h-4 mr-2" /> SOS Alert</>
+                                    ) : 'Book Now'}
                                 </Button>
                             </CardContent>
                         </Card>

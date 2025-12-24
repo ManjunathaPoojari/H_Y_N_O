@@ -87,10 +87,7 @@ export const AdminDashboard = () => {
   useEffect(() => {
     fetchDashboardData();
 
-    // Auto-refresh every 1 second
-    const intervalId = setInterval(fetchDashboardData, 1000);
 
-    return () => clearInterval(intervalId);
   }, []);
 
   if (loading) {

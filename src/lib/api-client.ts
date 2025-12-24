@@ -1,5 +1,6 @@
 // API Client for Spring Boot Backend Integration
 import { API_URL } from './config';
+import { CarePlanTask, VitalsRecord } from '../types';
 
 const API_BASE_URL = 'http://localhost:8081/api';
 
@@ -214,6 +215,15 @@ export const doctorAPI = {
   deleteScheduleSlot: (doctorId: string, slotId: string) =>
     apiCall<any>(`/doctors/${doctorId}/schedule/slots/${slotId}`, {
       method: 'DELETE',
+    }),
+  bookScheduleSlot: (doctorId: string, slotId: string, appointmentId: string) =>
+    apiCall<any>(`/doctors/${doctorId}/schedule/slots/${slotId}/book`, {
+      method: 'PUT',
+      body: JSON.stringify({ appointmentId }),
+    }),
+  releaseScheduleSlot: (doctorId: string, slotId: string) =>
+    apiCall<any>(`/doctors/${doctorId}/schedule/slots/${slotId}/release`, {
+      method: 'PUT',
     }),
 
   // Patient management
@@ -799,6 +809,69 @@ const trainerAPI = {
   search: (query: string) => apiCall<any[]>(`/trainers/search?query=${query}`),
 };
 
+// Care Plan API
+export const carePlanAPI = {
+  getTasks: async (patientId: string): Promise<CarePlanTask[]> => {
+    // Mock data for now
+    return [
+      {
+        id: '1',
+        patientId,
+        title: 'Morning Medication',
+        description: 'Take 1 pill of Aspirin and 1 pill of Vitamin D',
+        time: '08:00 AM',
+        status: 'completed',
+        type: 'medication',
+        iconName: 'Pill',
+        date: new Date().toISOString().split('T')[0]
+      },
+      {
+        id: '2',
+        patientId,
+        title: 'Hydration Goal',
+        description: 'Drink 2.5L of water throughout the day',
+        time: 'All day',
+        status: 'pending',
+        type: 'hydration',
+        iconName: 'Droplet',
+        date: new Date().toISOString().split('T')[0]
+      },
+      {
+        id: '3',
+        patientId,
+        title: 'Daily Movement',
+        description: 'Walk 4,000 steps',
+        time: 'Anytime',
+        status: 'pending',
+        type: 'exercise',
+        iconName: 'Activity',
+        date: new Date().toISOString().split('T')[0]
+      },
+      {
+        id: '4',
+        patientId,
+        title: 'Evening Blood Pressure',
+        description: 'Record your BP reading',
+        time: '08:00 PM',
+        status: 'pending',
+        type: 'vitals',
+        iconName: 'Heart',
+        date: new Date().toISOString().split('T')[0]
+      }
+    ];
+  },
+
+  updateTask: async (taskId: string, status: 'pending' | 'completed'): Promise<void> => {
+    console.log(`[API] Updating task ${taskId} to ${status}`);
+    return Promise.resolve();
+  },
+
+  recordVitals: async (record: VitalsRecord): Promise<void> => {
+    console.log(`[API] Recording vitals:`, record);
+    return Promise.resolve();
+  }
+};
+
 // Export all APIs
 export const api = {
   auth: authAPI,
@@ -816,6 +889,7 @@ export const api = {
   admin: adminAPI,
   trainers: trainerAPI,
   pharmacy: pharmacyAPI,
+  carePlan: carePlanAPI,
 };
 
 export default api;

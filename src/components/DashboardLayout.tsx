@@ -93,7 +93,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: Pill, label: 'Online Pharmacy', path: '/patient/pharmacy' },
           { icon: Apple, label: 'Nutrition & Diet', path: '/patient/nutrition' },
           { icon: Dumbbell, label: 'Yoga & Fitness', path: '/patient/yoga' },
-          { icon: User, label: 'Profile', path: '/my-profile' },
         ];
 
       case 'doctor':
@@ -104,7 +103,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: Calendar, label: 'Schedule', path: '/doctor/schedule' },
           { icon: MessageSquare, label: 'Chat', path: '/doctor/chat' },
           { icon: Video, label: 'Video Consultation', path: '/doctor/meetings' },
-          { icon: User, label: 'Profile', path: '/doctor/profile' },
         ];
 
       case 'hospital':
@@ -118,7 +116,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: Pill, label: 'Inventory & Pharmacy', path: '/hospital/inventory' },
           { icon: FileText, label: 'Billing', path: '/hospital/billing' },
           { icon: FileText, label: 'Reports', path: '/hospital/reports' },
-          { icon: User, label: 'Profile', path: '/hospital/profile' },
         ];
 
       case 'admin':
@@ -138,7 +135,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: Calendar, label: 'Schedule', path: '/trainer/schedule' },
           { icon: Users, label: 'Clients', path: '/trainer/clients' },
           { icon: MessageSquare, label: 'Messages', path: '/trainer/messages' },
-          { icon: User, label: 'Profile', path: '/trainer/profile' },
         ];
 
       default:
@@ -237,15 +233,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-medium text-slate-900">
-                  Welcome, {user?.name || 'User'}
+                  {(() => {
+                    const hour = new Date().getHours();
+                    if (hour < 12) return 'Good morning';
+                    if (hour < 17) return 'Good afternoon';
+                    return 'Good evening';
+                  })()}, {user?.name || 'User'}
                 </span>
               </div>
-              {role === 'patient' && (
-                <Button variant="outline" size="sm" className="hidden md:flex">
-                  <AlertCircle className="h-4 w-4 mr-2 text-red-500" />
-                  Emergency
-                </Button>
-              )}
             </div>
 
             {/* Centered Search Bar */}

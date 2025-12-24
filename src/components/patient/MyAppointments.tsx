@@ -81,8 +81,8 @@ export const MyAppointments = () => {
                 {appointment.type}
               </Badge>
               <Badge variant={appointment.status === 'booked' ? 'default' :
-                             appointment.status === 'completed' ? 'secondary' :
-                             'destructive'}>
+                appointment.status === 'completed' ? 'secondary' :
+                  'destructive'}>
                 {appointment.status}
               </Badge>
             </div>
@@ -110,7 +110,7 @@ export const MyAppointments = () => {
             )}
           </div>
         </div>
-        
+
         <div className="flex gap-2 mt-4">
           {appointment.status === 'pending' && (
             <div className="text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
@@ -159,7 +159,13 @@ export const MyAppointments = () => {
                         type="date"
                         value={rescheduleDate}
                         onChange={(e) => setRescheduleDate(e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
+                        min={(() => {
+                          const today = new Date();
+                          const year = today.getFullYear();
+                          const month = String(today.getMonth() + 1).padStart(2, '0');
+                          const day = String(today.getDate()).padStart(2, '0');
+                          return `${year}-${month}-${day}`;
+                        })()}
                       />
                     </div>
                     <div className="space-y-2">
@@ -185,7 +191,7 @@ export const MyAppointments = () => {
               </Button>
             </>
           )}
-          
+
           {appointment.status === 'completed' && (
             <>
               <Button size="sm" variant="outline" onClick={() => {

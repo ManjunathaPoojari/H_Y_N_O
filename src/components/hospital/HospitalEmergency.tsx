@@ -54,66 +54,15 @@ export const HospitalEmergency = () => {
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [notes, setNotes] = useState('');
 
-  // Mock emergency requests data for hospital
-  const [emergencyRequests, setEmergencyRequests] = useState<EmergencyRequest[]>([
-    {
-      id: '1',
-      patientId: 'p1',
-      patientName: 'John Doe',
-      patientPhone: '+1234567890',
-      patientLocation: 'Emergency Ward',
-      emergencyType: 'cardiac',
-      severity: 'critical',
-      symptoms: 'Chest pain, shortness of breath',
-      description: 'Patient experiencing severe chest pain and difficulty breathing. Heart rate elevated.',
-      status: 'pending',
-      requestedAt: new Date().toISOString(),
-      priority: 5
-    },
-    {
-      id: '2',
-      patientId: 'p2',
-      patientName: 'Jane Smith',
-      patientPhone: '+1234567891',
-      patientLocation: 'ICU',
-      emergencyType: 'accident',
-      severity: 'high',
-      symptoms: 'Head injury, unconscious',
-      description: 'Car accident victim with head trauma. Unconscious upon arrival.',
-      status: 'assigned',
-      assignedDoctorId: 'd1',
-      assignedDoctorName: 'Dr. Sarah Johnson',
-      requestedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      assignedAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-      priority: 4
-    },
-    {
-      id: '3',
-      patientId: 'p3',
-      patientName: 'Mike Wilson',
-      patientPhone: '+1234567892',
-      emergencyType: 'respiratory',
-      severity: 'medium',
-      symptoms: 'Difficulty breathing, wheezing',
-      description: 'Asthma attack. Patient has history of respiratory issues.',
-      status: 'in_progress',
-      assignedDoctorId: 'd2',
-      assignedDoctorName: 'Dr. Robert Chen',
-      requestedAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-      assignedAt: new Date(Date.now() - 50 * 60 * 1000).toISOString(),
-      priority: 3
-    }
-  ]);
-
-  const { doctors } = useAppStore();
+  const { doctors, emergencyRequests, updateEmergencyRequest } = useAppStore();
 
   // Filter doctors to only show hospital's doctors
   const hospitalDoctors = doctors.filter(doctor => doctor.hospitalId === 'H001' && doctor.available && doctor.status === 'approved');
 
   const filteredRequests = emergencyRequests.filter(request => {
     const matchesSearch = request.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.patientPhone.includes(searchTerm) ||
-                         request.symptoms.toLowerCase().includes(searchTerm.toLowerCase());
+      request.patientPhone.includes(searchTerm) ||
+      request.symptoms.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
     const matchesSeverity = severityFilter === 'all' || request.severity === severityFilter;
     return matchesSearch && matchesStatus && matchesSeverity;
@@ -149,17 +98,12 @@ export const HospitalEmergency = () => {
     if (selectedRequest && selectedDoctor) {
       const doctor = hospitalDoctors.find(d => d.id === selectedDoctor);
       if (doctor) {
-        setEmergencyRequests(prev => prev.map(request =>
-          request.id === selectedRequest.id
-            ? {
-                ...request,
-                status: 'assigned' as const,
-                assignedDoctorId: doctor.id,
-                assignedDoctorName: doctor.name,
-                assignedAt: new Date().toISOString()
-              }
-            : request
-        ));
+        updateEmergencyRequest(selectedRequest.id, {
+          status: 'assigned',
+          assignedDoctorId: doctor.id,
+          assignedDoctorName: doctor.name,
+          assignedAt: new Date().toISOString()
+        });
       }
       setShowAssignDialog(false);
       setSelectedDoctor('');
@@ -168,11 +112,7 @@ export const HospitalEmergency = () => {
   };
 
   const handleStatusUpdate = (requestId: string, newStatus: string) => {
-    setEmergencyRequests(prev => prev.map(request =>
-      request.id === requestId
-        ? { ...request, status: newStatus as any }
-        : request
-    ));
+    updateEmergencyRequest(requestId, { status: newStatus as any });
   };
 
   const formatTimeAgo = (dateString: string) => {
