@@ -1,0 +1,5 @@
+TABLE_NAME	CONSTRAINT_NAME
+trainer_languages	FKp783yn1je6vdp9sh8rg2mvxqd
+trainer_modes	FKcreip196183f0cc26nc45kpud
+trainer_qualifications	FKlmjw7k15qa5biaxe89bxs39cf
+trainer_specialties	FKbh1r4sm6dbpvwop9savgsu7s4

@@ -40,6 +40,11 @@ public class Patient {
     private List<String> medicalHistory = new ArrayList<>();
 
     @ElementCollection
+    @CollectionTable(name = "patient_diseases", joinColumns = @JoinColumn(name = "patient_id"))
+    @Column(name = "disease_name")
+    private List<String> diseases = new ArrayList<>();
+
+    @ElementCollection
     @CollectionTable(name = "patient_current_medications", joinColumns = @JoinColumn(name = "patient_id"))
     @Column(name = "medication")
     private List<String> currentMedications = new ArrayList<>();
@@ -49,6 +54,26 @@ public class Patient {
     private String password;
     private boolean isVerified = false;
     private String notes;
+
+    // Specialized Care - Baby Care
+    private Double birthWeight;
+    private Double birthHeight;
+    private String vaccinationSchedule; // JSON or comma-separated milestones
+
+    // Specialized Care - Elderly Care
+    private String mobilityStatus; // e.g., independent, assisted, wheelchair
+    private String primaryCaregiverName;
+    private String primaryCaregiverPhone;
+    @ElementCollection
+    @CollectionTable(name = "patient_chronic_conditions", joinColumns = @JoinColumn(name = "patient_id"))
+    @Column(name = "condition_name")
+    private List<String> chronicConditions = new ArrayList<>();
+
+    // Compliance & Identity
+    private String governmentIdType;
+    private String governmentIdNumber;
+    private boolean identityVerified = false;
+    private LocalDateTime identityVerifiedAt;
 
     @Column(name = "hospital_id")
     private String hospitalId;

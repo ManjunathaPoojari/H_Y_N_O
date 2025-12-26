@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, String> {
 
-    List<ChatMessage> findByChatRoomIdOrderByCreatedAtAsc(String chatRoomId);
+    List<ChatMessage> findByChatRoom_IdOrderByCreatedAtAsc(String chatRoomId);
 
     @Query("SELECT cm FROM ChatMessage cm WHERE cm.chatRoom.id = :chatRoomId AND cm.createdAt > :since ORDER BY cm.createdAt ASC")
     List<ChatMessage> findByChatRoomIdSince(@Param("chatRoomId") String chatRoomId, @Param("since") LocalDateTime since);
@@ -24,10 +24,10 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, String
     List<ChatMessage> findUnreadMessages(@Param("chatRoomId") String chatRoomId, @Param("senderRole") ChatMessage.SenderRole senderRole);
 
     @Modifying
-    @Query("UPDATE ChatMessage cm SET cm.status = 'DELIVERED', cm.deliveredAt = :deliveredAt WHERE cm.chatRoom.id = :chatRoomId AND cm.senderRole != :senderRole AND cm.status = 'SENT'")
-    void markMessagesAsDelivered(@Param("chatRoomId") String chatRoomId, @Param("senderRole") ChatMessage.SenderRole senderRole, @Param("deliveredAt") LocalDateTime deliveredAt);
+    @Query("UPDATE ChatMessage cm SET cm.status = :statusToSet, cm.deliveredAt = :deliveredAt WHERE cm.chatRoom.id = :chatRoomId AND cm.senderRole != :senderRole AND cm.status = :expectedStatus")
+    void markMessagesAsDelivered(@Param("chatRoomId") String chatRoomId, @Param("senderRole") ChatMessage.SenderRole senderRole, @Param("deliveredAt") LocalDateTime deliveredAt, @Param("statusToSet") ChatMessage.MessageStatus statusToSet, @Param("expectedStatus") ChatMessage.MessageStatus expectedStatus);
 
     @Modifying
-    @Query("UPDATE ChatMessage cm SET cm.status = 'READ', cm.readAt = :readAt WHERE cm.chatRoom.id = :chatRoomId AND cm.senderRole != :senderRole AND cm.status IN ('SENT', 'DELIVERED')")
-    void markMessagesAsRead(@Param("chatRoomId") String chatRoomId, @Param("senderRole") ChatMessage.SenderRole senderRole, @Param("readAt") LocalDateTime readAt);
+    @Query("UPDATE ChatMessage cm SET cm.status = :statusToSet, cm.readAt = :readAt WHERE cm.chatRoom.id = :chatRoomId AND cm.senderRole != :senderRole AND (cm.status = :sentStatus OR cm.status = :deliveredStatus)")
+    void markMessagesAsRead(@Param("chatRoomId") String chatRoomId, @Param("senderRole") ChatMessage.SenderRole senderRole, @Param("readAt") LocalDateTime readAt, @Param("statusToSet") ChatMessage.MessageStatus statusToSet, @Param("sentStatus") ChatMessage.MessageStatus sentStatus, @Param("deliveredStatus") ChatMessage.MessageStatus deliveredStatus);
 }

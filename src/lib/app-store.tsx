@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Patient, Doctor, Hospital, Appointment, Medicine, Prescription, NutritionPlan, Meal, Trainer } from '../types';
+import { Patient, Doctor, Hospital, Appointment, Medicine, Prescription, NutritionPlan, Meal, Trainer, MedicalEvent } from '../types';
 
 import api from './api-client';
 import { toast } from 'sonner';
@@ -16,6 +16,7 @@ interface AppStoreContextType {
   nutritionPlans: NutritionPlan[];
 
   trainers: Trainer[];
+  medicalEvents: MedicalEvent[];
 
   // Data loading functions
   refreshData: () => Promise<void>;
@@ -68,6 +69,13 @@ interface AppStoreContextType {
   approveTrainer: (trainerId: string) => void;
   rejectTrainer: (trainerId: string) => void;
   deleteTrainer: (id: string) => void;
+
+  // Event Actions
+  registerForEvent: (eventId: string, patientId: string) => Promise<void>;
+  unregisterFromEvent: (eventId: string, patientId: string) => Promise<void>;
+  addMedicalEvent: (event: Partial<MedicalEvent>) => Promise<void>;
+  deleteMedicalEvent: (id: string) => Promise<void>;
+
   // UI State
   refreshTrigger: number;
 }
@@ -90,6 +98,7 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
 
 
   const [trainers, setTrainers] = useState<Trainer[]>([]);
+  const [medicalEvents, setMedicalEvents] = useState<MedicalEvent[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Load data from backend on mount (if enabled)
@@ -130,11 +139,13 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       let trainerData: any[] = [];
 
       let nutritionPlansData: any[] = [];
+      let medicalEventsData: any[] = [];
 
       if (userRole === 'admin') {
         // Admin loads all data - handle each API call separately to prevent one failure from stopping others
         try {
           patientsData = await api.admin.getAllPatients();
+          medicalEventsData = await api.medicalEvents.getAll();
         } catch (error) {
           console.warn('Failed to load patients from backend:', error);
           patientsData = [];
@@ -207,6 +218,8 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
             type: apt.type?.toLowerCase(),
             date: apt.appointmentDate,
             time: apt.appointmentTime,
+            patientId: apt.patientId || apt.patient?.id || (typeof apt.patient === 'string' ? apt.patient : undefined),
+            doctorId: apt.doctorId || apt.doctor?.id || (typeof apt.doctor === 'string' ? apt.doctor : undefined),
           }));
         } catch (error) {
           console.warn('Failed to load appointments from backend:', error);
@@ -256,6 +269,8 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
             type: apt.type?.toLowerCase(),
             date: apt.appointmentDate,
             time: apt.appointmentTime,
+            patientId: apt.patientId || apt.patient?.id || (typeof apt.patient === 'string' ? apt.patient : undefined),
+            doctorId: apt.doctorId || apt.doctor?.id || (typeof apt.doctor === 'string' ? apt.doctor : undefined),
           }));
         } catch (error) {
           console.warn('Failed to load appointments from backend:', error);
@@ -306,6 +321,8 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
             type: apt.type?.toLowerCase(),
             date: apt.appointmentDate,
             time: apt.appointmentTime,
+            patientId: apt.patientId || apt.patient?.id || (typeof apt.patient === 'string' ? apt.patient : undefined),
+            doctorId: apt.doctorId || apt.doctor?.id || (typeof apt.doctor === 'string' ? apt.doctor : undefined),
           }));
         } catch (error) {
           console.warn('Failed to load appointments from backend:', error);
@@ -407,6 +424,8 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
           type: apt.type?.toLowerCase(),
           date: apt.appointmentDate,
           time: apt.appointmentTime,
+          patientId: apt.patientId || apt.patient?.id || (typeof apt.patient === 'string' ? apt.patient : undefined),
+          doctorId: apt.doctorId || apt.doctor?.id || (typeof apt.doctor === 'string' ? apt.doctor : undefined),
         })),
       );
       setMedicines(normalizedMedicines);
@@ -833,17 +852,42 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   // Nutrition Actions
-  const addNutritionPlan = (plan: NutritionPlan) => {
-    setNutritionPlans([...nutritionPlans, plan]);
-    toast.success('Nutrition plan created');
+  const addNutritionPlan = async (plan: NutritionPlan) => {
+    if (USE_BACKEND) {
+      try {
+        const newPlan = await api.nutrition.createPlan(plan);
+        setNutritionPlans([...nutritionPlans, newPlan]);
+        toast.success('Nutrition plan created');
+      } catch (error) {
+        toast.error('Failed to create nutrition plan');
+      }
+    } else {
+      setNutritionPlans([...nutritionPlans, plan]);
+      toast.success('Nutrition plan created');
+    }
   };
 
-  const updateNutritionPlan = (id: string, updatedData: Partial<NutritionPlan>) => {
-    setNutritionPlans(nutritionPlans.map(n => n.id === id ? { ...n, ...updatedData } : n));
-    toast.success('Nutrition plan updated');
+  const updateNutritionPlan = async (id: string, updatedData: Partial<NutritionPlan>) => {
+    if (USE_BACKEND) {
+      try {
+        const updatedPlan = await api.nutrition.updatePlan(id, updatedData);
+        setNutritionPlans(nutritionPlans.map(n => n.id === id ? updatedPlan : n));
+        toast.success('Nutrition plan updated');
+      } catch (error) {
+        toast.error('Failed to update nutrition plan');
+      }
+    } else {
+      setNutritionPlans(nutritionPlans.map(n => n.id === id ? { ...n, ...updatedData } : n));
+      toast.success('Nutrition plan updated');
+    }
   };
 
   const getNutritionPlanByPatient = (patientId: string) => {
+    if (USE_BACKEND) {
+      // In a real app, we might need an async fetch here if not preloaded
+      // But for now we rely on preload or local search
+      return nutritionPlans.find(n => n.patientId === patientId);
+    }
     return nutritionPlans.find(n => n.patientId === patientId);
   };
 
@@ -948,6 +992,46 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
+  const registerForEvent = async (eventId: string, patientId: string) => {
+    try {
+      const updatedEvent = await api.medicalEvents.register(eventId, patientId);
+      setMedicalEvents(prev => prev.map(e => e.id === eventId ? updatedEvent : e));
+      toast.success('Successfully registered for the event!');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to register for event');
+    }
+  };
+
+  const unregisterFromEvent = async (eventId: string, patientId: string) => {
+    try {
+      const updatedEvent = await api.medicalEvents.unregister(eventId, patientId);
+      setMedicalEvents(prev => prev.map(e => e.id === eventId ? updatedEvent : e));
+      toast.success('Successfully unregistered from the event');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to unregister');
+    }
+  };
+
+  const addMedicalEvent = async (event: Partial<MedicalEvent>) => {
+    try {
+      const response = await api.medicalEvents.create(event);
+      setMedicalEvents(prev => [...prev, response]);
+      toast.success('Event created successfully!');
+    } catch (error: any) {
+      toast.error('Failed to create event');
+    }
+  };
+
+  const deleteMedicalEvent = async (id: string) => {
+    try {
+      await api.medicalEvents.delete(id);
+      setMedicalEvents(prev => prev.filter(e => e.id !== id));
+      toast.success('Event deleted');
+    } catch (error: any) {
+      toast.error('Failed to delete event');
+    }
+  };
+
   const value: AppStoreContextType = {
     patients,
     doctors,
@@ -990,6 +1074,11 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     deleteTrainer,
     approveTrainer,
     rejectTrainer,
+    medicalEvents,
+    registerForEvent,
+    unregisterFromEvent,
+    addMedicalEvent,
+    deleteMedicalEvent,
     refreshTrigger,
   };
 

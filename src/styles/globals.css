@@ -39,6 +39,11 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --neon-primary: #00D4FF;
+  --neon-secondary: #FF0080;
+  --neon-accent: #00FF80;
+  --neon-background: #0A0A0A;
+  --neon-text: #FFFFFF;
 }
 
 .dark {

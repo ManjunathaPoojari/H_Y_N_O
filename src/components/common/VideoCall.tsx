@@ -220,72 +220,118 @@ const VideoCall: React.FC<VideoCallProps> = ({
       try {
         attempts++;
         setInitState('media');
-        console.log(`Requesting media permissions (Attempt ${attempts}/${maxAttempts})...`);
+        console.log(`🎥 [MEDIA] Requesting permissions (Attempt ${attempts}/${maxAttempts})...`);
 
         if (!navigator.mediaDevices?.getUserMedia) {
           throw new Error('Media devices not supported');
         }
 
-        // AGGRESSIVE CLEANUP: Stop any existing streams before requesting new ones
-        if (localStreamRef.current) {
-          localStreamRef.current.getTracks().forEach(track => track.stop());
+        // 1. AGGRESSIVE CLEANUP: Stop any existing streams BEFORE requesting new ones
+        // This is critical for mobile and some desktop drivers that can't handle multiple requests
+        const currentLocal = localStreamRef.current;
+        if (currentLocal) {
+          console.log('🎥 [MEDIA] Stopping previous localStream tracks...');
+          currentLocal.getTracks().forEach(track => {
+            track.stop();
+            track.enabled = false;
+          });
           localStreamRef.current = null;
         }
+
         if (globalLocalStream) {
-          console.log('Stopping lingering global stream...');
-          globalLocalStream.getTracks().forEach(track => track.stop());
+          console.log('🎥 [MEDIA] Stopping lingering global stream...');
+          globalLocalStream.getTracks().forEach(track => {
+            track.stop();
+            track.enabled = false;
+          });
           globalLocalStream = null;
         }
 
-        // Add delay on retries to allow hardware to release
+        // 2. Hardware cooldown delay
         if (attempts > 1) {
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          const delay = attempts * 1000;
+          console.log(`🎥 [MEDIA] Hardware cooldown delay: ${delay}ms`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480, frameRate: 15 },
-          audio: true
-        });
+        // 3. Request media with fallback constraints
+        // On attempt 3, we use very loose constraints to increase success chance
+        const constraints: MediaStreamConstraints = attempts < 3
+          ? {
+            video: {
+              width: { ideal: 640, max: 1280 },
+              height: { ideal: 480, max: 720 },
+              frameRate: { ideal: 15, max: 30 }
+            },
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true
+            }
+          }
+          : { video: true, audio: true };
+
+        console.log('🎥 [MEDIA] Using constraints:', JSON.stringify(constraints));
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
         if (!isMounted.current) {
+          console.warn('🎥 [MEDIA] Component unmounted during acquisition, stopping tracks...');
           stream.getTracks().forEach(track => track.stop());
           throw new Error('Component unmounted during initialization');
         }
 
-        localStreamRef.current = stream;
-        setLocalStream(stream); // Update state to trigger re-render
-        globalLocalStream = stream; // Track globally
+        // 4. Success - setup state and refs
+        console.log('🎥 [MEDIA] Success! Stream ID:', stream.id);
+        stream.getTracks().forEach(track => {
+          console.log(`🎥 [MEDIA] Track: ${track.kind}, ID: ${track.id}, State: ${track.readyState}`);
+          track.onended = () => console.log(`🎥 [MEDIA] Track ${track.kind} ended externally`);
+        });
 
-        // Set up local video
+        localStreamRef.current = stream;
+        setLocalStream(stream);
+        globalLocalStream = stream;
+
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
 
         return stream;
-      } catch (error) {
-        console.error(`Media initialization attempt ${attempts} failed:`, error);
 
-        // If it's the last attempt or not a "Device in use" error, throw
-        const isDeviceInUse = error instanceof Error && error.name === 'NotReadableError';
+      } catch (error: any) {
+        console.error(`🎥 [MEDIA] Initialization attempt ${attempts} failed:`, {
+          name: error.name,
+          message: error.message,
+          constraint: error.constraint
+        });
 
-        if (attempts >= maxAttempts || (!isDeviceInUse && (error instanceof Error && error.name !== 'TrackStartError'))) {
-          if (error instanceof Error) {
-            if (error.name === 'NotAllowedError') {
-              setError('Camera and microphone permissions are required. Please allow access.');
-            } else if (error.name === 'NotFoundError') {
-              setError('No camera/microphone found.');
-            } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-              setError('Camera is currently in use by another application. Please close other apps using the camera.');
-            } else {
-              setError('Failed to access camera/microphone.');
-            }
+        const errorName = error.name || '';
+
+        // Handle definite failure cases immediately
+        if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
+          setError('Camera and microphone permissions were denied. Please enable them in your browser settings and refresh.');
+          setInitState('error');
+          throw error;
+        }
+
+        if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
+          setError('No camera or microphone found. Please connect your media devices.');
+          setInitState('error');
+          throw error;
+        }
+
+        // NotReadable / TrackStart are usually "Device in use" or hardware issues - worth retrying
+        const isHardwareError = errorName === 'NotReadableError' || errorName === 'TrackStartError';
+
+        if (attempts >= maxAttempts) {
+          if (isHardwareError) {
+            setError('Your camera or microphone is being used by another application. Please close other video apps and try again.');
+          } else {
+            setError(`Failed to start video call: ${error.message || 'Unknown media error'}`);
           }
           setInitState('error');
           throw error;
         }
 
-        // If we're here, it's a recoverable error and we have retries left
-        console.log('Camera busy, retrying in 1.5s...');
+        console.log('🎥 [MEDIA] Recoverable error, retrying...');
       }
     }
 
@@ -887,20 +933,20 @@ const VideoCall: React.FC<VideoCallProps> = ({
         {/* Participant name overlay */}
         {(admittedPatient || (!isDoctor && remoteStream)) && (
           <div className="absolute bottom-6 left-6 bg-slate-900/80 backdrop-blur-md text-white px-5 py-2.5 rounded-2xl text-sm font-bold shadow-2xl border border-white/10 z-30 flex items-center gap-3">
-             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-             <div className="flex flex-col">
-               <span className="text-xs text-white/60 font-medium uppercase tracking-wider mb-0.5">
-                 {isDoctor ? 'In Consultation' : 'Secure Visit'}
-               </span>
-               <div className="flex items-center gap-2">
-                 {isDoctor ? (admittedPatient?.name || 'Patient') : 'Doctor'}
-                 {remoteAudioActive ? (
-                   <Mic className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
-                 ) : (
-                   <MicOff className="h-3.5 w-3.5 text-red-400" />
-                 )}
-               </div>
-             </div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+            <div className="flex flex-col">
+              <span className="text-xs text-white/60 font-medium uppercase tracking-wider mb-0.5">
+                {isDoctor ? 'In Consultation' : 'Secure Visit'}
+              </span>
+              <div className="flex items-center gap-2">
+                {isDoctor ? (admittedPatient?.name || 'Patient') : 'Doctor'}
+                {remoteAudioActive ? (
+                  <Mic className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
+                ) : (
+                  <MicOff className="h-3.5 w-3.5 text-red-400" />
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

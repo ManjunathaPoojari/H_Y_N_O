@@ -340,7 +340,7 @@ export const appointmentAPI = {
       body: JSON.stringify({
         patient: { id: appointment.patientId },
         patientName: appointment.patientName,
-        doctor: { id: appointment.doctorId },
+        doctor: appointment.doctorId ? { id: appointment.doctorId } : null,
         doctorName: appointment.doctorName,
         hospital: appointment.hospitalId ? { id: appointment.hospitalId } : null,
         type: appointment.type?.toUpperCase(),
@@ -470,7 +470,7 @@ export const nutritionAPI = {
   getPlans: () => apiCall<any[]>('/nutrition/plans'),
 
   getPlanByPatient: (patientId: string) =>
-    apiCall<any>(`/nutrition/plans/patient/${patientId}`),
+    apiCall<any>(`/nutrition/patient/${patientId}`),
 
   createPlan: (plan: any) =>
     apiCall<any>('/nutrition/plans', {
@@ -482,6 +482,11 @@ export const nutritionAPI = {
     apiCall<any>(`/nutrition/plans/${id}`, {
       method: 'PUT',
       body: JSON.stringify(plan),
+    }),
+
+  deletePlan: (id: string) =>
+    apiCall<void>(`/nutrition/plans/${id}`, {
+      method: 'DELETE',
     }),
 
   getMeals: () => apiCall<any[]>('/nutrition/meals'),
@@ -799,6 +804,47 @@ const trainerAPI = {
   search: (query: string) => apiCall<any[]>(`/trainers/search?query=${query}`),
 };
 
+// Medical Events API
+export const medicalEventsAPI = {
+  getAll: () => apiCall<any[]>('/medical-events'),
+  getById: (id: string) => apiCall<any>(`/medical-events/${id}`),
+  getByHospital: (hospitalId: string) => apiCall<any[]>(`/medical-events/hospital/${hospitalId}`),
+  create: (event: any) =>
+    apiCall<any>('/medical-events', {
+      method: 'POST',
+      body: JSON.stringify(event),
+    }),
+  delete: (id: string) =>
+    apiCall<void>(`/medical-events/${id}`, {
+      method: 'DELETE',
+    }),
+  register: (eventId: string, patientId: string) =>
+    apiCall<any>(`/medical-events/${eventId}/register/${patientId}`, {
+      method: 'POST',
+    }),
+  unregister: (eventId: string, patientId: string) =>
+    apiCall<any>(`/medical-events/${eventId}/unregister/${patientId}`, {
+      method: 'POST',
+    }),
+};
+
+// Yoga Videos API
+export const yogaVideosAPI = {
+  getAll: () => apiCall<any[]>('/yoga-videos'),
+  getById: (id: string) => apiCall<any>(`/yoga-videos/${id}`),
+  search: (query: string) => apiCall<any[]>(`/yoga-videos/search?query=${query}`),
+};
+
+export const yogaPosesAPI = {
+  getSafe: (patientId: string) => apiCall<any[]>(`/yoga/poses/safe/${patientId}`),
+  getAll: () => apiCall<any[]>('/yoga/poses'),
+  create: (pose: any) =>
+    apiCall<any>('/yoga/poses', {
+      method: 'POST',
+      body: JSON.stringify(pose),
+    }),
+};
+
 // Export all APIs
 export const api = {
   auth: authAPI,
@@ -816,6 +862,9 @@ export const api = {
   admin: adminAPI,
   trainers: trainerAPI,
   pharmacy: pharmacyAPI,
+  medicalEvents: medicalEventsAPI,
+  yogaVideos: yogaVideosAPI,
+  yogaPoses: yogaPosesAPI,
 };
 
 export default api;

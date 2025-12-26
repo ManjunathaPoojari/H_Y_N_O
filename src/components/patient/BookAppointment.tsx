@@ -10,11 +10,12 @@ import { Calendar, Clock, Video, MessageSquare, MapPin, Building2, Star, Loader2
 import { useAppStore } from '../../lib/app-store';
 import { useAuth } from '../../lib/auth-context';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; // This will be removed, but kept here for exact matching in some tools if needed, though I'll favor direct replacement
 import api from '../../lib/api-client';
 
 interface BookAppointmentProps {
   type: 'video' | 'chat' | 'inperson' | 'hospital';
+  onNavigate?: (path: string) => void;
 }
 
 interface ScheduleSlot {
@@ -28,10 +29,10 @@ interface ScheduleSlot {
   notes: string;
 }
 
-export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
+export const BookAppointment: React.FC<BookAppointmentProps> = ({ type, onNavigate }) => {
   const { doctors, hospitals, bookAppointment } = useAppStore();
   const { user } = useAuth();
-  const navigate = useNavigate();
+  // Removed useNavigate as this component is not inside a <Router>
   const [selectedDoctor, setSelectedDoctor] = useState<string>('');
   const [selectedHospital, setSelectedHospital] = useState<string>('');
   const [selectedSlot, setSelectedSlot] = useState<string>('');
@@ -133,31 +134,31 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
 
     try {
       // Book the primary appointment
-      await bookAppointment({
+      const bookingData: any = {
         patientId: user.id,
         patientName: user.name,
-        doctorId: doctor?.id || undefined,
-        doctorName: doctor?.name || 'Hospital Appointment',
         hospitalId: selectedHospital || undefined,
         type: type,
         date: slot.date,
         time: slot.startTime,
-        status: 'pending', // All appointments start as pending for doctor approval
+        status: 'pending',
         reason,
-      });
+      };
+
+      if (doctor?.id) {
+        bookingData.doctorId = doctor.id;
+        bookingData.doctorName = doctor.name;
+      } else if (type === 'hospital') {
+        bookingData.doctorName = 'Hospital Appointment';
+      }
+
+      await bookAppointment(bookingData);
 
       // If booking a video consultation, also create a chat consultation for follow-up
-      if (type === 'video') {
+      if (type === 'video' && doctor?.id) {
         await bookAppointment({
-          patientId: user.id,
-          patientName: user.name,
-          doctorId: doctor?.id || undefined,
-          doctorName: doctor?.name || 'Hospital Appointment',
-          hospitalId: selectedHospital || undefined,
+          ...bookingData,
           type: 'chat',
-          date: slot.date,
-          time: slot.startTime,
-          status: 'pending',
           reason: `${reason} (Follow-up chat for video consultation)`,
         });
       }
@@ -172,7 +173,12 @@ export const BookAppointment: React.FC<BookAppointmentProps> = ({ type }) => {
       setAvailableSlots([]);
 
       // Navigate to My Appointments page
-      navigate('/patient/appointments');
+      if (onNavigate) {
+        onNavigate('/patient/appointments');
+      } else {
+        window.history.pushState(null, '', '/patient/appointments');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
     } catch (error) {
       console.error('Failed to book appointment:', error);
       toast.error('Failed to book appointment. Please try again.');

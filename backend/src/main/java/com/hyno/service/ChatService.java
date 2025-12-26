@@ -79,7 +79,7 @@ public class ChatService {
     public ChatRoom createChatRoomForAppointment(String appointmentId) {
         logger.info("Creating chat room for appointment: {}", appointmentId);
         try {
-            List<ChatRoom> existingRooms = chatRoomRepository.findByAppointmentId(appointmentId);
+            List<ChatRoom> existingRooms = chatRoomRepository.findByAppointment_Id(appointmentId);
             if (!existingRooms.isEmpty()) {
                 logger.info("Chat room already exists for appointment: {}", appointmentId);
                 return existingRooms.get(0);
@@ -122,7 +122,7 @@ public class ChatService {
     public List<ChatMessage> getMessagesByChatRoom(String chatRoomId) {
         logger.info("Fetching messages for chat room: {}", chatRoomId);
         try {
-            List<ChatMessage> messages = chatMessageRepository.findByChatRoomIdOrderByCreatedAtAsc(chatRoomId);
+            List<ChatMessage> messages = chatMessageRepository.findByChatRoom_IdOrderByCreatedAtAsc(chatRoomId);
             logger.info("Retrieved {} messages for chat room: {}", messages.size(), chatRoomId);
             return messages;
         } catch (Exception e) {
@@ -145,6 +145,10 @@ public class ChatService {
     }
 
     public ChatMessage sendMessage(String chatRoomId, String senderId, String senderName, ChatMessage.SenderRole senderRole, String content) {
+        return sendMessage(chatRoomId, senderId, senderName, senderRole, content, "TEXT", null, null, null);
+    }
+
+    public ChatMessage sendMessage(String chatRoomId, String senderId, String senderName, ChatMessage.SenderRole senderRole, String content, String messageType, String fileUrl, String fileName, Long fileSize) {
         logger.info("Sending message to chat room: {}", chatRoomId);
         try {
             Optional<ChatRoom> chatRoom = chatRoomRepository.findById(chatRoomId);
@@ -156,9 +160,38 @@ public class ChatService {
                 message.setSenderRole(senderRole);
                 message.setSenderType(senderRole == ChatMessage.SenderRole.PATIENT ? ChatMessage.SenderType.PATIENT : ChatMessage.SenderType.DOCTOR);
                 message.setContent(content);
+                
+                // Set file fields if applicable
+                if (messageType != null) {
+                    try {
+                        message.setMessageType(ChatMessage.MessageType.valueOf(messageType.toUpperCase()));
+                    } catch (IllegalArgumentException e) {
+                        message.setMessageType(ChatMessage.MessageType.TEXT);
+                    }
+                }
+                
+                message.setFileUrl(fileUrl);
+                message.setFileName(fileName);
+                message.setFileSize(fileSize);
+                
                 message.setCreatedAt(LocalDateTime.now());
                 ChatMessage savedMessage = chatMessageRepository.save(message);
-                logger.info("Message sent successfully with ID: {}", savedMessage.getId());
+                
+                // Update chat room with last message info
+                ChatRoom room = chatRoom.get();
+                room.setLastMessage(content);
+                room.setLastMessageTime(LocalDateTime.now());
+                
+                // Update unread counts
+                if (senderRole == ChatMessage.SenderRole.PATIENT) {
+                    room.setUnreadCountDoctor(room.getUnreadCountDoctor() + 1);
+                } else {
+                    room.setUnreadCountPatient(room.getUnreadCountPatient() + 1);
+                }
+                
+                chatRoomRepository.save(room);
+                
+                logger.info("Message sent successfully with ID: {} in chat room: {}", message.getId(), chatRoomId);
                 return savedMessage;
             } else {
                 logger.warn("Chat room not found: {}", chatRoomId);
@@ -170,11 +203,35 @@ public class ChatService {
         }
     }
 
+    @Transactional
     public void markMessagesAsRead(String chatRoomId, String userId, String userType) {
         logger.info("Marking messages as read for chat room: {} by user: {}", chatRoomId, userId);
         try {
-            ChatMessage.SenderRole senderRole = "patient".equals(userType) ? ChatMessage.SenderRole.DOCTOR : ChatMessage.SenderRole.PATIENT;
-            chatMessageRepository.markMessagesAsRead(chatRoomId, senderRole, LocalDateTime.now());
+            boolean isPatient = "patient".equalsIgnoreCase(userType);
+            ChatMessage.SenderRole myRole = isPatient ? ChatMessage.SenderRole.PATIENT : ChatMessage.SenderRole.DOCTOR;
+            
+            // Mark messages from the OTHER party as read
+            chatMessageRepository.markMessagesAsRead(
+                chatRoomId, 
+                myRole, 
+                LocalDateTime.now(), 
+                ChatMessage.MessageStatus.READ, 
+                ChatMessage.MessageStatus.SENT, 
+                ChatMessage.MessageStatus.DELIVERED
+            );
+            
+            // Reset unread count for the CURRENT user in the ChatRoom
+            Optional<ChatRoom> chatRoom = chatRoomRepository.findById(chatRoomId);
+            if (chatRoom.isPresent()) {
+                ChatRoom room = chatRoom.get();
+                if (isPatient) {
+                    room.setUnreadCountPatient(0);
+                } else {
+                    room.setUnreadCountDoctor(0);
+                }
+                chatRoomRepository.save(room);
+            }
+            
             logger.info("Messages marked as read for chat room: {}", chatRoomId);
         } catch (Exception e) {
             logger.error("Error marking messages as read for chat room: {}", chatRoomId, e);
@@ -182,11 +239,21 @@ public class ChatService {
         }
     }
 
+    @Transactional
     public void markMessagesAsDelivered(String chatRoomId, String userId, String userType) {
         logger.info("Marking messages as delivered for chat room: {} by user: {}", chatRoomId, userId);
         try {
-            ChatMessage.SenderRole senderRole = "patient".equals(userType) ? ChatMessage.SenderRole.DOCTOR : ChatMessage.SenderRole.PATIENT;
-            chatMessageRepository.markMessagesAsDelivered(chatRoomId, senderRole, LocalDateTime.now());
+            boolean isPatient = "patient".equalsIgnoreCase(userType);
+            ChatMessage.SenderRole myRole = isPatient ? ChatMessage.SenderRole.PATIENT : ChatMessage.SenderRole.DOCTOR;
+            
+            // Mark messages from the OTHER party as delivered
+            chatMessageRepository.markMessagesAsDelivered(
+                chatRoomId, 
+                myRole, 
+                LocalDateTime.now(), 
+                ChatMessage.MessageStatus.DELIVERED, 
+                ChatMessage.MessageStatus.SENT
+            );
             logger.info("Messages marked as delivered for chat room: {}", chatRoomId);
         } catch (Exception e) {
             logger.error("Error marking messages as delivered for chat room: {}", chatRoomId, e);

@@ -162,15 +162,22 @@ public class AppointmentService {
             }
             appointment.setPatient(patient.get());
 
-            // Validate that doctor exists
-            if (appointment.getDoctor() == null || appointment.getDoctor().getId() == null) {
-                throw new IllegalArgumentException("Doctor ID is required");
+            // Validate that doctor exists (Skip for hospital appointments)
+            if (appointment.getType() == Appointment.AppointmentType.HOSPITAL) {
+                if (appointment.getDoctor() != null && appointment.getDoctor().getId() != null) {
+                    Optional<com.hyno.entity.Doctor> doctor = doctorRepository.findById(appointment.getDoctor().getId());
+                    doctor.ifPresent(appointment::setDoctor);
+                }
+            } else {
+                if (appointment.getDoctor() == null || appointment.getDoctor().getId() == null) {
+                    throw new IllegalArgumentException("Doctor ID is required for non-hospital appointments");
+                }
+                Optional<com.hyno.entity.Doctor> doctor = doctorRepository.findById(appointment.getDoctor().getId());
+                if (doctor.isEmpty()) {
+                    throw new IllegalArgumentException("Doctor not found with ID: " + appointment.getDoctor().getId());
+                }
+                appointment.setDoctor(doctor.get());
             }
-            Optional<com.hyno.entity.Doctor> doctor = doctorRepository.findById(appointment.getDoctor().getId());
-            if (doctor.isEmpty()) {
-                throw new IllegalArgumentException("Doctor not found with ID: " + appointment.getDoctor().getId());
-            }
-            appointment.setDoctor(doctor.get());
 
             // Validate that hospital exists (if provided)
             if (appointment.getHospital() != null && appointment.getHospital().getId() != null) {

@@ -18,6 +18,9 @@ import {
   Activity,
   Stethoscope
 } from 'lucide-react';
+import { useAppStore } from '../../lib/app-store';
+import { Appointment } from '../../types';
+import { appointmentAPI } from '../../lib/api-client';
 
 interface MedicalReport {
   id: string;
@@ -38,10 +41,29 @@ export function PatientReports() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedReport, setSelectedReport] = useState<MedicalReport | null>(null);
+  const { appointments, setAppointments } = useAppStore();
+
+  useEffect(() => {
+    // Refresh appointments from backend when component mounts
+    const refreshAppointments = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.id && user.role === 'patient') {
+          const freshAppointments = await appointmentAPI.getByPatient(user.id);
+          const { setAppointments } = useAppStore.getState();
+          setAppointments(freshAppointments);
+        }
+      } catch (error) {
+        console.error('Failed to refresh appointments:', error);
+      }
+    };
+
+    refreshAppointments();
+  }, []);
 
   useEffect(() => {
     loadReports();
-  }, []);
+  }, [appointments]);
 
   useEffect(() => {
     filterReports();
@@ -50,76 +72,23 @@ export function PatientReports() {
   const loadReports = async () => {
     setLoading(true);
     try {
-      // Mock data - in real implementation, this would fetch from backend
-      const mockReports: MedicalReport[] = [
-        {
-          id: '1',
-          type: 'lab_test',
-          title: 'Complete Blood Count (CBC)',
-          date: '2024-01-15',
-          doctor: 'Dr. Sarah Johnson',
-          hospital: 'City General Hospital',
-          status: 'completed',
-          description: 'Routine blood test to evaluate overall health',
-          fileUrl: '#'
-        },
-        {
-          id: '2',
-          type: 'prescription',
-          title: 'Blood Pressure Medication',
-          date: '2024-01-10',
-          doctor: 'Dr. Michael Chen',
-          hospital: 'Metro Health Center',
-          status: 'completed',
-          description: 'Amlodipine 5mg - Take once daily',
-          fileUrl: '#'
-        },
-        {
-          id: '3',
-          type: 'visit_summary',
-          title: 'Annual Physical Examination',
-          date: '2024-01-08',
-          doctor: 'Dr. Emily Davis',
-          hospital: 'Wellness Medical Group',
-          status: 'reviewed',
-          description: 'Comprehensive health checkup - All vitals normal',
-          fileUrl: '#'
-        },
-        {
-          id: '4',
-          type: 'imaging',
-          title: 'Chest X-Ray',
-          date: '2024-01-05',
-          doctor: 'Dr. Robert Wilson',
-          hospital: 'Radiology Center',
-          status: 'completed',
-          description: 'Clear chest X-ray - No abnormalities detected',
-          fileUrl: '#'
-        },
-        {
-          id: '5',
-          type: 'vaccination',
-          title: 'COVID-19 Booster',
-          date: '2023-12-20',
-          doctor: 'Dr. Lisa Anderson',
-          hospital: 'Community Health Clinic',
-          status: 'completed',
-          description: 'Pfizer-BioNTech COVID-19 Vaccine Booster',
-          fileUrl: '#'
-        },
-        {
-          id: '6',
-          type: 'lab_test',
-          title: 'Lipid Profile',
-          date: '2023-12-15',
-          doctor: 'Dr. Sarah Johnson',
-          hospital: 'City General Hospital',
-          status: 'pending',
-          description: 'Cholesterol and triglyceride levels',
-          fileUrl: '#'
-        }
-      ];
-      setReports(mockReports);
+      // Get ALL prescriptions from appointments (including old ones without PDF)
+      const prescriptionReports: MedicalReport[] = appointments
+        .filter(apt => apt.prescription) // Show any appointment with prescription text
+        .map(apt => ({
+          id: apt.id,
+          type: 'prescription' as const,
+          title: `Prescription - ${apt.reason || 'Medical Consultation'}`,
+          date: apt.date,
+          doctor: apt.doctorName,
+          hospital: apt.hospitalId || 'Medical Center',
+          status: apt.status === 'completed' ? 'completed' as const : 'reviewed' as const,
+          description: apt.prescription || 'Prescription available',
+          fileUrl: apt.prescriptionUrl // May be undefined for old prescriptions
+        }));
+
+      console.log('📊 Loaded prescription reports:', prescriptionReports.length, prescriptionReports);
+      setReports(prescriptionReports);
     } catch (error) {
       toast.error('Failed to load medical reports');
     } finally {
@@ -195,8 +164,15 @@ export function PatientReports() {
   };
 
   const downloadReport = (report: MedicalReport) => {
-    toast.success(`Downloading ${report.title}`);
-    // In real implementation, this would trigger actual download
+    if (report.fileUrl) {
+      const link = document.createElement('a');
+      link.href = report.fileUrl;
+      link.download = `${report.title.replace(/\s+/g, '_')}_${report.date}.pdf`;
+      link.click();
+      toast.success(`Downloaded ${report.title}`);
+    } else {
+      toast.error('No file available for download');
+    }
   };
 
   const viewReport = (report: MedicalReport) => {

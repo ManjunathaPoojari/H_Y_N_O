@@ -3,6 +3,7 @@ package com.hyno.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -24,7 +25,7 @@ public class Appointment {
     private String patientName;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "doctor_id", nullable = false)
+    @JoinColumn(name = "doctor_id", nullable = true)
     @JsonIgnore
     private Doctor doctor;
 
@@ -57,8 +58,14 @@ public class Appointment {
     @JsonIgnore
     private ScheduleSlot scheduleSlot;
 
+    @JsonProperty("patientId")
     public String getPatientId() {
         return patient != null ? patient.getId() : null;
+    }
+
+    @JsonProperty("doctorId")
+    public String getDoctorId() {
+        return doctor != null ? doctor.getId() : null;
     }
 
     public LocalTime getTime() {
@@ -73,6 +80,10 @@ public class Appointment {
 
     @Column(length = 2000)
     private String prescription;
+
+    @Lob
+    @Column(name = "prescription_url", length = 1048576) // Large enough for PDF Data URLs
+    private String prescriptionUrl;
 
     // Video Call Status Tracking
     @Enumerated(EnumType.STRING)
@@ -95,7 +106,7 @@ public class Appointment {
     }
 
     public enum AppointmentType {
-        VIDEO, CHAT, INPERSON, HOSPITAL
+        VIDEO, CHAT, INPERSON, HOSPITAL, YOGA
     }
 
     public enum AppointmentStatus {

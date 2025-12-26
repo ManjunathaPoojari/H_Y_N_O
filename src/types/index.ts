@@ -66,6 +66,7 @@ export interface Appointment {
   status: 'pending' | 'booked' | 'completed' | 'cancelled';
   reason?: string;
   prescription?: string;
+  prescriptionUrl?: string;
   notes?: string;
 }
 
@@ -178,6 +179,17 @@ export interface User {
   email: string;
   role: 'patient' | 'doctor' | 'hospital' | 'admin' | 'trainer';
   avatar?: string;
+  age?: number;
+  gender?: 'Male' | 'Female' | 'Other';
+  weight?: number;
+  height?: number;
+  diseases?: string[];
+  medications?: string[];
+  allergies?: string[];
+  pregnancyStatus?: boolean;
+  recentInjuries?: string[];
+  chronicPain?: string[];
+  mobilityLimitations?: string[];
 }
 
 // Video Call Types
@@ -264,4 +276,21 @@ export interface EmergencyRequest {
   completedAt?: string;
   notes?: string;
   priority: number; // 1-5, 5 being highest
+}
+
+export type MedicalEventType = 'BLOOD_DONATION' | 'HEALTH_CAMP' | 'VACCINATION' | 'AWARENESS_SEMINAR' | 'EQUIPMENT_DONATION' | 'OTHER';
+
+export interface MedicalEvent {
+  id: string;
+  title: string;
+  description: string;
+  type: MedicalEventType;
+  startDateTime: string;
+  endDateTime: string;
+  location: string;
+  capacity?: number;
+  hospital: Hospital;
+  registeredPatients: Patient[];
+  createdAt: string;
+  updatedAt: string;
 }

@@ -282,6 +282,9 @@ public class AppointmentController {
             if (updateRequest.get("prescription") != null) {
                 appointment.setPrescription((String) updateRequest.get("prescription"));
             }
+            if (updateRequest.get("prescriptionUrl") != null) {
+                appointment.setPrescriptionUrl((String) updateRequest.get("prescriptionUrl"));
+            }
             if (updateRequest.get("reason") != null) {
                 appointment.setReason((String) updateRequest.get("reason"));
             }

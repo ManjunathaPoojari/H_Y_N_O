@@ -18,6 +18,41 @@ public class TrainerService {
     @Autowired
     private TrainerRepository trainerRepository;
 
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    @jakarta.annotation.PostConstruct
+    public void fixTrainerSchema() {
+        logger.info("AUTOMATED MIGRATION: Attempting to fix Trainer schema...");
+        try {
+            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS=0");
+            
+            // Fix main table
+            try {
+                jdbcTemplate.execute("ALTER TABLE trainers MODIFY COLUMN id VARCHAR(50) NOT NULL");
+                logger.info("SUCCESS: Altered trainers.id -> VARCHAR(50)");
+            } catch (Exception e) {
+                logger.warn("NOTICE: Could not alter trainers.id: " + e.getMessage());
+            }
+            
+            // Fix related tables
+            String[] tables = {"trainer_languages", "trainer_specialties", "trainer_modes", "trainer_qualifications"};
+            for (String table : tables) {
+                try {
+                    jdbcTemplate.execute("ALTER TABLE " + table + " MODIFY COLUMN trainer_id VARCHAR(50) NOT NULL");
+                    logger.info("SUCCESS: Altered " + table + ".trainer_id -> VARCHAR(50)");
+                } catch (Exception e) {
+                    logger.warn("NOTICE: Could not alter " + table + ": " + e.getMessage());
+                }
+            }
+            
+            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS=1");
+            logger.info("AUTOMATED MIGRATION: Completed.");
+        } catch (Exception e) {
+            logger.error("AUTOMATED MIGRATION FAILED", e);
+        }
+    }
+
     public List<Trainer> getAllTrainers() {
         logger.info("Fetching all trainers");
         try {
@@ -186,20 +221,34 @@ public class TrainerService {
         }
     }
 
-    private String generateNextTrainerId() {
-        Optional<Trainer> lastTrainer = trainerRepository.findTopByOrderByIdDesc();
-        if (lastTrainer.isPresent()) {
-            String lastId = lastTrainer.get().getId();
-            if (lastId.startsWith("T")) {
-                try {
-                    int number = Integer.parseInt(lastId.substring(1));
-                    return String.format("T%03d", number + 1);
-                } catch (NumberFormatException e) {
-                    // If parsing fails, start from T001
+    private synchronized String generateNextTrainerId() {
+        try {
+            List<Trainer> allTrainers = trainerRepository.findAll();
+            int maxId = 0;
+            
+            for (Trainer t : allTrainers) {
+                String id = t.getId();
+                if (id != null && id.startsWith("T")) {
+                    try {
+                        String numPart = id.substring(1);
+                        if (numPart.length() > 0) {
+                            int num = Integer.parseInt(numPart);
+                            if (num > maxId) {
+                                maxId = num;
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        // Ignore malformed IDs
+                    }
                 }
             }
+            
+            return String.format("T%03d", maxId + 1);
+        } catch (Exception e) {
+            logger.error("Error generating next trainer ID", e);
+            // Fallback to timestamp based ID if standard generation fails
+            return "T" + System.currentTimeMillis();
         }
-        return "T001";
     }
 
     public Trainer updateTrainer(String id, Trainer trainerDetails) {

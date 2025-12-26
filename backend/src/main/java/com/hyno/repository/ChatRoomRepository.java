@@ -15,9 +15,9 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, String> {
 
     List<ChatRoom> findByDoctor_Id(String doctorId);
 
-    List<ChatRoom> findByAppointmentId(String appointmentId);
+    List<ChatRoom> findByAppointment_Id(String appointmentId);
 
-    Optional<ChatRoom> findByAppointmentIdAndPatientIdAndDoctorId(String appointmentId, String patientId, String doctorId);
+    Optional<ChatRoom> findByAppointment_IdAndPatient_IdAndDoctor_Id(String appointmentId, String patientId, String doctorId);
 
     @Query("SELECT cr FROM ChatRoom cr WHERE cr.patient.id = :patientId AND cr.status = 'ACTIVE' ORDER BY cr.lastMessageTime DESC")
     List<ChatRoom> findActiveByPatientId(@Param("patientId") String patientId);

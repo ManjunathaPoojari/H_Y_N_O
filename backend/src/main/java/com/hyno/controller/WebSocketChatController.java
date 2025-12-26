@@ -32,7 +32,11 @@ public class WebSocketChatController {
             messageRequest.getSenderId(),
             messageRequest.getSenderName(),
             ChatMessage.SenderRole.valueOf(messageRequest.getSenderRole().toUpperCase()),
-            messageRequest.getContent()
+            messageRequest.getContent(),
+            messageRequest.getMessageType(),
+            messageRequest.getFileUrl(),
+            messageRequest.getFileName(),
+            messageRequest.getFileSize()
         );
 
         if (message == null) {
@@ -57,8 +61,12 @@ public class WebSocketChatController {
         response.setSenderRole(message.getSenderRole().name().toLowerCase());
         response.setContent(message.getContent());
         response.setTimestamp(message.getCreatedAt().toString());
-        response.setRead(false);
-        response.setMessageType("text");
+        response.setRead(message.getStatus() == ChatMessage.MessageStatus.READ);
+        response.setStatus(message.getStatus().name());
+        response.setMessageType(message.getMessageType().name().toLowerCase());
+        response.setFileUrl(message.getFileUrl());
+        response.setFileName(message.getFileName());
+        response.setFileSize(message.getFileSize());
 
         // Broadcast message to all subscribers of this chat room
         messagingTemplate.convertAndSend("/topic/chat/" + chatRoomId, response);
@@ -77,6 +85,20 @@ public class WebSocketChatController {
         messagingTemplate.convertAndSend(
             "/topic/chat/" + chatRoomId + "/read",
             new ReadNotification(request.getUserId(), LocalDateTime.now())
+        );
+    }
+
+    @MessageMapping("/chat/{chatRoomId}/markAsDelivered")
+    public void markAsDelivered(
+            @DestinationVariable String chatRoomId,
+            @Payload MarkAsDeliveredRequest request) {
+
+        chatService.markMessagesAsDelivered(chatRoomId, request.getUserId(), request.getUserType());
+
+        // Notify sender that messages were delivered
+        messagingTemplate.convertAndSend(
+            "/topic/chat/" + chatRoomId + "/delivered",
+            new DeliveredNotification(request.getUserId(), LocalDateTime.now())
         );
     }
 
@@ -102,6 +124,10 @@ public class WebSocketChatController {
         private String senderName;
         private String senderRole;
         private String content;
+        private String messageType;
+        private String fileUrl;
+        private String fileName;
+        private Long fileSize;
 
         // Getters and setters
         public String getChatRoomId() { return chatRoomId; }
@@ -118,9 +144,33 @@ public class WebSocketChatController {
 
         public String getContent() { return content; }
         public void setContent(String content) { this.content = content; }
+
+        public String getMessageType() { return messageType; }
+        public void setMessageType(String messageType) { this.messageType = messageType; }
+
+        public String getFileUrl() { return fileUrl; }
+        public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
+
+        public String getFileName() { return fileName; }
+        public void setFileName(String fileName) { this.fileName = fileName; }
+
+        public Long getFileSize() { return fileSize; }
+        public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
     }
 
     public static class MarkAsReadRequest {
+        private String userId;
+        private String userType;
+
+        // Getters and setters
+        public String getUserId() { return userId; }
+        public void setUserId(String userId) { this.userId = userId; }
+
+        public String getUserType() { return userType; }
+        public void setUserType(String userType) { this.userType = userType; }
+    }
+
+    public static class MarkAsDeliveredRequest {
         private String userId;
         private String userType;
 
@@ -162,6 +212,20 @@ public class WebSocketChatController {
         public LocalDateTime getReadAt() { return readAt; }
     }
 
+    public static class DeliveredNotification {
+        private String deliveredUserId;
+        private LocalDateTime deliveredAt;
+
+        public DeliveredNotification(String deliveredUserId, LocalDateTime deliveredAt) {
+            this.deliveredUserId = deliveredUserId;
+            this.deliveredAt = deliveredAt;
+        }
+
+        // Getters
+        public String getDeliveredUserId() { return deliveredUserId; }
+        public LocalDateTime getDeliveredAt() { return deliveredAt; }
+    }
+
     public static class WebSocketMessageResponse {
         private String id;
         private String senderId;
@@ -170,7 +234,11 @@ public class WebSocketChatController {
         private String content;
         private String timestamp;
         private boolean read;
+        private String status;
         private String messageType;
+        private String fileUrl;
+        private String fileName;
+        private Long fileSize;
 
         // Getters and setters
         public String getId() { return id; }
@@ -194,7 +262,19 @@ public class WebSocketChatController {
         public boolean isRead() { return read; }
         public void setRead(boolean read) { this.read = read; }
 
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+
         public String getMessageType() { return messageType; }
         public void setMessageType(String messageType) { this.messageType = messageType; }
+
+        public String getFileUrl() { return fileUrl; }
+        public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
+
+        public String getFileName() { return fileName; }
+        public void setFileName(String fileName) { this.fileName = fileName; }
+
+        public Long getFileSize() { return fileSize; }
+        public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
     }
 }

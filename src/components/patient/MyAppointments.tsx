@@ -17,6 +17,7 @@ export const MyAppointments = () => {
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleTime, setRescheduleTime] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState<string>('');
+  const [viewingPrescription, setViewingPrescription] = useState<Appointment | null>(null);
 
   const pendingAppointments = appointments.filter(a => a.status === 'pending');
   const upcomingAppointments = appointments.filter(a => a.status === 'booked');
@@ -81,8 +82,8 @@ export const MyAppointments = () => {
                 {appointment.type}
               </Badge>
               <Badge variant={appointment.status === 'booked' ? 'default' :
-                             appointment.status === 'completed' ? 'secondary' :
-                             'destructive'}>
+                appointment.status === 'completed' ? 'secondary' :
+                  'destructive'}>
                 {appointment.status}
               </Badge>
             </div>
@@ -110,7 +111,7 @@ export const MyAppointments = () => {
             )}
           </div>
         </div>
-        
+
         <div className="flex gap-2 mt-4">
           {appointment.status === 'pending' && (
             <div className="text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
@@ -124,16 +125,6 @@ export const MyAppointments = () => {
                 <Button size="sm" onClick={() => handleJoinVideo(appointment.id)}>
                   <Video className="h-4 w-4 mr-2" />
                   Join Video Call
-                </Button>
-              )}
-              {appointment.type === 'video' && appointment.status === 'booked' && (
-                <Button size="sm" variant="outline" onClick={() => {
-                  if (window.confirm('Are you sure you want to reschedule this appointment?')) {
-                    // Handle reschedule logic here
-                    toast.success('Reschedule functionality coming soon');
-                  }
-                }}>
-                  Reschedule
                 </Button>
               )}
               {appointment.type === 'chat' && (
@@ -185,13 +176,11 @@ export const MyAppointments = () => {
               </Button>
             </>
           )}
-          
+
           {appointment.status === 'completed' && (
             <>
               <Button size="sm" variant="outline" onClick={() => {
-                if (window.confirm('Are you sure you want to view the prescription?')) {
-                  toast.success('Opening prescription...');
-                }
+                setViewingPrescription(appointment);
               }}>
                 <FileText className="h-4 w-4 mr-2" />
                 View Prescription
@@ -288,6 +277,74 @@ export const MyAppointments = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Prescription Viewer Dialog */}
+      <Dialog open={!!viewingPrescription} onOpenChange={(open) => !open && setViewingPrescription(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Prescription Details
+            </DialogTitle>
+          </DialogHeader>
+          {viewingPrescription && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-500">Doctor</p>
+                  <p className="font-medium">{viewingPrescription.doctorName}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Date</p>
+                  <p className="font-medium">{viewingPrescription.date}</p>
+                </div>
+              </div>
+
+              {viewingPrescription.prescription && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium mb-2">Prescription Notes:</p>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{viewingPrescription.prescription}</p>
+                </div>
+              )}
+
+              {viewingPrescription.prescriptionUrl ? (
+                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <FileText className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-blue-900">Prescription PDF</p>
+                      <p className="text-sm text-blue-600">Click to download your formal prescription</p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = viewingPrescription.prescriptionUrl!;
+                      link.download = `Prescription_${viewingPrescription.patientName.replace(/\s+/g, '_')}_${viewingPrescription.date.replace(/\//g, '-')}.pdf`;
+                      link.click();
+                      toast.success('Prescription downloaded successfully!');
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Download PDF
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  <p>No PDF prescription available for this appointment.</p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewingPrescription(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

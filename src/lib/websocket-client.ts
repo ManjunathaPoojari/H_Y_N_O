@@ -10,7 +10,11 @@ export interface ChatMessage {
   content: string;
   createdAt: string;
   read: boolean;
+  status?: 'SENT' | 'DELIVERED' | 'READ';
   messageType?: 'text' | 'image' | 'file';
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
 }
 
 export interface ChatRoom {
@@ -54,6 +58,7 @@ class WebSocketClient {
   private onMessageReceived?: (message: ChatMessage, chatRoomId: string) => void;
   private onTypingIndicator?: (indicator: TypingIndicator, chatRoomId: string) => void;
   private onMessageRead?: (readerId: string, chatRoomId: string) => void;
+  private onMessageDelivered?: (deliveredUserId: string, chatRoomId: string) => void;
   private onConnectionChange?: (connected: boolean) => void;
   private onVideoCallSignal?: (signal: VideoCallSignal, appointmentId: string) => void;
 
@@ -163,6 +168,11 @@ class WebSocketClient {
       });
 
       // Subscribe to read notifications
+      this.client.subscribe(`/topic/chat/${chatRoomId}/delivered`, (message) => {
+        const payload = JSON.parse(message.body);
+        this.onMessageDelivered?.(payload.deliveredUserId, chatRoomId);
+      });
+
       this.client.subscribe(`/topic/chat/${chatRoomId}/read`, (message) => {
         const readNotification = JSON.parse(message.body);
         this.onMessageRead?.(readNotification.readerId, chatRoomId);
@@ -264,6 +274,10 @@ class WebSocketClient {
     senderName: string;
     senderRole: string;
     content: string;
+    messageType?: 'text' | 'image' | 'file';
+    fileUrl?: string;
+    fileName?: string;
+    fileSize?: number;
   }) {
     if (!this.client || !this.connected) {
       console.warn('WebSocket not connected, queuing message send');
@@ -296,21 +310,39 @@ class WebSocketClient {
       console.warn('WebSocket not connected, queuing mark as read');
       this.publishQueue.push({
         destination: `/app/chat/${chatRoomId}/markAsRead`,
-        body: JSON.stringify({
-          userId,
-          userType,
-        }),
+        body: JSON.stringify({ userId, userType }),
       });
       return;
     }
 
-    this.client.publish({
-      destination: `/app/chat/${chatRoomId}/markAsRead`,
-      body: JSON.stringify({
-        userId,
-        userType,
-      }),
-    });
+    try {
+      this.client.publish({
+        destination: `/app/chat/${chatRoomId}/markAsRead`,
+        body: JSON.stringify({ userId, userType }),
+      });
+    } catch (error) {
+      console.error('Failed to mark as read via WebSocket:', error);
+    }
+  }
+
+  markAsDelivered(chatRoomId: string, userId: string, userType: string) {
+    if (!this.client || !this.connected) {
+      console.warn('WebSocket not connected, queuing mark as delivered');
+      this.publishQueue.push({
+        destination: `/app/chat/${chatRoomId}/markAsDelivered`,
+        body: JSON.stringify({ userId, userType }),
+      });
+      return;
+    }
+
+    try {
+      this.client.publish({
+        destination: `/app/chat/${chatRoomId}/markAsDelivered`,
+        body: JSON.stringify({ userId, userType }),
+      });
+    } catch (error) {
+      console.error('Failed to mark as delivered via WebSocket:', error);
+    }
   }
 
   sendTypingIndicator(chatRoomId: string, userId: string, userName: string, isTyping: boolean) {
@@ -432,6 +464,10 @@ class WebSocketClient {
 
   setOnMessageRead(callback: (readerId: string, chatRoomId: string) => void) {
     this.onMessageRead = callback;
+  }
+
+  setOnMessageDelivered(callback: (deliveredUserId: string, chatRoomId: string) => void) {
+    this.onMessageDelivered = callback;
   }
 
   setOnConnectionChange(callback: (connected: boolean) => void) {

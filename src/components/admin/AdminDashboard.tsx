@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Users,
   RefreshCw,
+  Utensils,
 } from 'lucide-react';
 import { adminAPI } from '../../lib/api-client';
 
@@ -116,7 +117,7 @@ export const AdminDashboard = () => {
               <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Error Loading Dashboard</h3>
               <p className="text-gray-600 mb-4">{error}</p>
-              <Button onClick={fetchDashboardData}>
+              <Button onClick={() => fetchDashboardData()}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry
               </Button>
@@ -136,7 +137,7 @@ export const AdminDashboard = () => {
               <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Invalid Data Format</h3>
               <p className="text-gray-600 mb-4">The dashboard data is not in the expected format.</p>
-              <Button onClick={fetchDashboardData}>
+              <Button onClick={() => fetchDashboardData()}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry
               </Button>
@@ -195,7 +196,7 @@ export const AdminDashboard = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button variant="outline" onClick={fetchDashboardData}>
+          <Button variant="outline" onClick={() => fetchDashboardData()}>
             <RefreshCw className="h-4 w-4" />
             Refresh
           </Button>
@@ -206,6 +207,10 @@ export const AdminDashboard = () => {
           <Button variant="outline">
             <CheckCircle2 className="h-4 w-4" />
             Approvals board
+          </Button>
+          <Button variant="outline">
+            <Utensils className="h-4 w-4" />
+            Nutrition
           </Button>
         </div>
       </section>

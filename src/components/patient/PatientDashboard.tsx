@@ -16,6 +16,7 @@ import {
   Stethoscope,
   User,
   Video,
+  Yoga,
 } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
 import { useAuth } from '../../lib/auth-context';
@@ -240,6 +241,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
               { icon: MessageSquare, label: 'Chat with doctor', path: '/patient/book/chat' },
               { icon: MapPin, label: 'In-person visit', path: '/patient/book/inperson' },
               { icon: Pill, label: 'Pharmacy orders', path: '/patient/pharmacy' },
+              { icon: Activity, label: 'Yoga & Fitness', path: '/patient/yoga' },
             ].map((action) => (
               <button
                 key={action.label}
