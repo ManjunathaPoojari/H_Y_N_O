@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.hyno.entity.Symptom;
+
 @Entity
 @Table(name = "recipes")
 @Data
@@ -81,6 +83,10 @@ public class Recipe {
 
     @Column(name = "is_dairy_free")
     private Boolean isDairyFree = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "symptom_id")
+    private Symptom symptom;
 
     @Column(name = "image_url")
     private String imageUrl;

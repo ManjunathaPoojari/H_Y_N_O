@@ -1,4 +1,5 @@
 com\hyno\service\YogaSessionService.class
+com\hyno\repository\SymptomRepository.class
 com\hyno\controller\NutritionController.class
 com\hyno\repository\VideoCallRepository.class
 com\hyno\repository\PremiumPlanRepository.class
@@ -13,6 +14,7 @@ com\hyno\entity\Doctor.class
 com\hyno\controller\AppointmentCreateDTO.class
 com\hyno\entity\ChatRoom.class
 com\hyno\service\YogaTrainerService.class
+com\hyno\controller\RecipeController.class
 com\hyno\service\PremiumPlanService.class
 com\hyno\entity\YogaVideo.class
 com\hyno\repository\PatientRepository.class
@@ -52,6 +54,7 @@ com\hyno\entity\ChatMessage$SenderType.class
 com\hyno\repository\RecipeRepository.class
 com\hyno\service\AppointmentService.class
 com\hyno\repository\HospitalRepository.class
+com\hyno\entity\Symptom.class
 com\hyno\entity\Admin$AdminRole.class
 com\hyno\repository\ScheduleRepository.class
 com\hyno\service\YogaVideoService.class
@@ -80,6 +83,7 @@ com\hyno\controller\YogaController.class
 com\hyno\entity\VideoCall.class
 com\hyno\entity\YogaTrainer.class
 com\hyno\entity\Feedback.class
+com\hyno\service\SymptomService.class
 com\hyno\repository\PaymentRepository.class
 com\hyno\repository\FeedbackRepository.class
 com\hyno\HynoApplication.class
@@ -110,6 +114,7 @@ com\hyno\entity\Payment$PaymentStatus.class
 com\hyno\controller\WebSocketVideoCallController$JoinCallNotification.class
 com\hyno\entity\ChatMessage$SenderRole.class
 com\hyno\service\EmailService.class
+com\hyno\controller\SymptomController.class
 com\hyno\entity\NutritionProfile.class
 com\hyno\repository\AppointmentRepository.class
 com\hyno\repository\YogaTrainerRepository.class

@@ -9,6 +9,7 @@ C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\r
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\service\DoctorService.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\entity\Payment.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\repository\YogaTrainerRepository.java
+C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\repository\SymptomRepository.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\entity\PremiumPlan.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\repository\ChatRoomRepository.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\controller\DoctorScheduleController.java
@@ -33,6 +34,7 @@ C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\e
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\service\VideoCallService.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\service\AppointmentService.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\repository\AdminRepository.java
+C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\controller\SymptomController.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\entity\NutritionProfile.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\service\RecipeService.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\controller\HealthController.java
@@ -45,6 +47,7 @@ C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\c
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\controller\WebSocketChatController.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\entity\Hospital.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\repository\PasswordResetTokenRepository.java
+C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\service\SymptomService.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\entity\Appointment.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\entity\VideoCall.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\controller\HospitalScheduleController.java
@@ -76,10 +79,12 @@ C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\c
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\service\HospitalService.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\controller\DoctorPatientsController.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\entity\Medicine.java
+C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\entity\Symptom.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\config\ScheduledTasksConfig.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\DataInitializer.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\entity\Schedule.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\entity\ChatRoom.java
+C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\controller\RecipeController.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\controller\AuthController.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\HynoApplication.java
 C:\Users\Lenovo\IdeaProjects\hyno122325\H_Y_N_O\backend\src\main\java\com\hyno\entity\YogaTrainer.java
