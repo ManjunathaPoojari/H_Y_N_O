@@ -69,7 +69,7 @@ class WebSocketClient {
   private initializeClient() {
     try {
       this.client = new Client({
-        webSocketFactory: () => new SockJS(`${API_URL}/api/ws`),
+        webSocketFactory: () => new SockJS(`${API_URL}/ws`),
         connectHeaders: {
           Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
         },
@@ -207,6 +207,7 @@ class WebSocketClient {
     }
 
     try {
+      // Subscribe to video call signals
       this.client.subscribe(`/topic/video-call/${appointmentId}/join`, (message) => {
         const joinNotification = JSON.parse(message.body);
         this.onVideoCallSignal?.({
@@ -217,9 +218,10 @@ class WebSocketClient {
         }, appointmentId);
       });
 
-      this.client.subscribe(`/topic/video-call/${appointmentId}/offer`, (message) => {
+      const currentUserId = this.getCurrentUserId();
+
+      this.client.subscribe(`/topic/user/${currentUserId}/video-call/offer`, (message) => {
         const offer = JSON.parse(message.body);
-        // Frontend will filter out own messages
         this.onVideoCallSignal?.({
           type: 'offer',
           fromUserId: offer.fromUserId,
@@ -227,7 +229,7 @@ class WebSocketClient {
         }, appointmentId);
       });
 
-      this.client.subscribe(`/topic/video-call/${appointmentId}/answer`, (message) => {
+      this.client.subscribe(`/topic/user/${currentUserId}/video-call/answer`, (message) => {
         const answer = JSON.parse(message.body);
         this.onVideoCallSignal?.({
           type: 'answer',
@@ -236,7 +238,7 @@ class WebSocketClient {
         }, appointmentId);
       });
 
-      this.client.subscribe(`/topic/video-call/${appointmentId}/ice-candidate`, (message) => {
+      this.client.subscribe(`/topic/user/${currentUserId}/video-call/ice-candidate`, (message) => {
         const candidate = JSON.parse(message.body);
         this.onVideoCallSignal?.({
           type: 'ice-candidate',
@@ -247,7 +249,7 @@ class WebSocketClient {
         }, appointmentId);
       });
 
-      this.client.subscribe(`/topic/video-call/${appointmentId}/leave`, (message) => {
+      this.client.subscribe(`/topic/user/${currentUserId}/video-call/leave`, (message) => {
         const leaveNotification = JSON.parse(message.body);
         this.onVideoCallSignal?.({
           type: 'leave',

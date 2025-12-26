@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +34,9 @@ public class HospitalService {
     @Lazy
     @Autowired
     private DoctorService doctorService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<Hospital> getAllHospitals() {
         logger.info("Fetching all hospitals");
@@ -135,6 +139,11 @@ public class HospitalService {
             // Generate hospital ID starting from H001 and incrementing
             String nextId = generateNextHospitalId();
             hospital.setId(nextId);
+
+            // Encode password if provided
+            if (hospital.getPassword() != null && !hospital.getPassword().isEmpty()) {
+                hospital.setPassword(passwordEncoder.encode(hospital.getPassword()));
+            }
 
             Hospital savedHospital = hospitalRepository.save(hospital);
             logger.info("Hospital created successfully with ID: {}", savedHospital.getId());

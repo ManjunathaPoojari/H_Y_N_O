@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Patient, Doctor, Hospital, Appointment, Medicine, Prescription, NutritionPlan, Meal, Trainer, MedicalEvent } from '../types';
+import { Patient, Doctor, Hospital, Appointment, Medicine, Prescription, NutritionPlan, Meal, Trainer, EmergencyRequest, CarePlanTask, VitalsRecord } from '../types';
 
 import api from './api-client';
 import { toast } from 'sonner';
@@ -14,9 +14,9 @@ interface AppStoreContextType {
   medicines: Medicine[];
   prescriptions: Prescription[];
   nutritionPlans: NutritionPlan[];
+  emergencyRequests: EmergencyRequest[];
 
   trainers: Trainer[];
-  medicalEvents: MedicalEvent[];
 
   // Data loading functions
   refreshData: () => Promise<void>;
@@ -70,11 +70,14 @@ interface AppStoreContextType {
   rejectTrainer: (trainerId: string) => void;
   deleteTrainer: (id: string) => void;
 
-  // Event Actions
-  registerForEvent: (eventId: string, patientId: string) => Promise<void>;
-  unregisterFromEvent: (eventId: string, patientId: string) => Promise<void>;
-  addMedicalEvent: (event: Partial<MedicalEvent>) => Promise<void>;
-  deleteMedicalEvent: (id: string) => Promise<void>;
+  // Emergency Actions
+  createEmergencyRequest: (request: Omit<EmergencyRequest, 'id' | 'requestedAt' | 'status' | 'priority'>) => void;
+  updateEmergencyRequest: (id: string, updates: Partial<EmergencyRequest>) => void;
+
+  // Care Plan Actions
+  carePlanTasks: CarePlanTask[];
+  toggleTask: (taskId: string) => Promise<void>;
+  saveVitals: (record: VitalsRecord) => Promise<void>;
 
   // UI State
   refreshTrigger: number;
@@ -83,7 +86,13 @@ interface AppStoreContextType {
 const AppStoreContext = createContext<AppStoreContextType | undefined>(undefined);
 
 export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [patients, setPatients] = useState<Patient[]>([]);
+  const [patients, setPatients] = useState<Patient[]>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('patients');
+      return stored ? JSON.parse(stored) : [];
+    }
+    return [];
+  });
 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
 
@@ -95,10 +104,17 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [nutritionPlans, setNutritionPlans] = useState<NutritionPlan[]>([]);
+  const [emergencyRequests, setEmergencyRequests] = useState<EmergencyRequest[]>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('emergencyRequests');
+      return stored ? JSON.parse(stored) : [];
+    }
+    return [];
+  });
+  const [carePlanTasks, setCarePlanTasks] = useState<CarePlanTask[]>([]);
 
 
   const [trainers, setTrainers] = useState<Trainer[]>([]);
-  const [medicalEvents, setMedicalEvents] = useState<MedicalEvent[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Load data from backend on mount (if enabled)
@@ -139,13 +155,11 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       let trainerData: any[] = [];
 
       let nutritionPlansData: any[] = [];
-      let medicalEventsData: any[] = [];
 
       if (userRole === 'admin') {
         // Admin loads all data - handle each API call separately to prevent one failure from stopping others
         try {
           patientsData = await api.admin.getAllPatients();
-          medicalEventsData = await api.medicalEvents.getAll();
         } catch (error) {
           console.warn('Failed to load patients from backend:', error);
           patientsData = [];
@@ -202,6 +216,16 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
 
         try {
+          // Care Plan Tasks
+          if (userId) {
+            const tasks = await api.carePlan.getTasks(userId);
+            setCarePlanTasks(tasks);
+          }
+        } catch (error) {
+          console.warn('Failed to load care plan tasks:', error);
+        }
+
+        try {
           hospitalsData = await api.hospitals.getAll();
         } catch (error) {
           console.warn('Failed to load hospitals from backend:', error);
@@ -218,8 +242,6 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
             type: apt.type?.toLowerCase(),
             date: apt.appointmentDate,
             time: apt.appointmentTime,
-            patientId: apt.patientId || apt.patient?.id || (typeof apt.patient === 'string' ? apt.patient : undefined),
-            doctorId: apt.doctorId || apt.doctor?.id || (typeof apt.doctor === 'string' ? apt.doctor : undefined),
           }));
         } catch (error) {
           console.warn('Failed to load appointments from backend:', error);
@@ -269,8 +291,6 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
             type: apt.type?.toLowerCase(),
             date: apt.appointmentDate,
             time: apt.appointmentTime,
-            patientId: apt.patientId || apt.patient?.id || (typeof apt.patient === 'string' ? apt.patient : undefined),
-            doctorId: apt.doctorId || apt.doctor?.id || (typeof apt.doctor === 'string' ? apt.doctor : undefined),
           }));
         } catch (error) {
           console.warn('Failed to load appointments from backend:', error);
@@ -321,8 +341,6 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
             type: apt.type?.toLowerCase(),
             date: apt.appointmentDate,
             time: apt.appointmentTime,
-            patientId: apt.patientId || apt.patient?.id || (typeof apt.patient === 'string' ? apt.patient : undefined),
-            doctorId: apt.doctorId || apt.doctor?.id || (typeof apt.doctor === 'string' ? apt.doctor : undefined),
           }));
         } catch (error) {
           console.warn('Failed to load appointments from backend:', error);
@@ -424,8 +442,6 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
           type: apt.type?.toLowerCase(),
           date: apt.appointmentDate,
           time: apt.appointmentTime,
-          patientId: apt.patientId || apt.patient?.id || (typeof apt.patient === 'string' ? apt.patient : undefined),
-          doctorId: apt.doctorId || apt.doctor?.id || (typeof apt.doctor === 'string' ? apt.doctor : undefined),
         })),
       );
       setMedicines(normalizedMedicines);
@@ -468,13 +484,21 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (USE_BACKEND) {
       try {
         const newPatient = await api.patients.create(patient);
-        setPatients([...patients, newPatient]);
+        setPatients(prev => {
+          const updated = [...prev, newPatient];
+          localStorage.setItem('patients', JSON.stringify(updated));
+          return updated;
+        });
         toast.success('Patient added successfully');
       } catch (error) {
         toast.error('Failed to add patient');
       }
     } else {
-      setPatients([...patients, patient]);
+      setPatients(prev => {
+        const updated = [...prev, patient];
+        localStorage.setItem('patients', JSON.stringify(updated));
+        return updated;
+      });
       toast.success('Patient added successfully');
     }
   };
@@ -852,42 +876,17 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   // Nutrition Actions
-  const addNutritionPlan = async (plan: NutritionPlan) => {
-    if (USE_BACKEND) {
-      try {
-        const newPlan = await api.nutrition.createPlan(plan);
-        setNutritionPlans([...nutritionPlans, newPlan]);
-        toast.success('Nutrition plan created');
-      } catch (error) {
-        toast.error('Failed to create nutrition plan');
-      }
-    } else {
-      setNutritionPlans([...nutritionPlans, plan]);
-      toast.success('Nutrition plan created');
-    }
+  const addNutritionPlan = (plan: NutritionPlan) => {
+    setNutritionPlans([...nutritionPlans, plan]);
+    toast.success('Nutrition plan created');
   };
 
-  const updateNutritionPlan = async (id: string, updatedData: Partial<NutritionPlan>) => {
-    if (USE_BACKEND) {
-      try {
-        const updatedPlan = await api.nutrition.updatePlan(id, updatedData);
-        setNutritionPlans(nutritionPlans.map(n => n.id === id ? updatedPlan : n));
-        toast.success('Nutrition plan updated');
-      } catch (error) {
-        toast.error('Failed to update nutrition plan');
-      }
-    } else {
-      setNutritionPlans(nutritionPlans.map(n => n.id === id ? { ...n, ...updatedData } : n));
-      toast.success('Nutrition plan updated');
-    }
+  const updateNutritionPlan = (id: string, updatedData: Partial<NutritionPlan>) => {
+    setNutritionPlans(nutritionPlans.map(n => n.id === id ? { ...n, ...updatedData } : n));
+    toast.success('Nutrition plan updated');
   };
 
   const getNutritionPlanByPatient = (patientId: string) => {
-    if (USE_BACKEND) {
-      // In a real app, we might need an async fetch here if not preloaded
-      // But for now we rely on preload or local search
-      return nutritionPlans.find(n => n.patientId === patientId);
-    }
     return nutritionPlans.find(n => n.patientId === patientId);
   };
 
@@ -992,43 +991,84 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  const registerForEvent = async (eventId: string, patientId: string) => {
-    try {
-      const updatedEvent = await api.medicalEvents.register(eventId, patientId);
-      setMedicalEvents(prev => prev.map(e => e.id === eventId ? updatedEvent : e));
-      toast.success('Successfully registered for the event!');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to register for event');
+  // Emergency Actions
+  const createEmergencyRequest = (requestData: Omit<EmergencyRequest, 'id' | 'requestedAt' | 'status' | 'priority'>) => {
+    const newRequest: EmergencyRequest = {
+      id: Math.random().toString(36).substr(2, 9),
+      ...requestData,
+      status: 'pending',
+      requestedAt: new Date().toISOString(),
+      priority: requestData.severity === 'critical' ? 5 : requestData.severity === 'high' ? 4 : requestData.severity === 'medium' ? 3 : 1
+    };
+    setEmergencyRequests(prev => {
+      const updated = [newRequest, ...prev];
+      localStorage.setItem('emergencyRequests', JSON.stringify(updated));
+      return updated;
+    });
+    toast.error('Emergency Alert Sent! Help is on the way.');
+    // In a real app, this would trigger notifications to admins/hospitals via websocket/API
+  };
+
+  const updateEmergencyRequest = (id: string, updates: Partial<EmergencyRequest>) => {
+    setEmergencyRequests(prev => {
+      const updated = prev.map(req =>
+        req.id === id ? { ...req, ...updates } : req
+      );
+      localStorage.setItem('emergencyRequests', JSON.stringify(updated));
+      return updated;
+    });
+    if (updates.status === 'assigned') {
+      toast.success('Doctor assigned to emergency case');
+    } else if (updates.status === 'in_progress') {
+      toast.info('Emergency treatment started');
+    } else if (updates.status === 'completed') {
+      toast.success('Emergency case resolved');
     }
   };
 
-  const unregisterFromEvent = async (eventId: string, patientId: string) => {
-    try {
-      const updatedEvent = await api.medicalEvents.unregister(eventId, patientId);
-      setMedicalEvents(prev => prev.map(e => e.id === eventId ? updatedEvent : e));
-      toast.success('Successfully unregistered from the event');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to unregister');
+
+  const toggleTask = async (taskId: string) => {
+    const task = carePlanTasks.find(t => t.id === taskId);
+    if (!task) return;
+    const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+
+    // Optimistic update
+    setCarePlanTasks(prev => prev.map(t =>
+      t.id === taskId ? { ...t, status: newStatus } : t
+    ));
+
+    if (USE_BACKEND) {
+      try {
+        await api.carePlan.updateTask(taskId, newStatus);
+        toast.success(newStatus === 'completed' ? 'Task completed!' : 'Task reset');
+      } catch (error) {
+        console.error('Failed to update task:', error);
+        // Revert on failure
+        setCarePlanTasks(prev => prev.map(t =>
+          t.id === taskId ? { ...t, status: task.status } : t
+        ));
+        toast.error('Failed to update task');
+      }
+    } else {
+      toast.success(newStatus === 'completed' ? 'Task completed!' : 'Task reset');
     }
   };
 
-  const addMedicalEvent = async (event: Partial<MedicalEvent>) => {
-    try {
-      const response = await api.medicalEvents.create(event);
-      setMedicalEvents(prev => [...prev, response]);
-      toast.success('Event created successfully!');
-    } catch (error: any) {
-      toast.error('Failed to create event');
-    }
-  };
-
-  const deleteMedicalEvent = async (id: string) => {
-    try {
-      await api.medicalEvents.delete(id);
-      setMedicalEvents(prev => prev.filter(e => e.id !== id));
-      toast.success('Event deleted');
-    } catch (error: any) {
-      toast.error('Failed to delete event');
+  const saveVitals = async (record: VitalsRecord) => {
+    if (USE_BACKEND) {
+      try {
+        await api.carePlan.recordVitals(record);
+        toast.success('Vitals recorded successfully');
+        // Mark vitals task as completed if exists
+        setCarePlanTasks(prev => prev.map(t => t.type === 'vitals' ? { ...t, status: 'completed' } : t));
+      } catch (error) {
+        console.error('Failed to record vitals:', error);
+        toast.error('Failed to record vitals');
+      }
+    } else {
+      console.log('Mock save vitals:', record);
+      toast.success('Vitals recorded (Mock)');
+      setCarePlanTasks(prev => prev.map(t => t.type === 'vitals' ? { ...t, status: 'completed' } : t));
     }
   };
 
@@ -1074,11 +1114,12 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     deleteTrainer,
     approveTrainer,
     rejectTrainer,
-    medicalEvents,
-    registerForEvent,
-    unregisterFromEvent,
-    addMedicalEvent,
-    deleteMedicalEvent,
+    emergencyRequests,
+    createEmergencyRequest,
+    updateEmergencyRequest,
+    carePlanTasks,
+    toggleTask,
+    saveVitals,
     refreshTrigger,
   };
 

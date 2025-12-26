@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +21,9 @@ public class PatientService {
 
     @Autowired
     private PatientRepository patientRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<Patient> getAllPatients() {
         logger.info("Fetching all patients");
@@ -89,6 +92,12 @@ public class PatientService {
             // Generate patient ID starting from P001 and incrementing
             String nextId = generateNextPatientId();
             patient.setId(nextId);
+
+            // Encode password if provided
+            if (patient.getPassword() != null && !patient.getPassword().isEmpty()) {
+                patient.setPassword(passwordEncoder.encode(patient.getPassword()));
+            }
+
             Patient savedPatient = patientRepository.save(patient);
             logger.info("Patient created successfully with ID: {}", savedPatient.getId());
             return savedPatient;
@@ -207,15 +216,18 @@ public class PatientService {
                 if (search != null && !search.trim().isEmpty()) {
                     String searchTerm = "%" + search.toLowerCase() + "%";
                     Predicate namePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), searchTerm);
-                    Predicate emailPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), searchTerm);
-                    Predicate phonePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("phone")), searchTerm);
+                    Predicate emailPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("email")),
+                            searchTerm);
+                    Predicate phonePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("phone")),
+                            searchTerm);
                     return criteriaBuilder.or(namePredicate, emailPredicate, phonePredicate);
                 }
                 return criteriaBuilder.conjunction();
             };
 
             Page<Patient> patients = patientRepository.findAll(spec, pageable);
-            logger.info("Retrieved {} patients out of {} total", patients.getNumberOfElements(), patients.getTotalElements());
+            logger.info("Retrieved {} patients out of {} total", patients.getNumberOfElements(),
+                    patients.getTotalElements());
             return patients;
         } catch (Exception e) {
             logger.error("Error fetching patients with pagination", e);
@@ -230,8 +242,10 @@ public class PatientService {
                 if (query != null && !query.trim().isEmpty()) {
                     String searchTerm = "%" + query.toLowerCase() + "%";
                     Predicate namePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), searchTerm);
-                    Predicate emailPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), searchTerm);
-                    Predicate phonePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("phone")), searchTerm);
+                    Predicate emailPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("email")),
+                            searchTerm);
+                    Predicate phonePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("phone")),
+                            searchTerm);
                     return criteriaBuilder.or(namePredicate, emailPredicate, phonePredicate);
                 }
                 return criteriaBuilder.conjunction();

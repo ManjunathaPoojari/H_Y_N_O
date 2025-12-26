@@ -32,7 +32,7 @@ export const DoctorManagement = () => {
 
   const filteredDoctors = doctors.filter(doctor => {
     const matchesSearch = doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase());
+      doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filter === 'all' || doctor.status === filter;
     return matchesSearch && matchesFilter;
   });
@@ -107,6 +107,7 @@ export const DoctorManagement = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>ID</TableHead>
                 <TableHead>Doctor Name</TableHead>
                 <TableHead>Specialization</TableHead>
                 <TableHead>Contact</TableHead>
@@ -119,6 +120,7 @@ export const DoctorManagement = () => {
             <TableBody>
               {filteredDoctors.map((doctor) => (
                 <TableRow key={doctor.id}>
+                  <TableCell className="font-mono text-xs">{doctor.id}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <UserCog className="h-4 w-4 text-gray-400" />
@@ -152,8 +154,8 @@ export const DoctorManagement = () => {
                     <Badge
                       variant={
                         doctor.status === 'approved' ? 'default' :
-                        doctor.status === 'pending' ? 'secondary' :
-                        'destructive'
+                          doctor.status === 'pending' ? 'secondary' :
+                            'destructive'
                       }
                     >
                       {doctor.status}
@@ -232,8 +234,8 @@ export const DoctorManagement = () => {
                                 <Badge
                                   variant={
                                     selectedDoctor.status === 'approved' ? 'default' :
-                                    selectedDoctor.status === 'pending' ? 'secondary' :
-                                    'destructive'
+                                      selectedDoctor.status === 'pending' ? 'secondary' :
+                                        'destructive'
                                   }
                                 >
                                   {selectedDoctor.status}
@@ -276,14 +278,25 @@ export const DoctorManagement = () => {
                         </>
                       )}
                       {doctor.status === 'approved' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() => handleSuspend(doctor.id)}
-                        >
-                          <Ban className="h-3 w-3" />
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-blue-600 hover:text-blue-700"
+                            onClick={() => handleApprove(doctor.id)}
+                            title="Re-verify doctor (updates verification status)"
+                          >
+                            <CheckCircle className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleSuspend(doctor.id)}
+                          >
+                            <Ban className="h-3 w-3" />
+                          </Button>
+                        </>
                       )}
                     </div>
                   </TableCell>

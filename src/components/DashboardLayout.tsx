@@ -5,10 +5,8 @@ import {
   Activity, Bell, Search, LogOut, Menu,
   LayoutDashboard, Users, Calendar, MessageSquare, Video,
   FileText, Building2, UserCog, AlertCircle,
-  Pill, User, Hospital, Stethoscope, Apple, Dumbbell, ShieldCheck, Key, Bed, Utensils
+  Pill, User, Hospital, Stethoscope, Apple, Dumbbell, ShieldCheck, Key, Bed
 } from 'lucide-react';
-
-
 import { Input } from './ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Badge } from './ui/badge';
@@ -18,7 +16,6 @@ import { useNotifications } from '../lib/notification-context';
 import api from '../lib/api-client';
 import { useAppStore } from '../lib/app-store';
 import { AnimatedBackground } from './common/AnimatedBackground';
-import { VoiceAssistance } from './common/VoiceAssistance';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -65,15 +62,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       intervalId = setInterval(fetchPendingCount, 1000);
     }
 
-    // Voice Navigation Listener
-    const handleVoiceNavigate = (e: any) => {
-      onNavigate(e.detail);
-    };
-    window.addEventListener('app-navigate' as any, handleVoiceNavigate);
-
     return () => {
       if (intervalId) clearInterval(intervalId);
-      window.removeEventListener('app-navigate' as any, handleVoiceNavigate);
     };
   }, [role, refreshTrigger]);
 
@@ -103,8 +93,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: Pill, label: 'Online Pharmacy', path: '/patient/pharmacy' },
           { icon: Apple, label: 'Nutrition & Diet', path: '/patient/nutrition' },
           { icon: Dumbbell, label: 'Yoga & Fitness', path: '/patient/yoga' },
-          { icon: Building2, label: 'Health Events', path: '/patient/events' },
-          { icon: User, label: 'Profile', path: '/my-profile' },
         ];
 
       case 'doctor':
@@ -115,8 +103,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: Calendar, label: 'Schedule', path: '/doctor/schedule' },
           { icon: MessageSquare, label: 'Chat', path: '/doctor/chat' },
           { icon: Video, label: 'Video Consultation', path: '/doctor/meetings' },
-          { icon: Building2, label: 'Health Events', path: '/patient/events' },
-          { icon: User, label: 'Profile', path: '/doctor/profile' },
         ];
 
       case 'hospital':
@@ -125,13 +111,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: Stethoscope, label: 'Doctors', path: '/hospital/doctors' },
           { icon: Calendar, label: 'Appointments', path: '/hospital/appointments' },
           { icon: Users, label: 'Patients', path: '/hospital/patients' },
-          { icon: Building2, label: 'Health Events', path: '/hospital/events' },
           { icon: AlertCircle, label: 'Emergency', path: '/hospital/emergency' },
           { icon: Bed, label: 'Bed Management', path: '/hospital/beds' },
           { icon: Pill, label: 'Inventory & Pharmacy', path: '/hospital/inventory' },
           { icon: FileText, label: 'Billing', path: '/hospital/billing' },
           { icon: FileText, label: 'Reports', path: '/hospital/reports' },
-          { icon: User, label: 'Profile', path: '/hospital/profile' },
         ];
 
       case 'admin':
@@ -141,7 +125,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: Users, label: 'User Management', path: '/admin/users' },
           { icon: Calendar, label: 'Appointments', path: '/admin/appointments' },
           { icon: Pill, label: 'Pharmacy', path: '/admin/pharmacy' },
-          { icon: Utensils, label: 'Nutrition', path: '/admin/nutrition' },
           { icon: AlertCircle, label: 'Emergency', path: '/admin/emergency' },
           { icon: FileText, label: 'Reports', path: '/admin/reports' },
         ];
@@ -152,7 +135,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: Calendar, label: 'Schedule', path: '/trainer/schedule' },
           { icon: Users, label: 'Clients', path: '/trainer/clients' },
           { icon: MessageSquare, label: 'Messages', path: '/trainer/messages' },
-          { icon: User, label: 'Profile', path: '/trainer/profile' },
         ];
 
       default:
@@ -251,15 +233,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-medium text-slate-900">
-                  Welcome, {user?.name || 'User'}
+                  {(() => {
+                    const hour = new Date().getHours();
+                    if (hour < 12) return 'Good morning';
+                    if (hour < 17) return 'Good afternoon';
+                    return 'Good evening';
+                  })()}, {user?.name || 'User'}
                 </span>
               </div>
-              {role === 'patient' && (
-                <Button variant="outline" size="sm" className="hidden md:flex">
-                  <AlertCircle className="h-4 w-4 mr-2 text-red-500" />
-                  Emergency
-                </Button>
-              )}
             </div>
 
             {/* Centered Search Bar */}
@@ -396,7 +377,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <main className="flex-1 p-4 md:p-6 lg:p-8">
           {children}
         </main>
-        <VoiceAssistance />
       </div>
     </div>
   );

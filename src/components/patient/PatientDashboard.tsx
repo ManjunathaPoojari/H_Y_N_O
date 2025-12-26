@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import {
   Activity,
+  AlertCircle,
   Apple,
   Calendar,
   CheckCircle2,
@@ -12,27 +13,33 @@ import {
   HeartPulse,
   MapPin,
   MessageSquare,
+  Phone,
   Pill,
   Stethoscope,
   User,
   Video,
-  Yoga,
+  Ambulance,
+  Shield,
 } from 'lucide-react';
 import { useAppStore } from '../../lib/app-store';
 import { useAuth } from '../../lib/auth-context';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
+import { toast } from 'sonner';
 
 interface PatientDashboardProps {
   onNavigate: (path: string) => void;
 }
 
 export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }) => {
-  const { appointments } = useAppStore();
+  const { appointments, carePlanTasks, createEmergencyRequest } = useAppStore();
   const { user } = useAuth();
   const [unreadMessages, setUnreadMessages] = React.useState(3);
   const [pendingReports, setPendingReports] = React.useState(2);
-  const [incompleteTasks, setIncompleteTasks] = React.useState(1);
 
   const upcomingAppointments = appointments.filter((a) => a.status === 'booked').slice(0, 4);
+  const totalCareTasks = carePlanTasks.length;
+  const completedCareTasks = carePlanTasks.filter(t => t.status === 'completed').length;
+  const pendingCareTasks = totalCareTasks - completedCareTasks;
 
   // Auto-refresh metrics every 1 second
   React.useEffect(() => {
@@ -40,7 +47,6 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
       // Simulate fetching metrics - in real app, call API
       setUnreadMessages(Math.floor(Math.random() * 5));
       setPendingReports(Math.floor(Math.random() * 3));
-      setIncompleteTasks(Math.floor(Math.random() * 4));
     };
 
     fetchMetrics();
@@ -60,21 +66,21 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
       value: upcomingAppointments.length,
       helper: upcomingAppointments[0] ? `Next with ${upcomingAppointments[0].doctorName}` : 'No visits planned',
       icon: Calendar,
-      badge: upcomingAppointments.length,
+      path: '/patient/appointments'
     },
     {
       title: 'Care plan',
-      value: '3 tasks',
-      helper: '2 completed today',
+      value: `${totalCareTasks} tasks`,
+      helper: `${completedCareTasks} completed today`,
       icon: CheckCircle2,
-      badge: incompleteTasks,
+      path: '/patient/care-plan'
     },
     {
       title: 'Reports',
       value: recentReports.length,
       helper: 'Latest results are ready',
       icon: FileText,
-      badge: pendingReports,
+      path: '/patient/reports'
     },
   ];
 
@@ -111,13 +117,40 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
         <div>
           <p className="text-sm text-muted-foreground">Daily summary</p>
           <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-            Welcome back, {user?.name || 'Patient'}
+            {(() => {
+              const hour = new Date().getHours();
+              if (hour < 12) return 'Good morning';
+              if (hour < 17) return 'Good afternoon';
+              return 'Good evening';
+            })()}, {user?.name || 'Patient'}
+            <Badge variant="outline" className="ml-3 font-mono text-sm font-normal align-middle">
+              {user?.id}
+            </Badge>
           </h1>
           <p className="text-muted-foreground mt-2">
             Your latest appointments, care tasks, and wellness updates are ready.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
+          <Button
+            variant="destructive"
+            className="animate-pulse shadow-lg shadow-red-500/20"
+            onClick={() => {
+              createEmergencyRequest({
+                patientId: user?.id || 'P-GUEST',
+                patientName: user?.name || 'Current User',
+                patientPhone: user?.phone || 'Not Provided',
+                patientLocation: 'Home (Dashboard)',
+                emergencyType: 'medical',
+                severity: 'critical',
+                symptoms: 'Emergency SOS triggered from Dashboard',
+                description: 'Emergency SOS triggered from Patient Dashboard'
+              });
+            }}
+          >
+            <Shield className="mr-2 h-4 w-4" />
+            Emergency SOS
+          </Button>
           <Button variant="outline" onClick={() => onNavigate('/patient/book/video')}>
             <Video className="h-4 w-4" />
             Book visit
@@ -127,11 +160,17 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
             View reports
           </Button>
         </div>
+
+
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
         {quickStats.map((stat) => (
-          <Card key={stat.title} className="h-full border-slate-200 shadow-sm">
+          <Card
+            key={stat.title}
+            className="h-full border-slate-200 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
+            onClick={() => onNavigate(stat.path)}
+          >
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
               <div>
                 <CardTitle className="text-sm font-medium text-slate-500">{stat.title}</CardTitle>
@@ -141,11 +180,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
                 <div className="rounded-full bg-slate-100 p-2 text-slate-600">
                   <stat.icon className="h-4 w-4" />
                 </div>
-                {stat.badge > 0 && (
-                  <Badge variant="destructive" className="text-xs">
-                    {stat.badge}
-                  </Badge>
-                )}
+
               </div>
             </CardHeader>
             <CardContent>
@@ -184,7 +219,10 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-semibold text-slate-900">{appointment.doctorName}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-slate-900">{appointment.doctorName}</p>
+                        <span className="text-xs text-slate-400 font-mono">#{appointment.id}</span>
+                      </div>
                       <p className="text-sm text-muted-foreground">{appointment.reason}</p>
                     </div>
                     <Badge variant="secondary" className="capitalize">
@@ -241,7 +279,6 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onNavigate }
               { icon: MessageSquare, label: 'Chat with doctor', path: '/patient/book/chat' },
               { icon: MapPin, label: 'In-person visit', path: '/patient/book/inperson' },
               { icon: Pill, label: 'Pharmacy orders', path: '/patient/pharmacy' },
-              { icon: Activity, label: 'Yoga & Fitness', path: '/patient/yoga' },
             ].map((action) => (
               <button
                 key={action.label}

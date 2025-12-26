@@ -18,10 +18,6 @@ interface VideoCallProps {
 type InitState = 'idle' | 'connecting' | 'media' | 'peer' | 'ready' | 'error';
 type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'failed';
 
-
-// Global stream tracker to handle React Strict Mode double-mounts
-let globalLocalStream: MediaStream | null = null;
-
 const VideoCall: React.FC<VideoCallProps> = ({
   callId,
   appointmentId,
@@ -65,97 +61,6 @@ const VideoCall: React.FC<VideoCallProps> = ({
   const [waitingForAdmission, setWaitingForAdmission] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [isPictureInPicture, setIsPictureInPicture] = useState(false);
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [remoteAudioActive, setRemoteAudioActive] = useState(false);
-  const [localAudioLevel, setLocalAudioLevel] = useState(0);
-
-  // Mounted ref
-  const isMounted = useRef(false);
-
-  // Sync local stream with video element
-  useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
-      console.log('🎥 Syncing local stream to video element');
-
-      // Basic Audio Level Metering (Optional but helpful)
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const source = audioCtx.createMediaStreamSource(localStream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-      const updateLevel = () => {
-        if (!isMounted.current) return;
-        analyser.getByteFrequencyData(dataArray);
-        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-        setLocalAudioLevel(average);
-        requestAnimationFrame(updateLevel);
-      };
-      updateLevel();
-
-      return () => {
-        audioCtx.close();
-      };
-    }
-  }, [localStream]);
-
-  // Sync remote stream with video element
-  useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream;
-      console.log('🎥 [DEBUG] Remote video srcObject attached via Effect');
-      remoteVideoRef.current.play().catch(e => console.warn('🎥 [DEBUG] Remote play() failed:', e));
-    }
-  }, [remoteStream]);
-
-  // Callback ref for remote video to ensure srcObject is set correctly
-  const remoteVideoCallbackRef = useCallback((node: HTMLVideoElement | null) => {
-    if (node) {
-      remoteVideoRef.current = node;
-      if (remoteStream) {
-        node.srcObject = remoteStream;
-        console.log('🎥 [DEBUG] Remote video srcObject attached via Callback Ref');
-        node.play().catch(e => console.warn('🎥 [DEBUG] Remote play() failed:', e));
-      }
-    }
-  }, [remoteStream]);
-
-  // Callback ref for local video
-  const localVideoCallbackRef = useCallback((node: HTMLVideoElement | null) => {
-    if (node) {
-      localVideoRef.current = node;
-      if (localStream) {
-        node.srcObject = localStream;
-        console.log('🎥 [DEBUG] Local video srcObject attached via Callback Ref');
-      }
-    }
-  }, [localStream]);
-
-  // Set remote stream ref (Defined before cleanup)
-  const setRemoteStreamRef = useCallback((stream: MediaStream | null) => {
-    console.log('🎥 [DEBUG] Remote stream signal:', stream ? `Stream ID: ${stream.id}` : 'Stream cleared');
-    if (stream) {
-      setRemoteAudioActive(stream.getAudioTracks().length > 0);
-      stream.getTracks().forEach(track => {
-        console.log(`🎥 [DEBUG] Remote track: ${track.kind}, enabled: ${track.enabled}, state: ${track.readyState}`);
-        track.onunmute = () => {
-          console.log(`🎥 [DEBUG] Remote track ${track.kind} UNMUTED`);
-          if (track.kind === 'audio') setRemoteAudioActive(true);
-        };
-        track.onmute = () => {
-          console.log(`🎥 [DEBUG] Remote track ${track.kind} MUTED`);
-          if (track.kind === 'audio') setRemoteAudioActive(false);
-        };
-      });
-    } else {
-      setRemoteAudioActive(false);
-    }
-    remoteStreamRef.current = stream;
-    setRemoteStream(stream);
-  }, []);
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -163,20 +68,8 @@ const VideoCall: React.FC<VideoCallProps> = ({
 
     // Stop media tracks
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => {
-        track.stop();
-        track.enabled = false;
-      });
+      localStreamRef.current.getTracks().forEach(track => track.stop());
       localStreamRef.current = null;
-    }
-
-    // Stop media tracks (Global)
-    if (globalLocalStream) {
-      globalLocalStream.getTracks().forEach(track => {
-        track.stop();
-        track.enabled = false;
-      });
-      globalLocalStream = null;
     }
 
     // Close peer connection
@@ -195,147 +88,65 @@ const VideoCall: React.FC<VideoCallProps> = ({
     websocketClient.disconnect();
 
     // Reset state
-    if (isMounted.current) {
-      setCallState({
-        isInCall: false,
-        isMuted: false,
-        isVideoEnabled: true,
-        callDuration: 0,
-        connectionQuality: 'good'
-      });
+    setCallState({
+      isInCall: false,
+      isMuted: false,
+      isVideoEnabled: true,
+      callDuration: 0,
+      connectionQuality: 'good'
+    });
 
-      setWaitingPatient(null);
-      setAdmittedPatient(null);
-      setWaitingForAdmission(false);
-      setRemoteStreamRef(null);
+    setWaitingPatient(null);
+    setAdmittedPatient(null);
+    setWaitingForAdmission(false);
+    setRemoteStreamRef(null);
+  }, []);
+
+  // Set remote stream ref
+  const setRemoteStreamRef = useCallback((stream: MediaStream | null) => {
+    remoteStreamRef.current = stream;
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = stream;
     }
-  }, [setRemoteStreamRef]);
+  }, []);
 
   // Initialize media (camera/microphone)
   const initializeMedia = useCallback(async (): Promise<MediaStream> => {
-    let attempts = 0;
-    const maxAttempts = 3;
+    try {
+      setInitState('media');
+      console.log('Requesting media permissions...');
 
-    while (attempts < maxAttempts) {
-      try {
-        attempts++;
-        setInitState('media');
-        console.log(`🎥 [MEDIA] Requesting permissions (Attempt ${attempts}/${maxAttempts})...`);
-
-        if (!navigator.mediaDevices?.getUserMedia) {
-          throw new Error('Media devices not supported');
-        }
-
-        // 1. AGGRESSIVE CLEANUP: Stop any existing streams BEFORE requesting new ones
-        // This is critical for mobile and some desktop drivers that can't handle multiple requests
-        const currentLocal = localStreamRef.current;
-        if (currentLocal) {
-          console.log('🎥 [MEDIA] Stopping previous localStream tracks...');
-          currentLocal.getTracks().forEach(track => {
-            track.stop();
-            track.enabled = false;
-          });
-          localStreamRef.current = null;
-        }
-
-        if (globalLocalStream) {
-          console.log('🎥 [MEDIA] Stopping lingering global stream...');
-          globalLocalStream.getTracks().forEach(track => {
-            track.stop();
-            track.enabled = false;
-          });
-          globalLocalStream = null;
-        }
-
-        // 2. Hardware cooldown delay
-        if (attempts > 1) {
-          const delay = attempts * 1000;
-          console.log(`🎥 [MEDIA] Hardware cooldown delay: ${delay}ms`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-
-        // 3. Request media with fallback constraints
-        // On attempt 3, we use very loose constraints to increase success chance
-        const constraints: MediaStreamConstraints = attempts < 3
-          ? {
-            video: {
-              width: { ideal: 640, max: 1280 },
-              height: { ideal: 480, max: 720 },
-              frameRate: { ideal: 15, max: 30 }
-            },
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true
-            }
-          }
-          : { video: true, audio: true };
-
-        console.log('🎥 [MEDIA] Using constraints:', JSON.stringify(constraints));
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-        if (!isMounted.current) {
-          console.warn('🎥 [MEDIA] Component unmounted during acquisition, stopping tracks...');
-          stream.getTracks().forEach(track => track.stop());
-          throw new Error('Component unmounted during initialization');
-        }
-
-        // 4. Success - setup state and refs
-        console.log('🎥 [MEDIA] Success! Stream ID:', stream.id);
-        stream.getTracks().forEach(track => {
-          console.log(`🎥 [MEDIA] Track: ${track.kind}, ID: ${track.id}, State: ${track.readyState}`);
-          track.onended = () => console.log(`🎥 [MEDIA] Track ${track.kind} ended externally`);
-        });
-
-        localStreamRef.current = stream;
-        setLocalStream(stream);
-        globalLocalStream = stream;
-
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-
-        return stream;
-
-      } catch (error: any) {
-        console.error(`🎥 [MEDIA] Initialization attempt ${attempts} failed:`, {
-          name: error.name,
-          message: error.message,
-          constraint: error.constraint
-        });
-
-        const errorName = error.name || '';
-
-        // Handle definite failure cases immediately
-        if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
-          setError('Camera and microphone permissions were denied. Please enable them in your browser settings and refresh.');
-          setInitState('error');
-          throw error;
-        }
-
-        if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
-          setError('No camera or microphone found. Please connect your media devices.');
-          setInitState('error');
-          throw error;
-        }
-
-        // NotReadable / TrackStart are usually "Device in use" or hardware issues - worth retrying
-        const isHardwareError = errorName === 'NotReadableError' || errorName === 'TrackStartError';
-
-        if (attempts >= maxAttempts) {
-          if (isHardwareError) {
-            setError('Your camera or microphone is being used by another application. Please close other video apps and try again.');
-          } else {
-            setError(`Failed to start video call: ${error.message || 'Unknown media error'}`);
-          }
-          setInitState('error');
-          throw error;
-        }
-
-        console.log('🎥 [MEDIA] Recoverable error, retrying...');
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Media devices not supported');
       }
-    }
 
-    throw new Error('Media initialization failed after max retries');
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480, frameRate: 15 },
+        audio: true
+      });
+
+      localStreamRef.current = stream;
+
+      // Set up local video
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+
+      return stream;
+    } catch (error) {
+      console.error('Media initialization failed:', error);
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          setError('Camera and microphone permissions are required for video calls. Please allow access and refresh the page.');
+        } else if (error.name === 'NotFoundError') {
+          setError('No camera or microphone found. Please check your device settings.');
+        } else {
+          setError('Failed to access camera/microphone. Please try again.');
+        }
+      }
+      setInitState('error');
+      throw error;
+    }
   }, []);
 
   // Initialize peer connection
@@ -422,6 +233,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
       }
     });
 
+    websocketClient.setOnVideoCallSignal(handleVideoCallSignal);
     websocketClient.connect();
   }, [appointmentId]);
 
@@ -451,19 +263,22 @@ const VideoCall: React.FC<VideoCallProps> = ({
     }
   }, [appointmentId, user, initializeMedia, initializePeerConnection, initializeWebSocket]);
 
-  // Flush pending ICE candidates
-  const flushPendingIceCandidates = useCallback(async () => {
-    if (!peerConnectionRef.current) return;
-
-    while (pendingIceCandidates.current.length > 0) {
-      const candidate = pendingIceCandidates.current.shift()!;
-      try {
-        await peerConnectionRef.current.addIceCandidate(candidate);
-      } catch (error) {
-        console.error('Failed to flush ICE candidate:', error);
-      }
+  // Join call when both WebSocket and peer connection are ready
+  useEffect(() => {
+    if (connectionState === 'connected' && initState === 'ready' && appointmentId && user) {
+      console.log('Both WebSocket and peer connection ready, joining call...');
+      joinCall();
     }
-  }, []);
+  }, [connectionState, initState, appointmentId, user]);
+
+  // Initialize on mount
+  useEffect(() => {
+    if (appointmentId) {
+      initializeCall();
+    }
+
+    return cleanup;
+  }, [appointmentId, initializeCall, cleanup]);
 
   // Handle video call signals
   const handleVideoCallSignal = useCallback(async (signal: any, signalAppointmentId: string) => {
@@ -480,48 +295,33 @@ const VideoCall: React.FC<VideoCallProps> = ({
           break;
 
         case 'offer':
-          console.log('📥 [PATIENT] Received OFFER from doctor');
           if (user.role === 'patient' && peerConnectionRef.current) {
-            console.log('📥 [PATIENT] Processing offer, setting remote description...');
             setWaitingForAdmission(false);
             await peerConnectionRef.current.setRemoteDescription({
               type: 'offer',
               sdp: signal.data
             });
-            console.log('✅ [PATIENT] Remote description set, flushing ICE candidates...');
             await flushPendingIceCandidates();
-            console.log('✅ [PATIENT] Creating answer...');
             const answer = await peerConnectionRef.current.createAnswer();
             await peerConnectionRef.current.setLocalDescription(answer);
-            console.log('📤 [PATIENT] Sending ANSWER to doctor');
             websocketClient.sendVideoCallAnswer(appointmentId!, {
               fromUserId: user.id,
               answer: answer.sdp!
             });
-            console.log('✅ [PATIENT] Answer sent successfully');
-          } else {
-            console.warn('❌ [PATIENT] Cannot process offer - role:', user.role, 'peerConnection:', !!peerConnectionRef.current);
           }
           break;
 
         case 'answer':
-          console.log('📥 [DOCTOR] Received ANSWER from patient');
           if (user.role === 'doctor' && peerConnectionRef.current) {
-            console.log('📥 [DOCTOR] Processing answer, setting remote description...');
             await peerConnectionRef.current.setRemoteDescription({
               type: 'answer',
               sdp: signal.data
             });
-            console.log('✅ [DOCTOR] Remote description set, flushing ICE candidates...');
             await flushPendingIceCandidates();
-            console.log('✅ [DOCTOR] ICE candidates flushed');
             if (waitingPatient) {
               setAdmittedPatient(waitingPatient);
               setWaitingPatient(null);
             }
-            console.log('✅ [DOCTOR] Patient admitted to call');
-          } else {
-            console.warn('❌ [DOCTOR] Cannot process answer - role:', user.role, 'peerConnection:', !!peerConnectionRef.current);
           }
           break;
 
@@ -560,7 +360,21 @@ const VideoCall: React.FC<VideoCallProps> = ({
     } catch (error) {
       console.error('Error handling video call signal:', error);
     }
-  }, [appointmentId, user, waitingPatient, admittedPatient, setRemoteStreamRef, flushPendingIceCandidates]);
+  }, [appointmentId, user, waitingPatient, admittedPatient, setRemoteStreamRef]);
+
+  // Flush pending ICE candidates
+  const flushPendingIceCandidates = useCallback(async () => {
+    if (!peerConnectionRef.current) return;
+
+    while (pendingIceCandidates.current.length > 0) {
+      const candidate = pendingIceCandidates.current.shift()!;
+      try {
+        await peerConnectionRef.current.addIceCandidate(candidate);
+      } catch (error) {
+        console.error('Failed to flush ICE candidate:', error);
+      }
+    }
+  }, []);
 
   // Join call
   const joinCall = useCallback(() => {
@@ -576,38 +390,6 @@ const VideoCall: React.FC<VideoCallProps> = ({
     }
   }, [appointmentId, user]);
 
-  // Join call when both WebSocket and peer connection are ready
-  useEffect(() => {
-    if (isMounted.current && connectionState === 'connected' && initState === 'ready' && appointmentId && user) {
-      console.log('Both WebSocket and peer connection ready, joining call...');
-      joinCall();
-    }
-  }, [connectionState, initState, appointmentId, user, joinCall]);
-
-  // Register video call signal handler (must be after handleVideoCallSignal is defined)
-  useEffect(() => {
-    websocketClient.setOnVideoCallSignal(handleVideoCallSignal);
-  }, [handleVideoCallSignal]);
-
-  // Initialize on mount
-  useEffect(() => {
-    isMounted.current = true;
-
-    if (appointmentId) {
-      initializeCall();
-    }
-
-    return () => {
-      isMounted.current = false;
-      cleanup();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appointmentId]);
-
-
-
-
-
   // Admit patient (doctor only)
   const admitPatient = useCallback(async () => {
     if (!waitingPatient || !peerConnectionRef.current || !appointmentId || !user?.id) return;
@@ -618,23 +400,20 @@ const VideoCall: React.FC<VideoCallProps> = ({
     }
 
     try {
-      console.log('📤 [DOCTOR] Creating OFFER for patient:', waitingPatient.name);
       const offer = await peerConnectionRef.current.createOffer();
       await peerConnectionRef.current.setLocalDescription(offer);
-      console.log('📤 [DOCTOR] Sending OFFER via WebSocket');
 
       websocketClient.sendVideoCallOffer(appointmentId, {
         fromUserId: user.id,
         offer: offer.sdp!
       });
 
-      console.log('✅ [DOCTOR] Offer sent successfully');
       toast.success(`Connecting to ${waitingPatient.name}...`);
       setAdmittedPatient(waitingPatient);
       setWaitingPatient(null);
 
     } catch (error) {
-      console.error('❌ [DOCTOR] Error admitting patient:', error);
+      console.error('Error admitting patient:', error);
       toast.error('Failed to start call. Please try again.');
     }
   }, [waitingPatient, appointmentId, user, connectionState]);
@@ -650,68 +429,14 @@ const VideoCall: React.FC<VideoCallProps> = ({
     }
   }, [callState.isMuted]);
 
-  // Toggle video (Hardware Stop/Start)
-  const toggleVideo = useCallback(async () => {
-    try {
-      if (callState.isVideoEnabled) {
-        // Turning OFF: Stop the tracks completely to turn off hardware light
-        if (localStreamRef.current) {
-          const videoTracks = localStreamRef.current.getVideoTracks();
-          videoTracks.forEach(track => {
-            track.stop(); // This turns off the camera light
-            localStreamRef.current?.removeTrack(track);
-          });
-        }
-        setCallState(prev => ({ ...prev, isVideoEnabled: false }));
-
-        // Notify peer of mute (optional, depending on requirements, but stopping track usually sends black)
-      } else {
-        // Turning ON: Re-acquire camera
-        setCallState(prev => ({ ...prev, isVideoEnabled: true })); // Optimistic update
-
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480, frameRate: 15 }
-        });
-
-        const newVideoTrack = stream.getVideoTracks()[0];
-
-        if (localStreamRef.current) {
-          localStreamRef.current.addTrack(newVideoTrack);
-        } else {
-          // Should not happen if audio is still there, but safe fallback
-          localStreamRef.current = stream;
-        }
-
-        // Update global tracker
-        if (globalLocalStream) {
-          // Remove old video tracks from global stream if any exist (cleanup)
-          globalLocalStream.getVideoTracks().forEach(t => t.stop());
-          globalLocalStream.addTrack(newVideoTrack);
-        } else {
-          globalLocalStream = localStreamRef.current;
-        }
-        setLocalStream(localStreamRef.current); // Update state to trigger re-render
-
-        // Update local video element
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = localStreamRef.current;
-        }
-
-        // Replace track in PeerConnection for remote viewer
-        if (peerConnectionRef.current) {
-          const videoSender = peerConnectionRef.current.getSenders().find(s => s.track?.kind === 'video');
-          if (videoSender) {
-            await videoSender.replaceTrack(newVideoTrack);
-          } else {
-            // If we didn't have a sender before (started without video), add it
-            peerConnectionRef.current.addTrack(newVideoTrack, localStreamRef.current!);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error toggling video:', error);
-      toast.error('Failed to access camera');
-      setCallState(prev => ({ ...prev, isVideoEnabled: false })); // Revert state on error
+  // Toggle video
+  const toggleVideo = useCallback(() => {
+    if (localStreamRef.current) {
+      const videoTracks = localStreamRef.current.getVideoTracks();
+      videoTracks.forEach(track => {
+        track.enabled = !callState.isVideoEnabled;
+      });
+      setCallState(prev => ({ ...prev, isVideoEnabled: !prev.isVideoEnabled }));
     }
   }, [callState.isVideoEnabled]);
 
@@ -828,36 +553,16 @@ const VideoCall: React.FC<VideoCallProps> = ({
       </div>
 
       {/* Main video area */}
-      <div className="w-full flex-1 relative bg-slate-900 min-h-[500px]">
+      <div className="w-full h-full relative">
         {/* Remote video */}
-        {remoteStream ? (
-          <div className="w-full h-full bg-black flex items-center justify-center">
-            <video
-              key={`remote-${remoteStream.id}`}
-              ref={remoteVideoCallbackRef}
-              autoPlay
-              playsInline
-              muted={false}
-              className="w-full h-full object-contain"
-              style={{ background: '#000' }}
-            />
-            <div className="absolute top-4 right-4 bg-emerald-500/80 text-white text-[10px] px-2 py-1 rounded font-bold tracking-wider z-20">
-              LIVE • REMOTECONNECTED
-            </div>
-
-            {/* Manual Fix Button - Helpful for autoplay blocks or rendering glitches */}
-            <button
-              onClick={() => {
-                if (remoteStream && remoteVideoRef.current) {
-                  remoteVideoRef.current.srcObject = remoteStream;
-                  remoteVideoRef.current.play().catch(console.error);
-                }
-              }}
-              className="absolute top-4 left-4 bg-black/40 hover:bg-black/60 text-[10px] text-white/50 hover:text-white px-2 py-1 rounded transition-colors z-30"
-            >
-              Fix Video/Audio
-            </button>
-          </div>
+        {remoteStreamRef.current ? (
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            className="w-full h-full object-cover rounded-xl"
+            muted={false}
+          />
         ) : isDoctor && !admittedPatient ? (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
             <div className="text-center text-gray-800 max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl border border-gray-200">
@@ -908,105 +613,78 @@ const VideoCall: React.FC<VideoCallProps> = ({
         )}
 
         {/* Local video inset */}
-        {localStream && (
-          <div className="absolute bottom-24 right-6 w-36 h-24 bg-black rounded-xl overflow-hidden shadow-2xl border-2 border-white/40 z-30">
+        {localStreamRef.current && (
+          <div className="absolute bottom-24 right-6 w-28 h-20 bg-white rounded-xl overflow-hidden shadow-2xl border-2 border-white/20">
             <video
-              key={localStream.id}
-              ref={localVideoCallbackRef}
+              ref={localVideoRef}
               autoPlay
               muted
               playsInline
-              className="w-full h-full object-cover scale-x-[-1]"
+              className="w-full h-full object-cover rounded-lg"
             />
-            <div className="absolute bottom-1 left-1 bg-black bg-opacity-70 text-white text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
-              You (Local)
-              <div className="w-8 h-1 bg-gray-700 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-emerald-500 transition-all duration-75"
-                  style={{ width: `${Math.min(100, localAudioLevel * 2)}%` }}
-                />
-              </div>
+            <div className="absolute bottom-1 left-1 bg-black bg-opacity-70 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+              You
             </div>
           </div>
         )}
 
         {/* Participant name overlay */}
-        {(admittedPatient || (!isDoctor && remoteStream)) && (
-          <div className="absolute bottom-6 left-6 bg-slate-900/80 backdrop-blur-md text-white px-5 py-2.5 rounded-2xl text-sm font-bold shadow-2xl border border-white/10 z-30 flex items-center gap-3">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            <div className="flex flex-col">
-              <span className="text-xs text-white/60 font-medium uppercase tracking-wider mb-0.5">
-                {isDoctor ? 'In Consultation' : 'Secure Visit'}
-              </span>
-              <div className="flex items-center gap-2">
-                {isDoctor ? (admittedPatient?.name || 'Patient') : 'Doctor'}
-                {remoteAudioActive ? (
-                  <Mic className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
-                ) : (
-                  <MicOff className="h-3.5 w-3.5 text-red-400" />
-                )}
-              </div>
-            </div>
+        {admittedPatient && (
+          <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-sm text-gray-900 px-4 py-2 rounded-full text-sm font-semibold shadow-lg border border-white/50">
+            👨‍⚕️ {admittedPatient.name}
+          </div>
+        )}
+        {!isDoctor && remoteStreamRef.current && (
+          <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-sm text-gray-900 px-4 py-2 rounded-full text-sm font-semibold shadow-lg border border-white/50">
+            👨‍⚕️ Doctor
           </div>
         )}
       </div>
 
-      {/* Controls Container */}
-      {(callState.isInCall || localStream) && (
-        <div className="bg-slate-950 p-6 flex justify-center items-center gap-8 border-t border-white/5">
-          <div className="flex items-center gap-6">
-            <Button
-              variant="ghost"
-              size="lg"
-              onClick={toggleMute}
-              className={`rounded-full w-14 h-14 p-0 transition-all ${callState.isMuted
-                ? 'bg-red-500/20 text-red-400 border border-red-500/50'
-                : 'bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10'
-                }`}
-            >
-              {callState.isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-            </Button>
+      {/* Controls */}
+      {callState.isInCall && remoteStreamRef.current && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4 flex justify-center items-center gap-6 z-20">
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={toggleMute}
+            className={`rounded-full w-16 h-16 p-0 transition-all duration-200 transform hover:scale-110 ${callState.isMuted
+              ? 'bg-red-500/20 text-red-400 border-2 border-red-400/50 hover:bg-red-500/30'
+              : 'bg-white/20 text-white border-2 border-white/30 hover:bg-white/30'
+              }`}
+          >
+            {callState.isMuted ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+          </Button>
 
-            <Button
-              variant="ghost"
-              size="lg"
-              onClick={toggleVideo}
-              className={`rounded-full w-14 h-14 p-0 transition-all ${!callState.isVideoEnabled
-                ? 'bg-red-500/20 text-red-400 border border-red-500/50'
-                : 'bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10'
-                }`}
-            >
-              {callState.isVideoEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={toggleVideo}
+            className={`rounded-full w-16 h-16 p-0 transition-all duration-200 transform hover:scale-110 ${!callState.isVideoEnabled
+              ? 'bg-red-500/20 text-red-400 border-2 border-red-400/50 hover:bg-red-500/30'
+              : 'bg-white/20 text-white border-2 border-white/30 hover:bg-white/30'
+              }`}
+          >
+            {callState.isVideoEnabled ? <Video className="h-6 w-6" /> : <VideoOff className="h-6 w-6" />}
+          </Button>
 
           <Button
             variant="destructive"
             size="lg"
             onClick={endCall}
-            className="rounded-full w-14 h-14 p-0 bg-red-600 hover:bg-red-700 shadow-lg shadow-red-900/20"
+            className="rounded-full w-16 h-16 p-0 bg-red-500 hover:bg-red-600 transform hover:scale-110 transition-all duration-200 shadow-lg"
           >
-            <PhoneOff className="h-5 w-5" />
+            <PhoneOff className="h-6 w-6" />
           </Button>
 
-          <div className="ml-auto flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => initializeCall()}
-              className="text-slate-500 hover:text-white text-[10px] uppercase font-bold"
-            >
-              Reconnect
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowChat(!showChat)}
-              className="bg-white/5 text-slate-300 hover:bg-white/10 rounded-full h-10 w-10 p-0"
-            >
-              <MessageCircle className="h-5 w-5" />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowChat(!showChat)}
+            className="absolute right-4 bg-white/20 text-white hover:bg-white/30 rounded-full h-10 w-10 p-0"
+          >
+            <MessageCircle className="h-5 w-5" />
+          </Button>
         </div>
       )}
 

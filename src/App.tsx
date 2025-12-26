@@ -18,15 +18,8 @@ import { PatientReports } from './components/patient/PatientReports';
 import { OnlinePharmacy } from './components/patient/OnlinePharmacy';
 import { NutritionWellness } from './components/patient/NutritionWellness';
 import { YogaFitness } from './components/patient/YogaFitness';
-import { YogaSession } from './components/patient/YogaSession';
-import { YogaIntroScreen } from './components/patient/yoga/YogaIntroScreen';
-import { YogaSchedule } from './components/patient/yoga/YogaSchedule';
-import { YogaTrainers } from './components/patient/yoga/YogaTrainers';
-import { YogaPractices } from './components/patient/yoga/YogaPractices';
-import { YogaCategoryPage } from './components/patient/yoga/YogaCategoryPage';
-import { YogaBooking } from './components/patient/yoga/YogaBooking';
-import { PaymentHistory } from './components/patient/PaymentHistory';
 import { PatientMeetings } from './components/patient/PatientMeetings';
+import { PatientCarePlan } from './components/patient/PatientCarePlan';
 import { ChatInterface } from './components/common/ChatInterface';
 import { DoctorDashboard } from './components/doctor/DoctorDashboard';
 import { DoctorProfile } from './components/doctor/DoctorProfile';
@@ -71,7 +64,6 @@ import { Video, MessageSquare, MapPin, Building2 } from 'lucide-react';
 import { ServicesPage } from './components/ServicesPage';
 import { DoctorsPage } from './components/DoctorsPage';
 import { PageTransition } from './components/common/PageTransition';
-import { EventsList } from './components/events/EventsList';
 
 
 function AppContent() {
@@ -240,10 +232,10 @@ function AppContent() {
               </div>
             </div>
           )}
-          {currentPath === '/patient/book/video' && <BookAppointment type="video" onNavigate={navigate} />}
-          {currentPath === '/patient/book/chat' && <BookAppointment type="chat" onNavigate={navigate} />}
-          {currentPath === '/patient/book/inperson' && <BookAppointment type="inperson" onNavigate={navigate} />}
-          {currentPath === '/patient/book/hospital' && <BookAppointment type="hospital" onNavigate={navigate} />}
+          {currentPath === '/patient/book/video' && <BookAppointment type="video" />}
+          {currentPath === '/patient/book/chat' && <BookAppointment type="chat" />}
+          {currentPath === '/patient/book/inperson' && <BookAppointment type="inperson" />}
+          {currentPath === '/patient/book/hospital' && <BookAppointment type="hospital" />}
           {currentPath === '/patient/appointments' && <MyAppointments />}
           {currentPath === '/patient/chat' && <ChatInterface />}
           {currentPath === '/patient/meetings' && <PatientMeetings />}
@@ -258,49 +250,9 @@ function AppContent() {
           {currentPath === '/patient/reports' && <PatientReports />}
           {currentPath === '/patient/pharmacy' && <OnlinePharmacy />}
           {currentPath === '/patient/nutrition' && <NutritionWellness onNavigate={navigate} />}
-          {(currentPath === '/patient/yoga' || currentPath.startsWith('/patient/yoga?')) && (() => {
-            const mode = new URLSearchParams(window.location.search).get('mode');
-            if (mode === 'intro') {
-              return <YogaIntroScreen onNavigate={navigate} />;
-            }
-            // Default to fitness view
-            return <YogaFitness onNavigate={navigate} />;
-          })()}
-
-          {/* Specific Yoga Routes - Must come before the generic session route */}
-          {currentPath === '/patient/yoga/schedule' && <YogaSchedule onNavigate={navigate} />}
-          {currentPath === '/patient/yoga/trainers' && <YogaTrainers onNavigate={navigate} />}
-          {currentPath === '/patient/yoga/practices' && <YogaPractices onNavigate={navigate} />}
-          {currentPath.startsWith('/patient/yoga/category/') && (
-            <YogaCategoryPage
-              categoryId={currentPath.split('/patient/yoga/category/')[1]}
-              onNavigate={navigate}
-            />
-          )}
-          {currentPath.startsWith('/patient/yoga/book/') && (
-            <YogaBooking
-              trainerId={currentPath.split('/patient/yoga/book/')[1]}
-              onNavigate={navigate}
-            />
-          )}
-
-          {/* Yoga Session Route - Fallback for other yoga paths */}
-          {currentPath.startsWith('/patient/yoga/') &&
-            !currentPath.includes('/schedule') &&
-            !currentPath.includes('/trainers') &&
-            !currentPath.includes('/book/') &&
-            !currentPath.includes('/practices') &&
-            !currentPath.includes('/category/') &&
-            !currentPath.endsWith('/yoga') && // Don't match the main list page
-            (
-              <YogaSession
-                categoryId={currentPath.split('/patient/yoga/')[1].split('?')[0]}
-                onNavigate={navigate}
-              />
-            )}
-          {currentPath === '/patient/events' && <EventsList />}
+          {currentPath === '/patient/yoga' && <YogaFitness onNavigate={navigate} />}
+          {currentPath === '/patient/care-plan' && <PatientCarePlan />}
           {currentPath === '/my-profile' && <PatientProfile />}
-          {currentPath === '/patient/payments' && <PaymentHistory />}
         </DashboardLayout>
       );
     }
@@ -355,7 +307,6 @@ function AppContent() {
           {currentPath === '/hospital/inventory' && <HospitalInventory />}
           {currentPath === '/hospital/billing' && <HospitalBilling />}
           {currentPath === '/hospital/reports' && <HospitalReports />}
-          {currentPath === '/hospital/events' && <EventsList />}
           {currentPath === '/hospital/profile' && <HospitalProfile />}
         </DashboardLayout>
       );

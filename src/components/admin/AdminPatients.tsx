@@ -149,7 +149,7 @@ export const AdminPatients = () => {
                 const createdDate = new Date(p.createdAt);
                 const now = new Date();
                 return createdDate.getMonth() === now.getMonth() &&
-                       createdDate.getFullYear() === now.getFullYear();
+                  createdDate.getFullYear() === now.getFullYear();
               }).length}
             </div>
             <p className="text-xs text-gray-600 mt-1">Recent registrations</p>
@@ -211,6 +211,7 @@ export const AdminPatients = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>ID</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
@@ -223,6 +224,7 @@ export const AdminPatients = () => {
                 <TableBody>
                   {filteredPatients.map((patient) => (
                     <TableRow key={patient.id}>
+                      <TableCell className="font-mono text-xs">{patient.id}</TableCell>
                       <TableCell className="font-medium">{patient.name}</TableCell>
                       <TableCell>{patient.email}</TableCell>
                       <TableCell>{patient.phone}</TableCell>

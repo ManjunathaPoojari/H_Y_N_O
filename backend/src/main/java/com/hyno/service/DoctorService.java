@@ -10,6 +10,7 @@ import com.hyno.repository.HospitalRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +28,9 @@ public class DoctorService {
 
     @Autowired
     private HospitalDoctorService hospitalDoctorService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<Doctor> getAllDoctors() {
         logger.info("Fetching all doctors");
@@ -125,6 +129,11 @@ public class DoctorService {
             // Generate doctor ID starting from D001 and incrementing
             String nextId = generateNextDoctorId();
             doctor.setId(nextId);
+
+            // Encode password if provided
+            if (doctor.getPassword() != null && !doctor.getPassword().isEmpty()) {
+                doctor.setPassword(passwordEncoder.encode(doctor.getPassword()));
+            }
 
             // Save doctor first to ensure it exists in database
             Doctor savedDoctor = doctorRepository.save(doctor);
@@ -269,6 +278,7 @@ public class DoctorService {
             if (optionalDoctor.isPresent()) {
                 Doctor doctor = optionalDoctor.get();
                 doctor.setStatus("approved");
+                doctor.setVerified(true); // Mark doctor as verified when approved
                 Doctor approvedDoctor = doctorRepository.save(doctor);
                 logger.info("Doctor approved successfully: {}", id);
                 return approvedDoctor;

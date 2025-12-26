@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { authAPI } from './api-client';
-
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string, role: string) => Promise<User | null>;
@@ -24,12 +23,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Load user from localStorage on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
+    const storedUser = sessionStorage.getItem('user');
+    const token = sessionStorage.getItem('token');
     if (storedUser && token) {
       setUser(JSON.parse(storedUser));
       resetIdleTimer();
     }
+    // No activeTab enforcement – each tab can have its own session
   }, []); // runs once on mount
 
   // Reset idle timer on user activity
@@ -70,8 +70,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
       const token = res.token;
       setUser(normalizedUser);
-      localStorage.setItem('user', JSON.stringify(normalizedUser));
-      localStorage.setItem('token', token);
+      sessionStorage.setItem('user', JSON.stringify(normalizedUser));
+      sessionStorage.setItem('token', token);
+      // No activeTab handling – session is per‑tab
       return normalizedUser;
     } catch (err: any) {
       console.error('Login failed:', err);
@@ -91,8 +92,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
       const jwtToken = res.token;
       setUser(normalizedUser);
-      localStorage.setItem('user', JSON.stringify(normalizedUser));
-      localStorage.setItem('token', jwtToken);
+      sessionStorage.setItem('user', JSON.stringify(normalizedUser));
+      sessionStorage.setItem('token', jwtToken);
       return normalizedUser;
     } catch (err: any) {
       console.error('Google Login failed:', err);
@@ -120,9 +121,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    localStorage.removeItem('storedPath');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('storedPath');
     if (idleTimerRef.current) {
       clearTimeout(idleTimerRef.current);
     }
@@ -131,7 +132,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const navigateToStoredPath = () => {
-    const storedPath = localStorage.getItem('storedPath');
+    const storedPath = sessionStorage.getItem('storedPath');
     if (storedPath && storedPath !== '/' && storedPath !== '/login' && storedPath !== '/register') {
       window.location.href = storedPath;
     }
@@ -141,7 +142,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(prev => {
       if (!prev) return prev;
       const updatedUser = { ...prev, ...updates };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      sessionStorage.setItem('user', JSON.stringify(updatedUser));
       return updatedUser;
     });
   };
