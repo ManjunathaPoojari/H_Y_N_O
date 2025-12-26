@@ -5,7 +5,7 @@ import {
   Activity, Bell, Search, LogOut, Menu,
   LayoutDashboard, Users, Calendar, MessageSquare, Video,
   FileText, Building2, UserCog, AlertCircle,
-  Pill, User, Hospital, Stethoscope, Apple, Dumbbell, ShieldCheck, Key, Bed
+  Pill, User, Hospital, Stethoscope, Apple, Dumbbell, ShieldCheck, Key, Bed, Utensils
 } from 'lucide-react';
 import { Input } from './ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
@@ -124,6 +124,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { icon: ShieldCheck, label: 'Pending Approvals', path: '/admin/pending-approvals' },
           { icon: Users, label: 'User Management', path: '/admin/users' },
           { icon: Calendar, label: 'Appointments', path: '/admin/appointments' },
+          { icon: Utensils, label: 'Nutrition', path: '/admin/nutrition' },
           { icon: Pill, label: 'Pharmacy', path: '/admin/pharmacy' },
           { icon: AlertCircle, label: 'Emergency', path: '/admin/emergency' },
           { icon: FileText, label: 'Reports', path: '/admin/reports' },

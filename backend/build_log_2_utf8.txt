@@ -1,0 +1,56 @@
+﻿mvnd : Dec 26, 2025 
+12:16:06 PM 
+org.jline.utils.Log logr
+At line:1 char:1
++ mvnd clean compile 
+"-DskipTests" -B > 
+build_log_2.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~
+    + CategoryInfo          
+    : NotSpecified: (Dec 2  
+  6, 2025 12....utils.Log   
+  logr:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+WARNING: Unable to create a 
+system terminal, creating a 
+dumb terminal (enable debug 
+logging for more 
+information)
+[main] WARNING org.jline - 
+Unable to create a system 
+terminal, creating a dumb 
+terminal (enable debug 
+logging for more 
+information)
+[INFO] Processing build on daemon b0058772
+[INFO] Scanning for projects...
+[INFO] BuildTimeEventSpy is registered.
+[INFO] 
+[INFO] Using the SmartBuilder implementation with a thread count of 7
+[INFO] 
+[INFO] -----------------< com.hyno:health-management-system >------------------
+[INFO] Building HYNO Health Management System 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.3.2:clean (default-clean) @ health-management-system ---
+[INFO] Deleting C:\Users\LENOVO\Documents\GitHub\H_Y_N_O\backend\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ health-management-system ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 5 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ health-management-system ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 123 source files with javac [debug release 17] to target\classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  24.520 s (Wall Clock)
+[INFO] Finished at: 2025-12-26T12:16:37+05:30
+[INFO] ------------------------------------------------------------------------

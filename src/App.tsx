@@ -48,6 +48,7 @@ import { AdminEmergency } from './components/admin/AdminEmergency';
 import { HospitalManagement } from './components/admin/HospitalManagement';
 import { DoctorManagement } from './components/admin/DoctorManagement';
 import { AdminPharmacy } from './components/admin/AdminPharmacy';
+import { AdminNutrition } from './components/admin/AdminNutrition';
 import { PendingApprovals } from './components/admin/PendingApprovals';
 import { UserManagement } from './components/admin/UserManagement';
 import { AdminProfile } from './components/admin/AdminProfile';
@@ -335,6 +336,7 @@ function AppContent() {
           {currentPath === '/admin/patients' && <AdminPatients />}
           {currentPath === '/admin/appointments' && <AdminAppointments />}
           {currentPath === '/admin/pharmacy' && <AdminPharmacy />}
+          {currentPath === '/admin/nutrition' && <AdminNutrition />}
           {currentPath === '/admin/emergency' && <AdminEmergency />}
           {currentPath === '/admin/reports' && <AdminReports />}
           {currentPath === '/admin/settings' && <AdminSettings />}
